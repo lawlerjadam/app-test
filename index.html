@@ -444,10 +444,10 @@ const defaultData = {
     {id:4,company:'Soho House',contactName:'Tom Briggs',contactEmail:'tbriggs@sohohouse.com',projectType:'Creative Project',estimatedValue:8000,status:'proposal-sent',notes:'Sent proposal for member events programme.'}
   ],
   team:[
-    {id:1,name:'Maya Chen',role:'Creative Director',email:'maya@freelance.com',rate:650,skills:['Art Direction','Brand Strategy','Concepting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Preferred creative lead for brand activations. Always delivers on time.',payments:[{id:1,description:'Summer Pop-Up — 5 days',amount:3250,date:'2026-07-25',status:'paid'},{id:2,description:'Felt Zine — Issue 01 retainer',amount:1300,date:'2026-08-15',status:'pending'}]},
-    {id:2,name:'James Okafor',role:'Designer',email:'james@freelance.com',rate:450,skills:['Brand Identity','Print','Motion'],availability:'busy',availableFrom:'2026-09-01',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Booked solid through August. Book at least 3 weeks ahead.',payments:[{id:3,description:'Summer Pop-Up — 8 days',amount:3600,date:'2026-07-25',status:'paid'},{id:4,description:'Brand Identity — Studio Kern (July)',amount:2700,date:'2026-07-31',status:'paid'},{id:5,description:'Brand Identity — Studio Kern (August)',amount:1800,date:'2026-08-31',status:'pending'}]},
-    {id:3,name:'Sofia Reyes',role:'Producer',email:'sofia@freelance.com',rate:500,skills:['Event Production','Logistics','Budgeting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Essential for any live event. Has great supplier relationships.',payments:[{id:6,description:'Summer Pop-Up — 3 days',amount:1500,date:'2026-07-25',status:'paid'},{id:7,description:'Summer Pop-Up — expenses reimbursement',amount:280,date:'2026-07-25',status:'overdue'}]},
-    {id:4,name:'Tom Wright',role:'Copywriter',email:'tom@freelance.com',rate:400,skills:['Editorial','Brand Voice','Scripts'],availability:'available',availableFrom:'',contractStatus:'sent',ir35:'not-assessed',paymentTerms:'30',notes:'New to FELT — contract sent, awaiting signature.',payments:[]}
+    {id:1,name:'Maya Chen',role:'Creative Director',email:'maya@freelance.com',rate:650,skills:['Art Direction','Brand Strategy','Concepting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Preferred creative lead for brand activations. Always delivers on time.',payments:[{id:1,description:'Summer Pop-Up — 5 days',amount:3250,date:'2026-07-25',status:'paid'},{id:2,description:'Felt Zine — Issue 01 retainer',amount:1300,date:'2026-08-15',status:'pending'}],driveFolder:'',contracts:[{id:1,projectId:1,templateId:1,status:'signed',sentDate:'2026-06-20',signedDate:'2026-06-22',notes:''},{id:2,projectId:3,templateId:1,status:'sent',sentDate:'2026-07-30',signedDate:'',notes:'Chased once.'}]},
+    {id:2,name:'James Okafor',role:'Designer',email:'james@freelance.com',rate:450,skills:['Brand Identity','Print','Motion'],availability:'busy',availableFrom:'2026-09-01',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Booked solid through August. Book at least 3 weeks ahead.',payments:[{id:3,description:'Summer Pop-Up — 8 days',amount:3600,date:'2026-07-25',status:'paid'},{id:4,description:'Brand Identity — Studio Kern (July)',amount:2700,date:'2026-07-31',status:'paid'},{id:5,description:'Brand Identity — Studio Kern (August)',amount:1800,date:'2026-08-31',status:'pending'}],driveFolder:'',contracts:[{id:3,projectId:1,templateId:1,status:'signed',sentDate:'2026-06-20',signedDate:'2026-06-21',notes:''},{id:4,projectId:2,templateId:1,status:'signed',sentDate:'2026-06-28',signedDate:'2026-06-30',notes:''}]},
+    {id:3,name:'Sofia Reyes',role:'Producer',email:'sofia@freelance.com',rate:500,skills:['Event Production','Logistics','Budgeting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Essential for any live event. Has great supplier relationships.',payments:[{id:6,description:'Summer Pop-Up — 3 days',amount:1500,date:'2026-07-25',status:'paid'},{id:7,description:'Summer Pop-Up — expenses reimbursement',amount:280,date:'2026-07-25',status:'overdue'}],driveFolder:'',contracts:[{id:5,projectId:1,templateId:1,status:'signed',sentDate:'2026-06-20',signedDate:'2026-06-23',notes:''}]},
+    {id:4,name:'Tom Wright',role:'Copywriter',email:'tom@freelance.com',rate:400,skills:['Editorial','Brand Voice','Scripts'],availability:'available',availableFrom:'',contractStatus:'sent',ir35:'not-assessed',paymentTerms:'30',notes:'New to FELT — contract sent, awaiting signature.',payments:[],driveFolder:'',contracts:[{id:6,projectId:3,templateId:1,status:'sent',sentDate:'2026-07-28',signedDate:'',notes:'Awaiting signature.'}]}
   ],
   contacts:[
     {id:1,name:'Rachel Kim',company:'Nova Drinks',email:'rachel@novadrinks.com',phone:'+44 7700 900123',role:'Brand Manager'},
@@ -460,7 +460,10 @@ const defaultData = {
     {id:2,title:'Artist Residency Pop-Up',category:'Space',description:'A rotating artist residency inside a retail space — each month a different artist takes over.',submittedBy:'Tom Wright',date:'2026-07-28'},
     {id:3,title:'FELT Annual Report (as Zine)',category:'Print',description:'Instead of a boring PDF, FELT publishes an annual report as a beautiful printed zine.',submittedBy:'James Okafor',date:'2026-08-01'}
   ],
-  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:4,suppliers:4,equipment:4,payments:8,keyContacts:4}
+  contractTemplates:[
+    {id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, outside IR35'}
+  ],
+  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:4,suppliers:4,equipment:4,payments:8,keyContacts:4,contracts:7,templates:2}
 };
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
@@ -469,8 +472,11 @@ function loadStore() { try { const s=localStorage.getItem(STORAGE_KEY); if(s) re
 function save() { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(store)); } catch(e){} }
 const store = loadStore();
 
-// Ensure nextId has keyContacts
+// Ensure nextId has all keys
 if (!store.nextId.keyContacts) store.nextId.keyContacts = 10;
+if (!store.nextId.contracts) store.nextId.contracts = 10;
+if (!store.nextId.templates) store.nextId.templates = 5;
+if (!store.contractTemplates) store.contractTemplates = [{id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, outside IR35'}];
 
 // Migration: ensure all projects have signoff + production
 store.projects.forEach(p => {
@@ -487,6 +493,8 @@ store.team.forEach(m => {
   if (!m.paymentTerms) m.paymentTerms = '30';
   if (!m.payments) m.payments = [];
   if (!m.notes) m.notes = '';
+  if (!m.driveFolder) m.driveFolder = '';
+  if (!m.contracts) m.contracts = [];
 });
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
@@ -1096,9 +1104,12 @@ function renderTeamProfile() {
       </div>
       <div class="tabs">
         <div class="tab ${currentMemberTab==='overview'?'active':''}" onclick="currentMemberTab='overview';render()">Overview</div>
+        <div class="tab ${currentMemberTab==='contracts'?'active':''}" onclick="currentMemberTab='contracts';render()">Contracts</div>
         <div class="tab ${currentMemberTab==='payments'?'active':''}" onclick="currentMemberTab='payments';render()">Payments</div>
       </div>
-      ${currentMemberTab==='overview'?renderMemberOverview(m):renderMemberPayments(m)}
+      ${currentMemberTab==='overview'?renderMemberOverview(m):''}
+      ${currentMemberTab==='contracts'?renderMemberContracts(m):''}
+      ${currentMemberTab==='payments'?renderMemberPayments(m):''}
     </div>`;
 }
 
@@ -1143,6 +1154,140 @@ function renderMemberPayments(m) {
       </table></div>`}
     </div>`;
 }
+
+function renderMemberContracts(m) {
+  const CONTRACT_STATUS = {'not-sent':'Not Sent','sent':'Sent','signed':'Signed / Returned'};
+  const sorted = [...m.contracts].sort((a,b)=>b.id-a.id);
+  const signedCount = m.contracts.filter(c=>c.status==='signed').length;
+  const pendingCount = m.contracts.filter(c=>c.status==='sent').length;
+
+  // Drive folder row
+  const driveRow = `
+    <div class="crm-stat" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div>
+        <div class="crm-stat-label">Google Drive Folder</div>
+        ${m.driveFolder
+          ? `<a href="${m.driveFolder}" target="_blank" style="color:var(--blue);font-weight:700;font-size:14px">Open ${m.name.split(' ')[0]}'s folder ↗</a>`
+          : `<div style="font-size:13px;color:var(--muted)">No folder linked yet.</div>`}
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditDriveFolderModal()">
+        ${m.driveFolder?'Change':'Set Folder'}
+      </button>
+    </div>`;
+
+  // Templates section
+  const templatesHtml = store.contractTemplates.length===0
+    ? `<div style="font-size:13px;color:var(--muted);padding:12px 0">No templates saved yet.</div>`
+    : store.contractTemplates.map(t=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:13px">${t.name}</div>
+            ${t.description?`<div style="font-size:11px;color:var(--muted)">${t.description}</div>`:''}
+          </div>
+          ${t.url?`<a href="${t.url}" target="_blank" class="btn btn-ghost btn-sm">Open ↗</a>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="deleteTemplate(${t.id})">✕</button>
+        </div>`).join('');
+
+  // Contract engagements table
+  const contractsTable = sorted.length===0
+    ? `<div class="empty-state"><div class="empty-icon">📄</div><p>No contracts logged for ${m.name.split(' ')[0]} yet.</p></div>`
+    : `<div class="table-wrap"><table class="table">
+        <thead><tr><th>Project</th><th>Template</th><th>Sent</th><th>Signed / Returned</th><th>Status</th><th></th></tr></thead>
+        <tbody>${sorted.map(c=>{
+          const proj=store.projects.find(p=>p.id===c.projectId);
+          const tmpl=store.contractTemplates.find(t=>t.id===c.templateId);
+          return `<tr>
+            <td style="font-weight:700">${proj?proj.name:'—'}</td>
+            <td style="color:var(--muted);font-size:12px">${tmpl?tmpl.name:'—'}</td>
+            <td style="color:var(--muted)">${c.sentDate?formatDate(c.sentDate):'—'}</td>
+            <td style="color:var(--muted)">${c.signedDate?formatDate(c.signedDate):'—'}</td>
+            <td><span class="status-badge badge-${c.status==='signed'?'signed':c.status==='sent'?'sent':'not-sent'}">${CONTRACT_STATUS[c.status]||c.status}</span></td>
+            <td style="text-align:right;white-space:nowrap">
+              <button class="btn btn-ghost btn-sm" onclick="cycleContractStatus(${c.id})" title="Change status">↻</button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteContract(${c.id})">✕</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
+
+  return `
+    <div class="crm-grid" style="margin-bottom:18px">
+      ${driveRow}
+      <div class="crm-stat"><div class="crm-stat-label">Contracts Signed</div><div class="crm-stat-value" style="color:var(--green)">${signedCount}</div></div>
+      <div class="crm-stat"><div class="crm-stat-label">Awaiting Signature</div><div class="crm-stat-value" style="color:var(--orange)">${pendingCount}</div></div>
+    </div>
+
+    <div class="section-header"><div class="section-title">Contract Templates</div><button class="btn btn-ghost btn-sm" onclick="openAddTemplateModal()">+ Add Template</button></div>
+    <div class="card" style="margin-bottom:18px">${templatesHtml}</div>
+
+    <div class="section-header"><div class="section-title">Project Contracts</div><button class="btn btn-primary btn-sm" onclick="openLogContractModal()">+ Log Contract</button></div>
+    <div class="card" style="padding:0;overflow:hidden">${contractsTable}</div>`;
+}
+
+function openEditDriveFolderModal() {
+  const m=currentMember;
+  openModal(`
+    <div class="modal-title">Google Drive Folder</div>
+    <div class="form-group full" style="margin-bottom:0">
+      <label>Paste the Google Drive folder link for ${m.name.split(' ')[0]}'s contracts</label>
+      <input id="df-url" value="${m.driveFolder||''}" placeholder="https://drive.google.com/drive/folders/...">
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px">Right-click any folder in Google Drive → Share → Copy link</div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveDriveFolder()">Save</button></div>`);
+}
+function saveDriveFolder() {
+  currentMember.driveFolder=document.getElementById('df-url').value.trim();
+  closeModal();save();toast('Drive folder saved');render();
+}
+
+function openAddTemplateModal() {
+  openModal(`
+    <div class="modal-title">Add Contract Template</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Template Name</label><input id="t-name" placeholder="e.g. Standard Freelancer Agreement"></div>
+      <div class="form-group full"><label>Google Doc / Drive Link</label><input id="t-url" placeholder="https://docs.google.com/..."></div>
+      <div class="form-group full"><label>Description</label><input id="t-desc" placeholder="e.g. For day-rate freelancers, outside IR35"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTemplate()">Add Template</button></div>`);
+}
+function addTemplate() {
+  const n=document.getElementById('t-name').value.trim();if(!n){toast('Name required');return;}
+  store.contractTemplates.push({id:store.nextId.templates++,name:n,url:document.getElementById('t-url').value.trim(),description:document.getElementById('t-desc').value.trim()});
+  closeModal();save();toast('Template added');render();
+}
+function deleteTemplate(id){store.contractTemplates=store.contractTemplates.filter(t=>t.id!==id);save();toast('Template removed');render();}
+
+function openLogContractModal() {
+  const m=currentMember;
+  const projectOpts=store.projects.filter(p=>p.teamIds.includes(m.id)).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const templateOpts=store.contractTemplates.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  if(!projectOpts){toast(`${m.name.split(' ')[0]} isn't assigned to any projects yet.`);return;}
+  openModal(`
+    <div class="modal-title">Log Contract</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Project</label><select id="c-project"><option value="">— Select —</option>${projectOpts}</select></div>
+      <div class="form-group full"><label>Template Used</label><select id="c-template"><option value="">— None / Other —</option>${templateOpts}</select></div>
+      <div class="form-group"><label>Status</label><select id="c-status"><option value="not-sent">Not Sent</option><option value="sent" selected>Sent</option><option value="signed">Signed / Returned</option></select></div>
+      <div class="form-group"><label>Date Sent</label><input id="c-sent" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="form-group"><label>Date Signed / Returned</label><input id="c-signed" type="date"></div>
+      <div class="form-group full"><label>Notes</label><input id="c-notes" placeholder="Any notes..."></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="logContract()">Log Contract</button></div>`);
+}
+function logContract() {
+  const proj=document.getElementById('c-project').value;if(!proj){toast('Select a project');return;}
+  const m=currentMember;
+  m.contracts.push({id:store.nextId.contracts++,projectId:parseInt(proj),templateId:parseInt(document.getElementById('c-template').value)||null,status:document.getElementById('c-status').value,sentDate:document.getElementById('c-sent').value,signedDate:document.getElementById('c-signed').value,notes:document.getElementById('c-notes').value});
+  closeModal();save();toast('Contract logged');render();
+}
+function cycleContractStatus(id) {
+  const cycle=['not-sent','sent','signed'];
+  const c=currentMember.contracts.find(x=>x.id===id);
+  c.status=cycle[(cycle.indexOf(c.status)+1)%cycle.length];
+  if(c.status==='signed'&&!c.signedDate)c.signedDate=new Date().toISOString().split('T')[0];
+  save();toast('Status: '+c.status);render();
+}
+function deleteContract(id){currentMember.contracts=currentMember.contracts.filter(c=>c.id!==id);save();toast('Removed');render();}
 
 function openAddPaymentModal() {
   openModal(`
