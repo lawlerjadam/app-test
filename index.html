@@ -21,6 +21,8 @@
     --blue-light: #E1EAF5;
     --yellow: #C4A44A;
     --yellow-light: #F5F0E1;
+    --purple: #7A5F8A;
+    --purple-light: #EDE1F5;
     --sidebar-w: 220px;
     --radius: 10px;
   }
@@ -55,14 +57,9 @@
     margin-bottom: 12px;
   }
 
-  .sidebar-logo span {
-    color: var(--accent);
-  }
+  .sidebar-logo span { color: var(--accent); }
 
-  .nav-section {
-    padding: 0 12px;
-    margin-bottom: 4px;
-  }
+  .nav-section { padding: 0 12px; margin-bottom: 4px; }
 
   .nav-label {
     font-size: 10px;
@@ -87,13 +84,9 @@
 
   .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
   .nav-item.active { background: var(--accent); color: #fff; }
-
   .nav-item .icon { width: 16px; text-align: center; font-size: 15px; }
 
-  .sidebar-footer {
-    margin-top: auto;
-    padding: 0 12px;
-  }
+  .sidebar-footer { margin-top: auto; padding: 0 12px; }
 
   .user-chip {
     display: flex;
@@ -110,18 +103,12 @@
     border-radius: 50%;
     background: var(--accent);
     color: #fff;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 11px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
   }
 
   /* MAIN */
-  .main {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-  }
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
 
   .topbar {
     background: var(--bg);
@@ -134,12 +121,7 @@
     z-index: 10;
   }
 
-  .page-title {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-  }
-
+  .page-title { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
   .page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
   .btn {
@@ -230,12 +212,19 @@
     text-transform: uppercase;
     padding: 3px 8px;
     border-radius: 20px;
+    white-space: nowrap;
   }
 
   .badge-active { background: var(--green-light); color: var(--green); }
   .badge-planning { background: var(--yellow-light); color: var(--yellow); }
   .badge-completed { background: #f0f0f0; color: var(--muted); }
   .badge-pitched { background: var(--blue-light); color: var(--blue); }
+  .badge-not-contacted { background: #f0f0f0; color: var(--muted); }
+  .badge-reached-out { background: var(--yellow-light); color: var(--yellow); }
+  .badge-in-conversation { background: var(--blue-light); color: var(--blue); }
+  .badge-proposal-sent { background: var(--purple-light); color: var(--purple); }
+  .badge-won { background: var(--green-light); color: var(--green); }
+  .badge-lost { background: #fdecea; color: #c0392b; }
 
   .project-meta {
     display: flex;
@@ -248,7 +237,7 @@
   .meta-item { font-size: 12px; color: var(--muted); }
   .meta-item strong { color: var(--text); display: block; font-size: 13px; font-weight: 600; }
 
-  .team-avatars { display: flex; gap: -4px; }
+  .team-avatars { display: flex; }
   .team-avatar-sm {
     width: 24px; height: 24px; border-radius: 50%;
     background: var(--accent-light);
@@ -267,20 +256,6 @@
     width: fit-content;
   }
   .back-btn:hover { color: var(--text); }
-
-  .project-detail-header {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .detail-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-  .detail-client { font-size: 14px; color: var(--muted); margin-top: 4px; }
 
   .tabs {
     display: flex;
@@ -451,6 +426,52 @@
   .contact-detail { font-size: 12px; color: var(--muted); }
   .contact-actions { margin-left: auto; display: flex; gap: 8px; }
 
+  /* LEADS PIPELINE */
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .pipeline-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    text-align: center;
+  }
+
+  .pipeline-col-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 4px; }
+  .pipeline-col-count { font-size: 26px; font-weight: 800; }
+  .pipeline-col-value { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .lead-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .lead-row:last-child { border-bottom: none; }
+
+  .lead-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--purple-light);
+    color: var(--purple);
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .lead-name { font-size: 14px; font-weight: 700; }
+  .lead-detail { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .lead-notes { font-size: 13px; color: var(--text); margin-top: 6px; line-height: 1.4; }
+  .lead-actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
+
   /* MODAL */
   .modal-overlay {
     position: fixed; inset: 0;
@@ -512,11 +533,6 @@
   .brief-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; font-weight: 700; }
   .brief-section-content { font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
 
-  /* CHECKBOX */
-  .checkbox-group { display: flex; flex-direction: column; gap: 8px; }
-  .checkbox-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
-  .checkbox-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
-
   /* ALLOCATE */
   .allocate-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -524,8 +540,6 @@
   }
   .allocate-row:last-child { border-bottom: none; }
   .allocate-info { display: flex; align-items: center; gap: 10px; }
-  .allocate-days { display: flex; align-items: center; gap: 8px; }
-  .allocate-days input { width: 60px; text-align: center; }
 
   /* TOAST */
   .toast {
@@ -546,7 +560,6 @@
 
   .divider { height: 1px; background: var(--border); margin: 20px 0; }
 
-  /* SCROLLBAR */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -554,7 +567,6 @@
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">FELT<span>.</span></div>
   <div class="nav-section">
@@ -564,6 +576,9 @@
     </div>
     <div class="nav-item" onclick="navigate('projects')">
       <span class="icon">▦</span> Projects
+    </div>
+    <div class="nav-item" onclick="navigate('leads')">
+      <span class="icon">◉</span> Leads
     </div>
   </div>
   <div class="nav-section">
@@ -583,41 +598,30 @@
   </div>
 </aside>
 
-<!-- MAIN -->
-<main class="main" id="main">
-  <!-- content rendered here -->
-</main>
+<main class="main" id="main"></main>
 
-<!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
   <div class="modal" id="modal-content"></div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── DATA STORE ───────────────────────────────────────────────────────────────
+// ─── DATA ─────────────────────────────────────────────────────────────────────
 const store = {
   projects: [
     {
-      id: 1,
-      name: 'Summer Pop-Up — Shoreditch',
-      client: 'Nova Drinks',
-      status: 'active',
-      type: 'Pop-Up',
-      startDate: '2026-07-15',
-      endDate: '2026-08-10',
-      budget: 18000,
-      spent: 11200,
+      id: 1, name: 'Summer Pop-Up — Shoreditch', client: 'Nova Drinks',
+      status: 'active', type: 'Pop-Up',
+      startDate: '2026-07-15', endDate: '2026-08-10',
+      budget: 18000, spent: 11200,
       brief: {
         overview: 'A 4-day immersive pop-up experience in Shoreditch to launch Nova\'s new summer range. The space should feel sun-drenched, tactile and social.',
         objectives: 'Drive brand awareness among 18–30 demographic. Generate 500+ social check-ins. Distribute 2,000 product samples.',
         deliverables: 'Full venue design & production, staffing, social content capture, on-site activation games.',
         timeline: 'Set build: 14 July. Live: 15–18 July. Strike: 19 July.'
       },
-      teamIds: [1, 2, 3],
-      contactIds: [1, 2],
+      teamIds: [1, 2, 3], contactIds: [1, 2],
       expenses: [
         { id: 1, description: 'Venue hire', amount: 4500, category: 'Venue', date: '2026-07-01' },
         { id: 2, description: 'Set design & production', amount: 3800, category: 'Production', date: '2026-07-08' },
@@ -627,23 +631,17 @@ const store = {
       teamAllocation: { 1: 5, 2: 8, 3: 3 }
     },
     {
-      id: 2,
-      name: 'Brand Identity — Studio Kern',
-      client: 'Studio Kern',
-      status: 'active',
-      type: 'Branding',
-      startDate: '2026-07-01',
-      endDate: '2026-09-01',
-      budget: 12000,
-      spent: 4200,
+      id: 2, name: 'Brand Identity — Studio Kern', client: 'Studio Kern',
+      status: 'active', type: 'Branding',
+      startDate: '2026-07-01', endDate: '2026-09-01',
+      budget: 12000, spent: 4200,
       brief: {
         overview: 'Full brand identity for Studio Kern, a new architecture practice based in East London. Positioning: refined, human, material.',
         objectives: 'Deliver a complete visual identity system including logo, typography, colour palette, and usage guidelines.',
         deliverables: 'Logo suite, brand guidelines PDF, stationery templates, social templates.',
         timeline: 'Discovery: July. Concepts: late July. Refinement: August. Delivery: 1 Sept.'
       },
-      teamIds: [2, 4],
-      contactIds: [3],
+      teamIds: [2, 4], contactIds: [3],
       expenses: [
         { id: 1, description: 'Brand strategy workshop', amount: 1500, category: 'Strategy', date: '2026-07-05' },
         { id: 2, description: 'Design retainer — July', amount: 2700, category: 'Design', date: '2026-07-31' },
@@ -651,47 +649,60 @@ const store = {
       teamAllocation: { 2: 10, 4: 6 }
     },
     {
-      id: 3,
-      name: 'Felt Zine — Issue 01',
-      client: 'FELT Internal',
-      status: 'planning',
-      type: 'Creative Project',
-      startDate: '2026-08-01',
-      endDate: '2026-10-15',
-      budget: 5000,
-      spent: 0,
+      id: 3, name: 'Felt Zine — Issue 01', client: 'FELT Internal',
+      status: 'planning', type: 'Creative Project',
+      startDate: '2026-08-01', endDate: '2026-10-15',
+      budget: 5000, spent: 0,
       brief: {
         overview: 'FELT\'s first self-published zine exploring creative culture, brand activations, and the people behind the work.',
         objectives: 'Establish FELT as a creative voice. 500 print run. Distributed at events and to clients.',
         deliverables: 'Editorial direction, design, print production, distribution plan.',
         timeline: 'Editorial: August. Design: September. Print: October.'
       },
-      teamIds: [1, 4],
-      contactIds: [],
-      expenses: [],
-      teamAllocation: { 1: 4, 4: 8 }
+      teamIds: [1, 4], contactIds: [],
+      expenses: [], teamAllocation: { 1: 4, 4: 8 }
     },
     {
-      id: 4,
-      name: 'Christmas Activation — Harrods',
-      client: 'Harrods / TBC',
-      status: 'pitched',
-      type: 'Brand Activation',
-      startDate: '2026-11-20',
-      endDate: '2026-12-24',
-      budget: 65000,
-      spent: 0,
+      id: 4, name: 'Christmas Activation — Harrods', client: 'Harrods / TBC',
+      status: 'pitched', type: 'Brand Activation',
+      startDate: '2026-11-20', endDate: '2026-12-24',
+      budget: 65000, spent: 0,
       brief: {
-        overview: 'Pitch for a large-scale Christmas brand activation within Harrods. Concept to be confirmed post-pitch.',
+        overview: 'Pitch for a large-scale Christmas brand activation within Harrods.',
         objectives: 'Win the pitch. Drive footfall and dwell time within designated zone.',
         deliverables: 'Pitch deck, concept visuals, production budget.',
         timeline: 'Pitch: 15 Aug. Decision: Sept.'
       },
-      teamIds: [1, 2, 3, 4],
-      contactIds: [4],
-      expenses: [],
-      teamAllocation: {}
+      teamIds: [1, 2, 3, 4], contactIds: [4],
+      expenses: [], teamAllocation: {}
     }
+  ],
+
+  leads: [
+    {
+      id: 1, company: 'Glossier UK', contactName: 'Priya Shah', contactEmail: 'priya@glossier.com',
+      projectType: 'Brand Activation', estimatedValue: 25000,
+      status: 'in-conversation',
+      notes: 'Met at the Shoreditch pop-up. Interested in a similar format for their autumn launch. Follow up with deck by 10 Aug.'
+    },
+    {
+      id: 2, company: 'The Ace Hotel', contactName: 'Ben Holloway', contactEmail: 'ben@acehotel.com',
+      projectType: 'Event', estimatedValue: 12000,
+      status: 'reached-out',
+      notes: 'Emailed re: hosting a FELT event series in their lobby space. Waiting to hear back.'
+    },
+    {
+      id: 3, company: 'Rapha', contactName: 'Claire Moon', contactEmail: 'claire@rapha.cc',
+      projectType: 'Pop-Up', estimatedValue: 40000,
+      status: 'not-contacted',
+      notes: 'Strong fit for a cycling culture pop-up. Need to find the right intro — potentially via James.'
+    },
+    {
+      id: 4, company: 'Soho House', contactName: 'Tom Briggs', contactEmail: 'tbriggs@sohohouse.com',
+      projectType: 'Creative Project', estimatedValue: 8000,
+      status: 'proposal-sent',
+      notes: 'Sent proposal for member events programme. Decision expected end of August.'
+    },
   ],
 
   team: [
@@ -708,7 +719,7 @@ const store = {
     { id: 4, name: 'Marcus Webb', company: 'Harrods', email: 'marcus.webb@harrods.com', phone: '+44 7700 900321', role: 'Events Director' },
   ],
 
-  nextId: { projects: 5, team: 5, contacts: 5, expenses: 10 }
+  nextId: { projects: 5, team: 5, contacts: 5, leads: 5, expenses: 10 }
 };
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
@@ -723,7 +734,7 @@ function navigate(view, projectId) {
     currentTab = 'brief';
   }
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const navMap = { dashboard: 0, projects: 1, team: 2, contacts: 3 };
+  const navMap = { dashboard: 0, projects: 1, leads: 2, team: 3, contacts: 4 };
   const items = document.querySelectorAll('.nav-item');
   if (navMap[view] !== undefined) items[navMap[view]].classList.add('active');
   render();
@@ -734,6 +745,7 @@ function render() {
   if (currentView === 'dashboard') main.innerHTML = renderDashboard();
   else if (currentView === 'projects') main.innerHTML = renderProjects();
   else if (currentView === 'project-detail') main.innerHTML = renderProjectDetail();
+  else if (currentView === 'leads') main.innerHTML = renderLeads();
   else if (currentView === 'team') main.innerHTML = renderTeam();
   else if (currentView === 'contacts') main.innerHTML = renderContacts();
 }
@@ -743,7 +755,7 @@ function renderDashboard() {
   const active = store.projects.filter(p => p.status === 'active').length;
   const totalBudget = store.projects.reduce((s, p) => s + p.budget, 0);
   const totalSpent = store.projects.reduce((s, p) => s + p.spent, 0);
-  const recentProjects = store.projects.slice(0, 4);
+  const hotLeads = store.leads.filter(l => ['in-conversation','proposal-sent'].includes(l.status)).length;
 
   return `
     <div class="topbar">
@@ -760,9 +772,9 @@ function renderDashboard() {
           <div class="stat-sub">${active} active</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Team Members</div>
-          <div class="stat-value">${store.team.length}</div>
-          <div class="stat-sub">Freelancers</div>
+          <div class="stat-label">Leads</div>
+          <div class="stat-value">${store.leads.length}</div>
+          <div class="stat-sub">${hotLeads} in progress</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Total Budget</div>
@@ -781,7 +793,7 @@ function renderDashboard() {
         <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all</button>
       </div>
       <div class="projects-grid">
-        ${recentProjects.map(p => renderProjectCard(p)).join('')}
+        ${store.projects.slice(0,4).map(p => renderProjectCard(p)).join('')}
       </div>
     </div>
   `;
@@ -838,11 +850,79 @@ function renderProjectCard(p) {
   `;
 }
 
+// ─── LEADS ────────────────────────────────────────────────────────────────────
+const LEAD_STATUSES = [
+  { key: 'not-contacted', label: 'Not Contacted' },
+  { key: 'reached-out', label: 'Reached Out' },
+  { key: 'in-conversation', label: 'In Conversation' },
+  { key: 'proposal-sent', label: 'Proposal Sent' },
+  { key: 'won', label: 'Won' },
+  { key: 'lost', label: 'Lost' },
+];
+
+function renderLeads() {
+  const pipeline = LEAD_STATUSES.map(s => ({
+    ...s,
+    leads: store.leads.filter(l => l.status === s.key),
+    value: store.leads.filter(l => l.status === s.key).reduce((sum, l) => sum + (l.estimatedValue || 0), 0)
+  }));
+
+  const activePipeline = pipeline.filter(s => !['won','lost'].includes(s.key));
+  const totalPipelineValue = store.leads
+    .filter(l => !['won','lost'].includes(l.status))
+    .reduce((s, l) => s + (l.estimatedValue || 0), 0);
+
+  return `
+    <div class="topbar">
+      <div>
+        <div class="page-title">Leads</div>
+        <div class="page-sub">${store.leads.length} leads · £${totalPipelineValue.toLocaleString()} pipeline value</div>
+      </div>
+      <button class="btn btn-primary" onclick="openNewLeadModal()">+ Add Lead</button>
+    </div>
+    <div class="content">
+      <div class="pipeline">
+        ${activePipeline.map(s => `
+          <div class="pipeline-col">
+            <div class="pipeline-col-label">${s.label}</div>
+            <div class="pipeline-col-count">${s.leads.length}</div>
+            ${s.value > 0 ? `<div class="pipeline-col-value">£${s.value.toLocaleString()}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">All Leads</div>
+      </div>
+      <div class="card">
+        ${store.leads.length === 0 ? `<div class="empty-state"><div class="empty-icon">◉</div><p>No leads yet. Add your first one.</p></div>` : ''}
+        ${store.leads.map(l => `
+          <div class="lead-row">
+            <div class="lead-avatar">${initials(l.company)}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <div class="lead-name">${l.company}</div>
+                <div class="status-badge badge-${l.status}">${LEAD_STATUSES.find(s=>s.key===l.status)?.label || l.status}</div>
+              </div>
+              <div class="lead-detail">${l.contactName}${l.contactEmail ? ' · ' + l.contactEmail : ''} · ${l.projectType}</div>
+              ${l.estimatedValue ? `<div class="lead-detail" style="color:var(--accent);font-weight:600">Est. £${l.estimatedValue.toLocaleString()}</div>` : ''}
+              ${l.notes ? `<div class="lead-notes">${l.notes}</div>` : ''}
+            </div>
+            <div class="lead-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openEditLeadModal(${l.id})">Edit</button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteLead(${l.id})">✕</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
 // ─── PROJECT DETAIL ───────────────────────────────────────────────────────────
 function renderProjectDetail() {
   const p = currentProject;
   if (!p) return '';
-  const pct = p.budget > 0 ? Math.round(p.spent / p.budget * 100) : 0;
 
   return `
     <div class="topbar">
@@ -851,9 +931,7 @@ function renderProjectDetail() {
         <div class="page-title">${p.name}</div>
         <div class="page-sub">${p.client} · <span class="status-badge badge-${p.status}">${p.status}</span></div>
       </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button>
-      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button>
     </div>
     <div class="content">
       <div class="tabs">
@@ -870,10 +948,7 @@ function renderProjectDetail() {
   `;
 }
 
-function switchTab(tab) {
-  currentTab = tab;
-  render();
-}
+function switchTab(tab) { currentTab = tab; render(); }
 
 function renderBriefTab(p) {
   return `
@@ -907,8 +982,6 @@ function renderBriefTab(p) {
 
 function renderTeamTab(p) {
   const assigned = store.team.filter(m => p.teamIds.includes(m.id));
-  const available = store.team.filter(m => !p.teamIds.includes(m.id));
-
   return `
     <div class="section-header">
       <div class="section-title">Assigned Team</div>
@@ -918,7 +991,6 @@ function renderTeamTab(p) {
       ${assigned.length === 0 ? `<div class="empty-state"><div class="empty-icon">◎</div><p>No team members assigned yet.</p></div>` : ''}
       ${assigned.map(m => {
         const days = (p.teamAllocation && p.teamAllocation[m.id]) || 0;
-        const cost = days * m.rate;
         return `
           <div class="allocate-row">
             <div class="allocate-info">
@@ -931,7 +1003,7 @@ function renderTeamTab(p) {
             <div style="display:flex;align-items:center;gap:20px">
               <div style="text-align:right">
                 <div style="font-size:13px;font-weight:600">${days} days</div>
-                <div style="font-size:12px;color:var(--muted)">£${cost.toLocaleString()}</div>
+                <div style="font-size:12px;color:var(--muted)">£${(days * m.rate).toLocaleString()}</div>
               </div>
               <button class="btn btn-ghost btn-sm" onclick="removeTeamMember(${m.id})">Remove</button>
             </div>
@@ -943,17 +1015,15 @@ function renderTeamTab(p) {
 }
 
 function renderBudgetTab(p) {
-  const total = p.budget;
   const spent = p.spent;
-  const remaining = total - spent;
-  const pct = total > 0 ? Math.round(spent / total * 100) : 0;
-  const over = spent > total;
-
+  const remaining = p.budget - spent;
+  const pct = p.budget > 0 ? Math.round(spent / p.budget * 100) : 0;
+  const over = spent > p.budget;
   return `
     <div class="budget-summary">
       <div class="budget-stat">
         <div class="budget-label">Total Budget</div>
-        <div class="budget-value">£${total.toLocaleString()}</div>
+        <div class="budget-value">£${p.budget.toLocaleString()}</div>
       </div>
       <div class="budget-stat">
         <div class="budget-label">Spent</div>
@@ -965,7 +1035,6 @@ function renderBudgetTab(p) {
         <div class="budget-value ${over?'over':'under'}">£${Math.abs(remaining).toLocaleString()} ${over?'over':''}</div>
       </div>
     </div>
-
     <div class="section-header">
       <div class="section-title">Expenses</div>
       <button class="btn btn-primary btn-sm" onclick="openAddExpenseModal()">+ Add Expense</button>
@@ -973,15 +1042,7 @@ function renderBudgetTab(p) {
     <div class="card" style="padding:0;overflow:hidden">
       ${p.expenses.length === 0 ? `<div class="empty-state"><div class="empty-icon">£</div><p>No expenses logged yet.</p></div>` : `
       <table class="table">
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Date</th>
-            <th style="text-align:right">Amount</th>
-            <th></th>
-          </tr>
-        </thead>
+        <thead><tr><th>Description</th><th>Category</th><th>Date</th><th style="text-align:right">Amount</th><th></th></tr></thead>
         <tbody>
           ${p.expenses.map(e => `
             <tr>
@@ -1000,7 +1061,6 @@ function renderBudgetTab(p) {
 
 function renderContactsTab(p) {
   const assigned = store.contacts.filter(c => p.contactIds.includes(c.id));
-
   return `
     <div class="section-header">
       <div class="section-title">Project Contacts</div>
@@ -1091,13 +1151,94 @@ function openModal(html) {
   document.getElementById('modal-content').innerHTML = html;
   document.getElementById('modal').classList.add('open');
 }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
 
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
+function statusOptions(selected) {
+  return LEAD_STATUSES.map(s => `<option value="${s.key}" ${selected===s.key?'selected':''}>${s.label}</option>`).join('');
 }
 
-function closeModalOutside(e) {
-  if (e.target === document.getElementById('modal')) closeModal();
+function openNewLeadModal() {
+  openModal(`
+    <div class="modal-title">Add Lead</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Company</label><input id="l-company" placeholder="Company name"></div>
+      <div class="form-group"><label>Contact Name</label><input id="l-contact" placeholder="Full name"></div>
+      <div class="form-group"><label>Contact Email</label><input id="l-email" type="email" placeholder="email@example.com"></div>
+      <div class="form-group"><label>Project Type</label>
+        <select id="l-type">
+          <option>Brand Activation</option><option>Pop-Up</option><option>Branding</option>
+          <option>Event</option><option>Creative Project</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Estimated Value (£)</label><input id="l-value" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Status</label><select id="l-status">${statusOptions('not-contacted')}</select></div>
+      <div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes" placeholder="Context, how you met, what to do next..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createLead()">Add Lead</button>
+    </div>
+  `);
+}
+
+function createLead() {
+  const company = document.getElementById('l-company').value.trim();
+  if (!company) { toast('Company name required'); return; }
+  store.leads.push({
+    id: store.nextId.leads++,
+    company,
+    contactName: document.getElementById('l-contact').value,
+    contactEmail: document.getElementById('l-email').value,
+    projectType: document.getElementById('l-type').value,
+    estimatedValue: parseInt(document.getElementById('l-value').value) || 0,
+    status: document.getElementById('l-status').value,
+    notes: document.getElementById('l-notes').value,
+  });
+  closeModal();
+  toast('Lead added');
+  render();
+}
+
+function openEditLeadModal(id) {
+  const l = store.leads.find(x => x.id === id);
+  openModal(`
+    <div class="modal-title">Edit Lead</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Company</label><input id="l-company" value="${l.company}"></div>
+      <div class="form-group"><label>Contact Name</label><input id="l-contact" value="${l.contactName}"></div>
+      <div class="form-group"><label>Contact Email</label><input id="l-email" value="${l.contactEmail}"></div>
+      <div class="form-group"><label>Project Type</label>
+        <select id="l-type">
+          ${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Estimated Value (£)</label><input id="l-value" type="number" value="${l.estimatedValue || 0}"></div>
+      <div class="form-group"><label>Status</label><select id="l-status">${statusOptions(l.status)}</select></div>
+      <div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes">${l.notes || ''}</textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLead(${id})">Save</button>
+    </div>
+  `);
+}
+
+function saveLead(id) {
+  const l = store.leads.find(x => x.id === id);
+  l.company = document.getElementById('l-company').value.trim() || l.company;
+  l.contactName = document.getElementById('l-contact').value;
+  l.contactEmail = document.getElementById('l-email').value;
+  l.projectType = document.getElementById('l-type').value;
+  l.estimatedValue = parseInt(document.getElementById('l-value').value) || 0;
+  l.status = document.getElementById('l-status').value;
+  l.notes = document.getElementById('l-notes').value;
+  closeModal(); toast('Lead saved'); render();
+}
+
+function deleteLead(id) {
+  store.leads = store.leads.filter(l => l.id !== id);
+  toast('Lead removed'); render();
 }
 
 function openNewProjectModal() {
@@ -1107,16 +1248,10 @@ function openNewProjectModal() {
       <div class="form-group full"><label>Project Name</label><input id="f-name" placeholder="e.g. Summer Pop-Up"></div>
       <div class="form-group"><label>Client</label><input id="f-client" placeholder="Client name"></div>
       <div class="form-group"><label>Type</label>
-        <select id="f-type">
-          <option>Brand Activation</option><option>Pop-Up</option><option>Branding</option>
-          <option>Creative Project</option><option>Event</option><option>Other</option>
-        </select>
+        <select id="f-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Creative Project</option><option>Event</option><option>Other</option></select>
       </div>
       <div class="form-group"><label>Status</label>
-        <select id="f-status">
-          <option value="planning">Planning</option><option value="active">Active</option>
-          <option value="pitched">Pitched</option><option value="completed">Completed</option>
-        </select>
+        <select id="f-status"><option value="planning">Planning</option><option value="active">Active</option><option value="pitched">Pitched</option><option value="completed">Completed</option></select>
       </div>
       <div class="form-group"><label>Budget (£)</label><input id="f-budget" type="number" placeholder="0"></div>
       <div class="form-group"><label>Start Date</label><input id="f-start" type="date"></div>
@@ -1132,9 +1267,8 @@ function openNewProjectModal() {
 function createProject() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { toast('Project name is required'); return; }
-  const p = {
-    id: store.nextId.projects++,
-    name,
+  store.projects.push({
+    id: store.nextId.projects++, name,
     client: document.getElementById('f-client').value || '—',
     type: document.getElementById('f-type').value,
     status: document.getElementById('f-status').value,
@@ -1144,11 +1278,8 @@ function createProject() {
     endDate: document.getElementById('f-end').value,
     brief: { overview: '', objectives: '', deliverables: '', timeline: '' },
     teamIds: [], contactIds: [], expenses: [], teamAllocation: {}
-  };
-  store.projects.push(p);
-  closeModal();
-  toast('Project created');
-  render();
+  });
+  closeModal(); toast('Project created'); render();
 }
 
 function openEditProjectModal() {
@@ -1159,14 +1290,10 @@ function openEditProjectModal() {
       <div class="form-group full"><label>Project Name</label><input id="f-name" value="${p.name}"></div>
       <div class="form-group"><label>Client</label><input id="f-client" value="${p.client}"></div>
       <div class="form-group"><label>Type</label>
-        <select id="f-type">
-          ${['Brand Activation','Pop-Up','Branding','Creative Project','Event','Other'].map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}
-        </select>
+        <select id="f-type">${['Brand Activation','Pop-Up','Branding','Creative Project','Event','Other'].map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}</select>
       </div>
       <div class="form-group"><label>Status</label>
-        <select id="f-status">
-          ${['planning','active','pitched','completed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}
-        </select>
+        <select id="f-status">${['planning','active','pitched','completed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}</select>
       </div>
       <div class="form-group"><label>Budget (£)</label><input id="f-budget" type="number" value="${p.budget}"></div>
       <div class="form-group"><label>Start Date</label><input id="f-start" type="date" value="${p.startDate}"></div>
@@ -1188,9 +1315,7 @@ function saveProject() {
   p.budget = parseInt(document.getElementById('f-budget').value) || 0;
   p.startDate = document.getElementById('f-start').value;
   p.endDate = document.getElementById('f-end').value;
-  closeModal();
-  toast('Project saved');
-  render();
+  closeModal(); toast('Project saved'); render();
 }
 
 function openEditBriefModal() {
@@ -1216,9 +1341,7 @@ function saveBrief() {
   p.brief.objectives = document.getElementById('b-objectives').value;
   p.brief.deliverables = document.getElementById('b-deliverables').value;
   p.brief.timeline = document.getElementById('b-timeline').value;
-  closeModal();
-  toast('Brief saved');
-  render();
+  closeModal(); toast('Brief saved'); render();
 }
 
 function openAllocateModal() {
@@ -1226,12 +1349,10 @@ function openAllocateModal() {
   const available = store.team.filter(m => !p.teamIds.includes(m.id));
   openModal(`
     <div class="modal-title">Allocate Team Member</div>
-    ${available.length === 0 ? '<p style="color:var(--muted)">All team members are already assigned to this project.</p>' : `
+    ${available.length === 0 ? '<p style="color:var(--muted)">All team members are already assigned.</p>' : `
     <div class="form-grid">
       <div class="form-group"><label>Team Member</label>
-        <select id="f-member">
-          ${available.map(m => `<option value="${m.id}">${m.name} — ${m.role} (£${m.rate}/day)</option>`).join('')}
-        </select>
+        <select id="f-member">${available.map(m=>`<option value="${m.id}">${m.name} — ${m.role} (£${m.rate}/day)</option>`).join('')}</select>
       </div>
       <div class="form-group"><label>Days Allocated</label><input id="f-days" type="number" value="1" min="0"></div>
     </div>`}
@@ -1249,17 +1370,14 @@ function allocateMember() {
   p.teamIds.push(memberId);
   if (!p.teamAllocation) p.teamAllocation = {};
   p.teamAllocation[memberId] = days;
-  closeModal();
-  toast('Team member added');
-  render();
+  closeModal(); toast('Team member added'); render();
 }
 
 function removeTeamMember(id) {
   const p = currentProject;
   p.teamIds = p.teamIds.filter(tid => tid !== id);
   if (p.teamAllocation) delete p.teamAllocation[id];
-  toast('Team member removed');
-  render();
+  toast('Team member removed'); render();
 }
 
 function openAddExpenseModal() {
@@ -1268,10 +1386,7 @@ function openAddExpenseModal() {
     <div class="form-grid">
       <div class="form-group full"><label>Description</label><input id="f-desc" placeholder="e.g. Venue hire"></div>
       <div class="form-group"><label>Category</label>
-        <select id="f-cat">
-          <option>Venue</option><option>Production</option><option>Staffing</option>
-          <option>Tech</option><option>Design</option><option>Travel</option><option>Other</option>
-        </select>
+        <select id="f-cat"><option>Venue</option><option>Production</option><option>Staffing</option><option>Tech</option><option>Design</option><option>Travel</option><option>Other</option></select>
       </div>
       <div class="form-group"><label>Amount (£)</label><input id="f-amount" type="number" placeholder="0"></div>
       <div class="form-group"><label>Date</label><input id="f-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
@@ -1288,25 +1403,16 @@ function addExpense() {
   const desc = document.getElementById('f-desc').value.trim();
   if (!desc) { toast('Description required'); return; }
   const p = currentProject;
-  p.expenses.push({
-    id: store.nextId.expenses++,
-    description: desc,
-    category: document.getElementById('f-cat').value,
-    amount,
-    date: document.getElementById('f-date').value
-  });
+  p.expenses.push({ id: store.nextId.expenses++, description: desc, category: document.getElementById('f-cat').value, amount, date: document.getElementById('f-date').value });
   p.spent = p.expenses.reduce((s, e) => s + e.amount, 0);
-  closeModal();
-  toast('Expense added');
-  render();
+  closeModal(); toast('Expense added'); render();
 }
 
 function deleteExpense(id) {
   const p = currentProject;
   p.expenses = p.expenses.filter(e => e.id !== id);
   p.spent = p.expenses.reduce((s, e) => s + e.amount, 0);
-  toast('Expense removed');
-  render();
+  toast('Expense removed'); render();
 }
 
 function openAddContactToProjectModal() {
@@ -1314,14 +1420,12 @@ function openAddContactToProjectModal() {
   const available = store.contacts.filter(c => !p.contactIds.includes(c.id));
   openModal(`
     <div class="modal-title">Add Contact to Project</div>
-    ${available.length === 0 ? '<p style="color:var(--muted)">All contacts are already linked. <a onclick="navigate(\'contacts\')" style="color:var(--accent);cursor:pointer">Add a new contact first.</a></p>' : `
+    ${available.length === 0 ? '<p style="color:var(--muted)">All contacts are already linked.</p>' : `
     <div class="form-group">
       <label>Select Contact</label>
-      <select id="f-contact">
-        ${available.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`).join('')}
-      </select>
+      <select id="f-contact">${available.map(c=>`<option value="${c.id}">${c.name} — ${c.company}</option>`).join('')}</select>
     </div>`}
-    <div style="margin-top:12px;color:var(--muted);font-size:12px">Don't see who you need? <a onclick="closeModal();navigate('contacts')" style="color:var(--accent);cursor:pointer">Add them to your contacts first.</a></div>
+    <div style="margin-top:12px;color:var(--muted);font-size:12px">Don't see who you need? <a onclick="closeModal();navigate('contacts')" style="color:var(--accent);cursor:pointer">Add them to contacts first.</a></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       ${available.length > 0 ? `<button class="btn btn-primary" onclick="addContactToProject()">Add Contact</button>` : ''}
@@ -1330,17 +1434,13 @@ function openAddContactToProjectModal() {
 }
 
 function addContactToProject() {
-  const cid = parseInt(document.getElementById('f-contact').value);
-  currentProject.contactIds.push(cid);
-  closeModal();
-  toast('Contact added');
-  render();
+  currentProject.contactIds.push(parseInt(document.getElementById('f-contact').value));
+  closeModal(); toast('Contact added'); render();
 }
 
 function removeContact(id) {
   currentProject.contactIds = currentProject.contactIds.filter(cid => cid !== id);
-  toast('Contact removed');
-  render();
+  toast('Contact removed'); render();
 }
 
 function openNewMemberModal() {
@@ -1349,7 +1449,7 @@ function openNewMemberModal() {
     <div class="form-grid">
       <div class="form-group"><label>Full Name</label><input id="f-name" placeholder="Full name"></div>
       <div class="form-group"><label>Role</label><input id="f-role" placeholder="e.g. Designer"></div>
-      <div class="form-group"><label>Email</label><input id="f-email" type="email" placeholder="email@example.com"></div>
+      <div class="form-group"><label>Email</label><input id="f-email" type="email"></div>
       <div class="form-group"><label>Day Rate (£)</label><input id="f-rate" type="number" placeholder="0"></div>
       <div class="form-group full"><label>Skills (comma separated)</label><input id="f-skills" placeholder="e.g. Branding, Motion, Print"></div>
     </div>
@@ -1363,17 +1463,8 @@ function openNewMemberModal() {
 function createMember() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { toast('Name required'); return; }
-  store.team.push({
-    id: store.nextId.team++,
-    name,
-    role: document.getElementById('f-role').value || 'Freelancer',
-    email: document.getElementById('f-email').value,
-    rate: parseInt(document.getElementById('f-rate').value) || 0,
-    skills: document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean)
-  });
-  closeModal();
-  toast('Team member added');
-  render();
+  store.team.push({ id: store.nextId.team++, name, role: document.getElementById('f-role').value || 'Freelancer', email: document.getElementById('f-email').value, rate: parseInt(document.getElementById('f-rate').value) || 0, skills: document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean) });
+  closeModal(); toast('Team member added'); render();
 }
 
 function openEditMemberModal(id) {
@@ -1401,15 +1492,12 @@ function saveMember(id) {
   m.email = document.getElementById('f-email').value;
   m.rate = parseInt(document.getElementById('f-rate').value) || 0;
   m.skills = document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean);
-  closeModal();
-  toast('Saved');
-  render();
+  closeModal(); toast('Saved'); render();
 }
 
 function deleteMember(id) {
   store.team = store.team.filter(m => m.id !== id);
-  toast('Team member removed');
-  render();
+  toast('Team member removed'); render();
 }
 
 function openNewContactModal() {
@@ -1432,17 +1520,8 @@ function openNewContactModal() {
 function createContact() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { toast('Name required'); return; }
-  store.contacts.push({
-    id: store.nextId.contacts++,
-    name,
-    company: document.getElementById('f-company').value,
-    role: document.getElementById('f-role').value,
-    email: document.getElementById('f-email').value,
-    phone: document.getElementById('f-phone').value
-  });
-  closeModal();
-  toast('Contact added');
-  render();
+  store.contacts.push({ id: store.nextId.contacts++, name, company: document.getElementById('f-company').value, role: document.getElementById('f-role').value, email: document.getElementById('f-email').value, phone: document.getElementById('f-phone').value });
+  closeModal(); toast('Contact added'); render();
 }
 
 function openEditContactModal(id) {
@@ -1470,35 +1549,23 @@ function saveContact(id) {
   c.role = document.getElementById('f-role').value;
   c.email = document.getElementById('f-email').value;
   c.phone = document.getElementById('f-phone').value;
-  closeModal();
-  toast('Contact saved');
-  render();
+  closeModal(); toast('Contact saved'); render();
 }
 
 function deleteContact(id) {
   store.contacts = store.contacts.filter(c => c.id !== id);
-  toast('Contact removed');
-  render();
+  toast('Contact removed'); render();
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
-function initials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-}
-
-function formatDate(d) {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
+function initials(name) { return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2); }
+function formatDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
 function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
 render();
 </script>
 </body>
