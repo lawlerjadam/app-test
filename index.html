@@ -88,6 +88,35 @@
   .badge-needed { background: #f0f0f0; color: var(--muted); }
   .badge-on-site { background: var(--blue-light); color: var(--blue); }
   .badge-returned { background: var(--green-light); color: var(--green); }
+  .badge-available { background: var(--green-light); color: var(--green); }
+  .badge-busy { background: var(--accent-light); color: #92700A; }
+  .badge-away { background: var(--red-light); color: var(--red); }
+  .badge-signed { background: var(--green-light); color: var(--green); }
+  .badge-not-sent { background: #f0f0f0; color: var(--muted); }
+  .badge-sent { background: var(--blue-light); color: var(--blue); }
+  .badge-expired { background: var(--red-light); color: var(--red); }
+  .badge-outside { background: var(--green-light); color: var(--green); }
+  .badge-inside { background: var(--orange-light); color: var(--orange); }
+  .badge-not-assessed { background: #f0f0f0; color: var(--muted); }
+  .badge-paid { background: var(--green-light); color: var(--green); }
+  .badge-pending { background: var(--accent-light); color: #92700A; }
+  .badge-overdue { background: var(--red-light); color: var(--red); }
+
+  .member-profile-header { background: var(--navy); border-radius: var(--radius); padding: 24px; display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
+  .member-avatar-xl { width: 64px; height: 64px; border-radius: 50%; background: var(--accent); color: var(--navy); font-size: 22px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .member-profile-name { font-size: 20px; font-weight: 800; color: #fff; }
+  .member-profile-role { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+  .member-profile-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .crm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .crm-stat { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+  .crm-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; font-weight: 700; }
+  .crm-stat-value { font-size: 18px; font-weight: 800; color: var(--navy); }
+  .payment-total-row { display: flex; gap: 14px; margin-bottom: 18px; }
+  .payment-total { flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; text-align: center; }
+  .payment-total-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 4px; font-weight: 700; }
+  .payment-total-value { font-size: 20px; font-weight: 800; color: var(--navy); }
+  .payment-total-value.pending-val { color: var(--orange); }
+  .payment-total-value.overdue-val { color: var(--red); }
 
   .project-meta { display: flex; gap: 14px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
   .meta-item { font-size: 11px; color: var(--muted); }
@@ -409,10 +438,10 @@ const defaultData = {
     {id:4,company:'Soho House',contactName:'Tom Briggs',contactEmail:'tbriggs@sohohouse.com',projectType:'Creative Project',estimatedValue:8000,status:'proposal-sent',notes:'Sent proposal for member events programme.'}
   ],
   team:[
-    {id:1,name:'Maya Chen',role:'Creative Director',email:'maya@freelance.com',rate:650,skills:['Art Direction','Brand Strategy','Concepting']},
-    {id:2,name:'James Okafor',role:'Designer',email:'james@freelance.com',rate:450,skills:['Brand Identity','Print','Motion']},
-    {id:3,name:'Sofia Reyes',role:'Producer',email:'sofia@freelance.com',rate:500,skills:['Event Production','Logistics','Budgeting']},
-    {id:4,name:'Tom Wright',role:'Copywriter',email:'tom@freelance.com',rate:400,skills:['Editorial','Brand Voice','Scripts']}
+    {id:1,name:'Maya Chen',role:'Creative Director',email:'maya@freelance.com',rate:650,skills:['Art Direction','Brand Strategy','Concepting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Preferred creative lead for brand activations. Always delivers on time.',payments:[{id:1,description:'Summer Pop-Up — 5 days',amount:3250,date:'2026-07-25',status:'paid'},{id:2,description:'Felt Zine — Issue 01 retainer',amount:1300,date:'2026-08-15',status:'pending'}]},
+    {id:2,name:'James Okafor',role:'Designer',email:'james@freelance.com',rate:450,skills:['Brand Identity','Print','Motion'],availability:'busy',availableFrom:'2026-09-01',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Booked solid through August. Book at least 3 weeks ahead.',payments:[{id:3,description:'Summer Pop-Up — 8 days',amount:3600,date:'2026-07-25',status:'paid'},{id:4,description:'Brand Identity — Studio Kern (July)',amount:2700,date:'2026-07-31',status:'paid'},{id:5,description:'Brand Identity — Studio Kern (August)',amount:1800,date:'2026-08-31',status:'pending'}]},
+    {id:3,name:'Sofia Reyes',role:'Producer',email:'sofia@freelance.com',rate:500,skills:['Event Production','Logistics','Budgeting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Essential for any live event. Has great supplier relationships.',payments:[{id:6,description:'Summer Pop-Up — 3 days',amount:1500,date:'2026-07-25',status:'paid'},{id:7,description:'Summer Pop-Up — expenses reimbursement',amount:280,date:'2026-07-25',status:'overdue'}]},
+    {id:4,name:'Tom Wright',role:'Copywriter',email:'tom@freelance.com',rate:400,skills:['Editorial','Brand Voice','Scripts'],availability:'available',availableFrom:'',contractStatus:'sent',ir35:'not-assessed',paymentTerms:'30',notes:'New to FELT — contract sent, awaiting signature.',payments:[]}
   ],
   contacts:[
     {id:1,name:'Rachel Kim',company:'Nova Drinks',email:'rachel@novadrinks.com',phone:'+44 7700 900123',role:'Brand Manager'},
@@ -425,7 +454,7 @@ const defaultData = {
     {id:2,title:'Artist Residency Pop-Up',category:'Space',description:'A rotating artist residency inside a retail space — each month a different artist takes over.',submittedBy:'Tom Wright',date:'2026-07-28'},
     {id:3,title:'FELT Annual Report (as Zine)',category:'Print',description:'Instead of a boring PDF, FELT publishes an annual report as a beautiful printed zine.',submittedBy:'James Okafor',date:'2026-08-01'}
   ],
-  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:3,suppliers:4,equipment:4}
+  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:3,suppliers:4,equipment:4,payments:8}
 };
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
@@ -439,14 +468,26 @@ store.projects.forEach(p => {
   if (!p.signoff) p.signoff = emptySignoff();
   if (!p.production) p.production = emptyProduction();
 });
+// Migration: ensure all team members have CRM fields
+store.team.forEach(m => {
+  if (!m.availability) m.availability = 'available';
+  if (m.availableFrom === undefined) m.availableFrom = '';
+  if (!m.contractStatus) m.contractStatus = 'not-sent';
+  if (!m.ir35) m.ir35 = 'not-assessed';
+  if (!m.paymentTerms) m.paymentTerms = '30';
+  if (!m.payments) m.payments = [];
+  if (!m.notes) m.notes = '';
+});
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
 let currentView='dashboard', currentProject=null, currentTab='brief';
+let currentMember=null, currentMemberTab='overview';
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 
-function navigate(view, projectId) {
+function navigate(view, projectId, memberId) {
   currentView=view;
   if(projectId!==undefined){currentProject=store.projects.find(p=>p.id===projectId);currentTab='brief';}
+  if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
   const navMap={dashboard:0,projects:1,leads:2,calendar:3,ideas:4,team:5,contacts:6};
@@ -466,6 +507,7 @@ function render() {
   else if(currentView==='calendar') m.innerHTML=renderCalendar();
   else if(currentView==='ideas') m.innerHTML=renderIdeas();
   else if(currentView==='team') m.innerHTML=renderTeam();
+  else if(currentView==='team-profile') m.innerHTML=renderTeamProfile();
   else if(currentView==='contacts') m.innerHTML=renderContacts();
   // Bind callsheet autosave after render
   if(currentTab==='production') {
@@ -875,10 +917,182 @@ function renderLeads() {
 }
 
 // ─── TEAM ─────────────────────────────────────────────────────────────────────
+const AVAIL_LABEL = {available:'Available',busy:'Busy',away:'Away'};
+const CONTRACT_LABEL = {'not-sent':'No Contract','sent':'Contract Sent','signed':'Signed','expired':'Expired'};
+const IR35_LABEL = {'outside':'Outside IR35','inside':'Inside IR35','not-assessed':'IR35 TBC'};
+
 function renderTeam() {
+  const avail = {available:0,busy:0,away:0};
+  store.team.forEach(m=>{ if(avail[m.availability]!==undefined) avail[m.availability]++; });
+  const pendingTotal = store.team.reduce((s,m)=>s+m.payments.filter(p=>p.status==='pending').reduce((a,p)=>a+p.amount,0),0);
+  const overdueTotal = store.team.reduce((s,m)=>s+m.payments.filter(p=>p.status==='overdue').reduce((a,p)=>a+p.amount,0),0);
   return `
-    <div class="topbar"><div><div class="page-title">Team</div><div class="page-sub">${store.team.length} freelancers</div></div><button class="btn btn-primary" onclick="openNewMemberModal()">+ Add</button></div>
-    <div class="content"><div class="team-grid">${store.team.map(m=>`<div class="team-card"><div class="team-avatar-lg">${initials(m.name)}</div><div class="team-name">${m.name}</div><div class="team-role">${m.role}</div><div class="team-rate">£${m.rate}/day</div><div class="skill-tags">${m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join('')}</div><div style="margin-top:12px;display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="openEditMemberModal(${m.id})">Edit</button><button class="btn btn-ghost btn-sm" onclick="deleteMember(${m.id})">Remove</button></div></div>`).join('')}</div></div>`;
+    <div class="topbar"><div><div class="page-title">Team</div><div class="page-sub">${store.team.length} freelancers · ${avail.available} available</div></div><button class="btn btn-primary" onclick="openNewMemberModal()">+ Add</button></div>
+    <div class="content">
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="stat-card"><div class="stat-label">Available</div><div class="stat-value" style="color:var(--green)">${avail.available}</div></div>
+        <div class="stat-card"><div class="stat-label">Busy</div><div class="stat-value" style="color:var(--accent-dark)">${avail.busy}</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Pay</div><div class="stat-value" style="color:var(--orange)">£${pendingTotal.toLocaleString()}</div></div>
+        <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" style="color:var(--red)">£${overdueTotal.toLocaleString()}</div></div>
+      </div>
+      <div class="team-grid">${store.team.map(m=>{
+        const pending=m.payments.filter(p=>p.status==='pending').reduce((s,p)=>s+p.amount,0);
+        const overdue=m.payments.filter(p=>p.status==='overdue').reduce((s,p)=>s+p.amount,0);
+        return `<div class="team-card" style="cursor:pointer;align-items:flex-start;text-align:left" onclick="navigate('team-profile',undefined,${m.id})">
+          <div style="display:flex;align-items:center;gap:12px;width:100%;margin-bottom:10px">
+            <div class="team-avatar-lg" style="margin-bottom:0;flex-shrink:0">${initials(m.name)}</div>
+            <div style="min-width:0">
+              <div class="team-name">${m.name}</div>
+              <div class="team-role">${m.role}</div>
+              <div class="team-rate" style="margin-top:2px">£${m.rate}/day</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+            <span class="status-badge badge-${m.availability}">${AVAIL_LABEL[m.availability]||m.availability}</span>
+            <span class="status-badge badge-${m.contractStatus}">${CONTRACT_LABEL[m.contractStatus]||m.contractStatus}</span>
+            <span class="status-badge badge-${m.ir35}">${IR35_LABEL[m.ir35]||m.ir35}</span>
+          </div>
+          ${m.availableFrom&&m.availability!=='available'?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Available from ${formatDate(m.availableFrom)}</div>`:''}
+          <div class="skill-tags" style="justify-content:flex-start">${m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join('')}</div>
+          ${overdue>0?`<div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--red)">⚠ £${overdue.toLocaleString()} overdue</div>`:''}
+          ${pending>0&&overdue===0?`<div style="margin-top:10px;font-size:12px;color:var(--muted)">£${pending.toLocaleString()} pending</div>`:''}
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+}
+
+function renderTeamProfile() {
+  const m=currentMember; if(!m) return '';
+  const allPaid=m.payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const pending=m.payments.filter(p=>p.status==='pending').reduce((s,p)=>s+p.amount,0);
+  const overdue=m.payments.filter(p=>p.status==='overdue').reduce((s,p)=>s+p.amount,0);
+  return `
+    <div class="topbar"><div><div class="back-btn" onclick="navigate('team')">← Team</div><div class="page-title">${m.name}</div><div class="page-sub">${m.role} · £${m.rate}/day</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditMemberCRMModal(${m.id})">Edit</button>
+    </div>
+    <div class="content">
+      <div class="member-profile-header">
+        <div class="member-avatar-xl">${initials(m.name)}</div>
+        <div>
+          <div class="member-profile-name">${m.name}</div>
+          <div class="member-profile-role">${m.role} · ${m.email}</div>
+          <div class="member-profile-badges">
+            <span class="status-badge badge-${m.availability}">${AVAIL_LABEL[m.availability]||m.availability}</span>
+            <span class="status-badge badge-${m.contractStatus}">${CONTRACT_LABEL[m.contractStatus]||m.contractStatus}</span>
+            <span class="status-badge badge-${m.ir35}">${IR35_LABEL[m.ir35]||m.ir35}</span>
+          </div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab ${currentMemberTab==='overview'?'active':''}" onclick="currentMemberTab='overview';render()">Overview</div>
+        <div class="tab ${currentMemberTab==='payments'?'active':''}" onclick="currentMemberTab='payments';render()">Payments</div>
+      </div>
+      ${currentMemberTab==='overview'?renderMemberOverview(m):renderMemberPayments(m)}
+    </div>`;
+}
+
+function renderMemberOverview(m) {
+  const projects=store.projects.filter(p=>p.teamIds.includes(m.id));
+  return `
+    <div class="crm-grid">
+      <div class="crm-stat"><div class="crm-stat-label">Day Rate</div><div class="crm-stat-value">£${m.rate}</div></div>
+      <div class="crm-stat"><div class="crm-stat-label">Payment Terms</div><div class="crm-stat-value">${m.paymentTerms} days</div></div>
+      <div class="crm-stat"><div class="crm-stat-label">Availability</div><div class="crm-stat-value"><span class="status-badge badge-${m.availability}">${AVAIL_LABEL[m.availability]}</span>${m.availableFrom&&m.availability!=='available'?`<div style="font-size:11px;color:var(--muted);margin-top:4px">From ${formatDate(m.availableFrom)}</div>`:''}</div></div>
+      <div class="crm-stat"><div class="crm-stat-label">IR35 Status</div><div class="crm-stat-value"><span class="status-badge badge-${m.ir35}">${IR35_LABEL[m.ir35]}</span></div></div>
+    </div>
+    <div class="section-header"><div class="section-title">Skills</div></div>
+    <div class="card" style="margin-bottom:18px"><div class="skill-tags" style="justify-content:flex-start">${m.skills.length?m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join(''):'<span style="color:var(--muted);font-size:13px">No skills listed.</span>'}</div></div>
+    <div class="section-header"><div class="section-title">Active Projects</div></div>
+    <div class="card" style="margin-bottom:18px">${projects.length===0?`<div class="empty-state" style="padding:20px"><p>Not on any projects.</p></div>`:projects.map(p=>`<div class="contact-row" style="cursor:pointer" onclick="navigate('project-detail',${p.id})"><div style="width:10px;height:10px;border-radius:50%;background:${p.status==='active'?'var(--green)':p.status==='planning'?'var(--accent)':'var(--muted)'};flex-shrink:0"></div><div><div class="contact-name">${p.name}</div><div class="contact-detail">${p.client} · <span class="status-badge badge-${p.status}">${p.status}</span></div></div><div style="margin-left:auto;font-size:12px;font-weight:700;color:var(--muted)">${(p.teamAllocation&&p.teamAllocation[m.id])||0} days</div></div>`).join('')}</div>
+    ${m.notes?`<div class="section-header"><div class="section-title">Notes</div></div><div class="brief-content"><div class="brief-section-content">${m.notes}</div></div>`:''}`;
+}
+
+function renderMemberPayments(m) {
+  const allPaid=m.payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const pending=m.payments.filter(p=>p.status==='pending').reduce((s,p)=>s+p.amount,0);
+  const overdue=m.payments.filter(p=>p.status==='overdue').reduce((s,p)=>s+p.amount,0);
+  const sorted=[...m.payments].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+    <div class="payment-total-row">
+      <div class="payment-total"><div class="payment-total-label">Total Paid</div><div class="payment-total-value">£${allPaid.toLocaleString()}</div></div>
+      <div class="payment-total"><div class="payment-total-label">Pending</div><div class="payment-total-value pending-val">£${pending.toLocaleString()}</div></div>
+      <div class="payment-total"><div class="payment-total-label">Overdue</div><div class="payment-total-value overdue-val">£${overdue.toLocaleString()}</div></div>
+    </div>
+    <div class="section-header"><div class="section-title">Payment History</div><button class="btn btn-primary btn-sm" onclick="openAddPaymentModal()">+ Log Payment</button></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      ${sorted.length===0?`<div class="empty-state"><div class="empty-icon">£</div><p>No payments logged yet.</p></div>`:`<div class="table-wrap"><table class="table">
+        <thead><tr><th>Description</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+        <tbody>${sorted.map(p=>`<tr>
+          <td style="font-weight:600">${p.description}</td>
+          <td style="color:var(--muted)">${formatDate(p.date)}</td>
+          <td><span class="status-badge badge-${p.status}">${p.status}</span></td>
+          <td style="text-align:right;font-weight:700">£${p.amount.toLocaleString()}</td>
+          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="cyclePaymentStatus(${p.id})" title="Click to change status">↻</button> <button class="btn btn-ghost btn-sm" onclick="deletePayment(${p.id})">✕</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`}
+    </div>`;
+}
+
+function openAddPaymentModal() {
+  openModal(`
+    <div class="modal-title">Log Payment</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Description</label><input id="pay-desc" placeholder="e.g. Summer Pop-Up — 5 days"></div>
+      <div class="form-group"><label>Amount (£)</label><input id="pay-amount" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Status</label><select id="pay-status"><option value="pending">Pending</option><option value="paid">Paid</option><option value="overdue">Overdue</option></select></div>
+      <div class="form-group"><label>Date</label><input id="pay-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addPayment()">Log Payment</button></div>`);
+}
+function addPayment() {
+  const d=document.getElementById('pay-desc').value.trim();if(!d){toast('Description required');return;}
+  const m=currentMember;
+  m.payments.push({id:store.nextId.payments++,description:d,amount:parseFloat(document.getElementById('pay-amount').value)||0,date:document.getElementById('pay-date').value,status:document.getElementById('pay-status').value});
+  closeModal();save();toast('Payment logged');render();
+}
+function deletePayment(id){currentMember.payments=currentMember.payments.filter(p=>p.id!==id);save();toast('Removed');render();}
+function cyclePaymentStatus(id) {
+  const cycle=['pending','paid','overdue'];
+  const p=currentMember.payments.find(x=>x.id===id);
+  p.status=cycle[(cycle.indexOf(p.status)+1)%cycle.length];
+  save();toast('Status: '+p.status);render();
+}
+
+function openEditMemberCRMModal(id) {
+  const m=store.team.find(t=>t.id===id);
+  openModal(`
+    <div class="modal-title">Edit ${m.name}</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Full Name</label><input id="f-name" value="${m.name}"></div>
+      <div class="form-group"><label>Role</label><input id="f-role" value="${m.role}"></div>
+      <div class="form-group"><label>Email</label><input id="f-email" value="${m.email}"></div>
+      <div class="form-group"><label>Day Rate (£)</label><input id="f-rate" type="number" value="${m.rate}"></div>
+      <div class="form-group full"><label>Skills (comma separated)</label><input id="f-skills" value="${m.skills.join(', ')}"></div>
+      <div class="form-group"><label>Availability</label><select id="f-avail"><option value="available" ${m.availability==='available'?'selected':''}>Available</option><option value="busy" ${m.availability==='busy'?'selected':''}>Busy</option><option value="away" ${m.availability==='away'?'selected':''}>Away</option></select></div>
+      <div class="form-group"><label>Available From</label><input id="f-avfrom" type="date" value="${m.availableFrom||''}"></div>
+      <div class="form-group"><label>Contract Status</label><select id="f-contract"><option value="not-sent" ${m.contractStatus==='not-sent'?'selected':''}>Not Sent</option><option value="sent" ${m.contractStatus==='sent'?'selected':''}>Sent</option><option value="signed" ${m.contractStatus==='signed'?'selected':''}>Signed</option><option value="expired" ${m.contractStatus==='expired'?'selected':''}>Expired</option></select></div>
+      <div class="form-group"><label>IR35</label><select id="f-ir35"><option value="outside" ${m.ir35==='outside'?'selected':''}>Outside IR35</option><option value="inside" ${m.ir35==='inside'?'selected':''}>Inside IR35</option><option value="not-assessed" ${m.ir35==='not-assessed'?'selected':''}>Not Assessed</option></select></div>
+      <div class="form-group"><label>Payment Terms (days)</label><input id="f-terms" value="${m.paymentTerms||'30'}"></div>
+      <div class="form-group"></div>
+      <div class="form-group full"><label>Notes</label><textarea id="f-notes">${m.notes||''}</textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveMemberCRM(${id})">Save</button></div>`);
+}
+function saveMemberCRM(id) {
+  const m=store.team.find(t=>t.id===id);
+  m.name=document.getElementById('f-name').value.trim()||m.name;
+  m.role=document.getElementById('f-role').value;
+  m.email=document.getElementById('f-email').value;
+  m.rate=parseInt(document.getElementById('f-rate').value)||0;
+  m.skills=document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean);
+  m.availability=document.getElementById('f-avail').value;
+  m.availableFrom=document.getElementById('f-avfrom').value;
+  m.contractStatus=document.getElementById('f-contract').value;
+  m.ir35=document.getElementById('f-ir35').value;
+  m.paymentTerms=document.getElementById('f-terms').value;
+  m.notes=document.getElementById('f-notes').value;
+  currentMember=m;
+  closeModal();save();toast('Saved');render();
 }
 
 // ─── CONTACTS ─────────────────────────────────────────────────────────────────
@@ -920,9 +1134,7 @@ function openAddContactToProjectModal(){const p=currentProject,av=store.contacts
 function addContactToProject(){currentProject.contactIds.push(parseInt(document.getElementById('f-contact').value));closeModal();toast('Contact added');save();render();}
 function removeContact(id){currentProject.contactIds=currentProject.contactIds.filter(c=>c!==id);toast('Removed');save();render();}
 function openNewMemberModal(){openModal(`<div class="modal-title">Add Team Member</div><div class="form-grid"><div class="form-group"><label>Full Name</label><input id="f-name"></div><div class="form-group"><label>Role</label><input id="f-role" placeholder="e.g. Designer"></div><div class="form-group"><label>Email</label><input id="f-email" type="email"></div><div class="form-group"><label>Day Rate (£)</label><input id="f-rate" type="number" placeholder="0"></div><div class="form-group full"><label>Skills (comma separated)</label><input id="f-skills"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createMember()">Add Member</button></div>`);}
-function createMember(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Name required');return;}store.team.push({id:store.nextId.team++,name:n,role:document.getElementById('f-role').value||'Freelancer',email:document.getElementById('f-email').value,rate:parseInt(document.getElementById('f-rate').value)||0,skills:document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean)});closeModal();toast('Team member added');save();render();}
-function openEditMemberModal(id){const m=store.team.find(t=>t.id===id);openModal(`<div class="modal-title">Edit Team Member</div><div class="form-grid"><div class="form-group"><label>Full Name</label><input id="f-name" value="${m.name}"></div><div class="form-group"><label>Role</label><input id="f-role" value="${m.role}"></div><div class="form-group"><label>Email</label><input id="f-email" value="${m.email}"></div><div class="form-group"><label>Day Rate (£)</label><input id="f-rate" type="number" value="${m.rate}"></div><div class="form-group full"><label>Skills (comma separated)</label><input id="f-skills" value="${m.skills.join(', ')}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveMember(${id})">Save</button></div>`);}
-function saveMember(id){const m=store.team.find(t=>t.id===id);m.name=document.getElementById('f-name').value.trim()||m.name;m.role=document.getElementById('f-role').value;m.email=document.getElementById('f-email').value;m.rate=parseInt(document.getElementById('f-rate').value)||0;m.skills=document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean);closeModal();toast('Saved');save();render();}
+function createMember(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Name required');return;}store.team.push({id:store.nextId.team++,name:n,role:document.getElementById('f-role').value||'Freelancer',email:document.getElementById('f-email').value,rate:parseInt(document.getElementById('f-rate').value)||0,skills:document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean),availability:'available',availableFrom:'',contractStatus:'not-sent',ir35:'not-assessed',paymentTerms:'30',payments:[],notes:''});closeModal();toast('Team member added');save();render();}
 function deleteMember(id){store.team=store.team.filter(m=>m.id!==id);toast('Removed');save();render();}
 function openNewContactModal(){openModal(`<div class="modal-title">Add Contact</div><div class="form-grid"><div class="form-group"><label>Full Name</label><input id="f-name"></div><div class="form-group"><label>Company</label><input id="f-company"></div><div class="form-group"><label>Role</label><input id="f-role"></div><div class="form-group"><label>Email</label><input id="f-email" type="email"></div><div class="form-group"><label>Phone</label><input id="f-phone"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createContact()">Add Contact</button></div>`);}
 function createContact(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Name required');return;}store.contacts.push({id:store.nextId.contacts++,name:n,company:document.getElementById('f-company').value,role:document.getElementById('f-role').value,email:document.getElementById('f-email').value,phone:document.getElementById('f-phone').value});closeModal();toast('Contact added');save();render();}
