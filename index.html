@@ -338,6 +338,7 @@
     <div class="nav-label">Resources</div>
     <div class="nav-item" onclick="navigate('team')"><span class="icon">◎</span> Team</div>
     <div class="nav-item" onclick="navigate('contacts')"><span class="icon">◇</span> Contacts</div>
+    <div class="nav-item" onclick="navigate('global-suppliers')"><span class="icon">🏭</span> Suppliers</div>
   </div>
   <div class="sidebar-footer">
     <div class="user-chip"><div class="avatar">AD</div> Adam</div>
@@ -416,7 +417,18 @@ const defaultData = {
           {id:3,productionRole:'Client Contact',name:'Rachel Kim',phone:'+44 7700 900123',email:'rachel@novadrinks.com'},
         ],
         callSheetNotes:'Parking: Loading bay on Bethnal Green Rd, 6–10am only.\nAccess code: 4821\nNearest A&E: Royal London Hospital, Whitechapel Rd.'
-      }
+      },
+      tasks:[
+        {id:1,name:'Brief signed off',category:'Client',startDate:'',dueDate:'2026-07-01',status:'done',assignedTo:'Adam'},
+        {id:2,name:'Set design & concepts',category:'Creative',startDate:'2026-07-01',dueDate:'2026-07-08',status:'done',assignedTo:'Maya Chen'},
+        {id:3,name:'Supplier contracts confirmed',category:'Production',startDate:'',dueDate:'2026-07-10',status:'done',assignedTo:'Sofia Reyes'},
+        {id:4,name:'Set build',category:'Production',startDate:'2026-07-14',dueDate:'2026-07-14',status:'done',assignedTo:'Sofia Reyes'},
+        {id:5,name:'Live event days',category:'Production',startDate:'2026-07-15',dueDate:'2026-07-18',status:'done',assignedTo:'Sofia Reyes'},
+        {id:6,name:'Strike & venue handover',category:'Production',startDate:'',dueDate:'2026-07-19',status:'done',assignedTo:'Sofia Reyes'},
+        {id:7,name:'Final invoice issued',category:'Finance',startDate:'',dueDate:'2026-08-06',status:'not-started',assignedTo:'Adam'},
+        {id:8,name:'Post-event report to client',category:'Client',startDate:'',dueDate:'2026-08-10',status:'not-started',assignedTo:'Maya Chen'},
+      ],
+      assets:{driveFolder:'',files:[]}
     },
     { id:2, name:'Brand Identity — Studio Kern', client:'Studio Kern', status:'active', type:'Branding', startDate:'2026-07-01', endDate:'2026-09-01', budget:12000, spent:4200,
       brief:{overview:'Full brand identity for Studio Kern, a new architecture practice in East London.',objectives:'Deliver a complete visual identity system.',deliverables:'Logo suite, brand guidelines PDF, stationery templates.',timeline:'Discovery: July. Concepts: late July. Refinement: Aug. Delivery: 1 Sept.'},
@@ -424,17 +436,26 @@ const defaultData = {
       expenses:[{id:5,description:'Brand strategy workshop',amount:1500,category:'Strategy',date:'2026-07-05'},{id:6,description:'Design retainer — July',amount:2700,category:'Design',date:'2026-07-31'}],
       teamAllocation:{2:10,4:6},
       signoff:{brief:{completed:true,completedBy:'Adam',completedAt:'2026-07-02'},budget:{completed:true,completedBy:'Adam',completedAt:'2026-07-02'},timeline:{completed:true,completedBy:'James Okafor',completedAt:'2026-07-03'},team:{completed:true,completedBy:'Adam',completedAt:'2026-07-03'},fabricators:{completed:false,completedBy:'',completedAt:''},contracts:{completed:false,completedBy:'',completedAt:''},'fab-timeline':{completed:false,completedBy:'',completedAt:''},creative:{completed:false,completedBy:'',completedAt:''},'pre-prod':{completed:false,completedBy:'',completedAt:''},'prod-ready':{completed:false,completedBy:'',completedAt:''},delivered:{completed:false,completedBy:'',completedAt:''},invoice:{completed:false,completedBy:'',completedAt:''},closed:{completed:false,completedBy:'',completedAt:''}},
-      production: emptyProduction()
+      production: emptyProduction(),
+      tasks:[
+        {id:9,name:'Discovery workshop',category:'Creative',startDate:'2026-07-05',dueDate:'2026-07-10',status:'done',assignedTo:'Maya Chen'},
+        {id:10,name:'Initial concepts — 3 directions',category:'Creative',startDate:'2026-07-10',dueDate:'2026-07-24',status:'in-progress',assignedTo:'James Okafor'},
+        {id:11,name:'Client concept presentation',category:'Client',startDate:'',dueDate:'2026-07-28',status:'not-started',assignedTo:'Adam'},
+        {id:12,name:'Refinement round',category:'Creative',startDate:'2026-07-28',dueDate:'2026-08-15',status:'not-started',assignedTo:'James Okafor'},
+        {id:13,name:'Final brand guidelines & stationery',category:'Creative',startDate:'2026-08-15',dueDate:'2026-08-28',status:'not-started',assignedTo:'Tom Wright'},
+        {id:14,name:'Client delivery & sign-off',category:'Client',startDate:'',dueDate:'2026-09-01',status:'not-started',assignedTo:'Adam'},
+      ],
+      assets:{driveFolder:'',files:[]}
     },
     { id:3, name:'Felt Zine — Issue 01', client:'FELT Internal', status:'planning', type:'Creative Project', startDate:'2026-08-01', endDate:'2026-10-15', budget:5000, spent:0,
       brief:{overview:'FELT\'s first self-published zine exploring creative culture.',objectives:'Establish FELT as a creative voice. 500 print run.',deliverables:'Editorial direction, design, print production.',timeline:'Editorial: August. Design: September. Print: October.'},
       teamIds:[1,4], contactIds:[], expenses:[], teamAllocation:{1:4,4:8},
-      signoff: emptySignoff(), production: emptyProduction()
+      signoff: emptySignoff(), production: emptyProduction(), tasks:[], assets:{driveFolder:'',files:[]}
     },
     { id:4, name:'Christmas Activation — Harrods', client:'Harrods / TBC', status:'pitched', type:'Brand Activation', startDate:'2026-11-20', endDate:'2026-12-24', budget:65000, spent:0,
       brief:{overview:'Pitch for a large-scale Christmas brand activation within Harrods.',objectives:'Win the pitch.',deliverables:'Pitch deck, concept visuals, production budget.',timeline:'Pitch: 15 Aug. Decision: Sept.'},
       teamIds:[1,2,3,4], contactIds:[4], expenses:[], teamAllocation:{},
-      signoff: emptySignoff(), production: emptyProduction()
+      signoff: emptySignoff(), production: emptyProduction(), tasks:[], assets:{driveFolder:'',files:[]}
     }
   ],
   leads:[
@@ -463,7 +484,12 @@ const defaultData = {
   contractTemplates:[
     {id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, outside IR35'}
   ],
-  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:4,suppliers:4,equipment:4,payments:8,keyContacts:4,contracts:7,templates:2}
+  globalSuppliers:[
+    {id:1,company:'Forma Build',category:'Fabrication',contactName:'Dan Clarke',contactEmail:'dan@formabuild.co.uk',contactPhone:'07700 111222',website:'',notes:'Reliable for set builds. 3-week lead time recommended.'},
+    {id:2,company:'Luminos AV',category:'AV / Tech',contactName:'Sarah Yip',contactEmail:'sarah@luminosav.com',contactPhone:'07700 333444',website:'',notes:'Great for LED walls and speaker rigs.'},
+    {id:3,company:'Street Eats Co.',category:'Catering',contactName:'Mo Hassan',contactEmail:'mo@streeteatesco.com',contactPhone:'07700 555666',website:'',notes:'Staff catering specialists. Min. 48hrs notice.'},
+  ],
+  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:4,suppliers:4,equipment:4,payments:8,keyContacts:4,contracts:7,templates:2,tasks:15,assets:1,globalSuppliers:4}
 };
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
@@ -476,13 +502,19 @@ const store = loadStore();
 if (!store.nextId.keyContacts) store.nextId.keyContacts = 10;
 if (!store.nextId.contracts) store.nextId.contracts = 10;
 if (!store.nextId.templates) store.nextId.templates = 5;
+if (!store.nextId.tasks) store.nextId.tasks = 20;
+if (!store.nextId.assets) store.nextId.assets = 5;
+if (!store.nextId.globalSuppliers) store.nextId.globalSuppliers = 10;
 if (!store.contractTemplates) store.contractTemplates = [{id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, outside IR35'}];
+if (!store.globalSuppliers) store.globalSuppliers = [];
 
 // Migration: ensure all projects have signoff + production
 store.projects.forEach(p => {
   if (!p.signoff) p.signoff = emptySignoff();
   if (!p.production) p.production = emptyProduction();
   if (!p.production.keyContacts) p.production.keyContacts = [];
+  if (!p.tasks) p.tasks = [];
+  if (!p.assets) p.assets = {driveFolder:'', files:[]};
 });
 // Migration: ensure all team members have CRM fields
 store.team.forEach(m => {
@@ -508,7 +540,7 @@ function navigate(view, projectId, memberId) {
   if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={dashboard:0,projects:1,leads:2,calendar:3,ideas:4,team:5,contacts:6};
+  const navMap={dashboard:0,projects:1,leads:2,calendar:3,ideas:4,team:5,contacts:6,'global-suppliers':7};
   const bnMap={dashboard:0,projects:1,leads:2,calendar:3,ideas:4,team:5};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
   document.querySelectorAll('.bottom-nav-item')[bnMap[view]]?.classList.add('active');
@@ -527,6 +559,7 @@ function render() {
   else if(currentView==='team') m.innerHTML=renderTeam();
   else if(currentView==='team-profile') m.innerHTML=renderTeamProfile();
   else if(currentView==='contacts') m.innerHTML=renderContacts();
+  else if(currentView==='global-suppliers') m.innerHTML=renderGlobalSuppliers();
   // Bind callsheet autosave after render
   if(currentTab==='production') {
     const ta=document.getElementById('callsheet-notes');
@@ -598,15 +631,19 @@ function renderProjectDetail() {
     <div class="content">
       <div class="tabs">
         <div class="tab ${currentTab==='brief'?'active':''}" onclick="switchTab('brief')">Brief</div>
+        <div class="tab ${currentTab==='timeline'?'active':''}" onclick="switchTab('timeline')">Timeline</div>
         <div class="tab ${currentTab==='signoff'?'active':''}" onclick="switchTab('signoff')">Sign-Off</div>
         <div class="tab ${currentTab==='production'?'active':''}" onclick="switchTab('production')">Production</div>
+        <div class="tab ${currentTab==='assets'?'active':''}" onclick="switchTab('assets')">Assets</div>
         <div class="tab ${currentTab==='team'?'active':''}" onclick="switchTab('team')">Team</div>
         <div class="tab ${currentTab==='budget'?'active':''}" onclick="switchTab('budget')">Budget</div>
         <div class="tab ${currentTab==='contacts'?'active':''}" onclick="switchTab('contacts')">Contacts</div>
       </div>
       ${currentTab==='brief'?renderBriefTab(p):''}
+      ${currentTab==='timeline'?renderTimelineTab(p):''}
       ${currentTab==='signoff'?renderSignoffTab(p):''}
       ${currentTab==='production'?renderProductionTab(p):''}
+      ${currentTab==='assets'?renderAssetsTab(p):''}
       ${currentTab==='team'?renderTeamTab(p):''}
       ${currentTab==='budget'?renderBudgetTab(p):''}
       ${currentTab==='contacts'?renderContactsTab(p):''}
@@ -804,18 +841,32 @@ function addShootDay() {
 function removeShootDay(id){const p=currentProject;p.production.shootDays=p.production.shootDays.filter(d=>d.id!==id);save();toast('Removed');render();}
 
 function openAddSupplierModal() {
+  const globalOpts = store.globalSuppliers.map(s=>`<option value="${s.id}">${s.company} — ${s.category}</option>`).join('');
   openModal(`
     <div class="modal-title">Add Supplier / Contractor</div>
     <div class="form-grid">
+      ${globalOpts?`<div class="form-group full"><label>Pull from supplier database</label><select id="sup-pull" onchange="prefillSupplier(this.value)"><option value="">— Add manually below —</option>${globalOpts}</select></div>`:''}
       <div class="form-group"><label>Company</label><input id="sup-company" placeholder="Company name"></div>
       <div class="form-group"><label>Contact Name</label><input id="sup-contact"></div>
-      <div class="form-group"><label>Category</label><select id="sup-cat"><option>Fabrication</option><option>AV / Tech</option><option>Catering</option><option>Staffing</option><option>Photography / Video</option><option>Transport</option><option>Print</option><option>Venue</option><option>Other</option></select></div>
+      <div class="form-group"><label>Category</label><select id="sup-cat">${SUPPLIER_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="form-group"><label>Status</label><select id="sup-status"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></div>
       <div class="form-group"><label>Cost (£)</label><input id="sup-cost" type="number" placeholder="0"></div>
       <div class="form-group"></div>
       <div class="form-group full"><label>Notes</label><textarea id="sup-notes" placeholder="Contract status, key dates, anything important..."></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addSupplier()">Add Supplier</button></div>`);
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addSupplier()">Add to Project</button>
+    </div>`);
+}
+function prefillSupplier(id) {
+  if(!id) return;
+  const s=store.globalSuppliers.find(x=>x.id===parseInt(id)); if(!s) return;
+  document.getElementById('sup-company').value=s.company||'';
+  document.getElementById('sup-contact').value=s.contactName||'';
+  const catSel=document.getElementById('sup-cat');
+  [...catSel.options].forEach(o=>{if(o.value===s.category)o.selected=true;});
+  document.getElementById('sup-notes').value=s.notes||'';
 }
 function addSupplier() {
   const c=document.getElementById('sup-company').value.trim();if(!c){toast('Company name required');return;}
@@ -980,6 +1031,7 @@ function renderCalendar() {
     if(p.startDate){const d=new Date(p.startDate+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:p.name,sublabel:'Project kicks off',icon:'▦',color:dc[p.status]||'var(--muted)',projectId:p.id});}
     if(p.endDate){const d=new Date(p.endDate+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:p.name,sublabel:'Deadline',icon:'⚑',color:'var(--red)',projectId:p.id});}
     if(p.production&&p.production.shootDays){p.production.shootDays.forEach(sd=>{const d=new Date(sd.date+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:sd.location||p.name,sublabel:p.name+(sd.callTime?' · Call '+sd.callTime:''),icon:'◉',color:'var(--orange)',projectId:p.id});});}
+    if(p.tasks){p.tasks.forEach(t=>{if(!t.dueDate||t.status==='done')return;const d=new Date(t.dueDate+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:t.name,sublabel:p.name+' · '+t.category+(t.assignedTo?' · '+t.assignedTo:''),icon:'◆',color:t.status==='in-progress'?'var(--blue)':t.status==='blocked'?'var(--red)':'var(--muted)',projectId:p.id});});}
   });
   docket.sort((a,b)=>a.date-b.date);
   const docketHtml = docket.length===0
@@ -1351,6 +1403,207 @@ function saveMemberCRM(id) {
   closeModal();save();toast('Saved');render();
 }
 
+// ─── TIMELINE TAB ─────────────────────────────────────────────────────────────
+const TASK_CATS = ['Creative','Production','Client','Finance','Admin','Other'];
+const TASK_STATUS = {'not-started':'Not Started','in-progress':'In Progress','done':'Done','blocked':'Blocked'};
+const TASK_COLORS = {'done':'var(--green)','in-progress':'var(--blue)','blocked':'var(--red)','not-started':'#C8C4BE'};
+
+function renderTimelineStrip(p) {
+  if (!p.startDate || !p.endDate) return `<div class="card" style="margin-bottom:18px;text-align:center;color:var(--muted);font-size:13px;padding:14px">Set project start and end dates to see the visual timeline.</div>`;
+  const start=new Date(p.startDate+'T00:00:00'), end=new Date(p.endDate+'T00:00:00'), total=end-start;
+  if(total<=0) return '';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayPct=Math.max(0,Math.min(100,(today-start)/total*100));
+  const tasksWithDates=(p.tasks||[]).filter(t=>t.dueDate);
+  const markers=tasksWithDates.map(t=>{
+    const due=new Date(t.dueDate+'T00:00:00');
+    const pct=Math.max(1,Math.min(99,(due-start)/total*100));
+    const color=TASK_COLORS[t.status]||'#ccc';
+    if(t.startDate){
+      const sd=new Date(t.startDate+'T00:00:00');
+      const sPct=Math.max(0,Math.min(99,(sd-start)/total*100));
+      const w=Math.max(1,pct-sPct);
+      return `<div title="${t.name}" style="position:absolute;left:${sPct}%;width:${w}%;top:50%;height:8px;transform:translateY(-50%);background:${color};border-radius:4px;opacity:0.85"></div>`;
+    }
+    return `<div title="${t.name} — due ${formatDate(t.dueDate)}" style="position:absolute;left:${pct}%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:${color};border:2px solid #fff;z-index:2"></div>`;
+  }).join('');
+  return `
+    <div class="card" style="margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:8px">
+        <span>${formatDate(p.startDate)}</span>
+        <span style="font-weight:700;color:var(--navy)">▲ Today</span>
+        <span>${formatDate(p.endDate)}</span>
+      </div>
+      <div style="position:relative;height:28px;background:var(--border);border-radius:6px;overflow:visible">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:${Math.min(100,todayPct)}%;background:var(--accent-light);border-radius:6px"></div>
+        <div style="position:absolute;left:${todayPct}%;top:-6px;bottom:-6px;width:2px;background:var(--accent);z-index:3"></div>
+        ${markers}
+      </div>
+      <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+        ${Object.entries(TASK_COLORS).map(([k,v])=>`<span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${v};display:inline-block"></span>${TASK_STATUS[k]}</span>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderTimelineTab(p) {
+  const tasks=p.tasks||[];
+  const done=tasks.filter(t=>t.status==='done').length;
+  const sorted=[...tasks].sort((a,b)=>(a.dueDate||'9').localeCompare(b.dueDate||'9'));
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  return `
+    <div class="section-header"><div class="section-title">Timeline</div><button class="btn btn-primary btn-sm" onclick="openAddTaskModal()">+ Add Task</button></div>
+    ${renderTimelineStrip(p)}
+    ${tasks.length>0?`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">${done} of ${tasks.length} tasks complete</div>`:''}
+    <div class="card" style="padding:0;overflow:hidden">
+      ${sorted.length===0?`<div class="empty-state"><div class="empty-icon">◆</div><p>No tasks yet. Add milestones and deadlines to build the timeline.</p></div>`:`<div class="table-wrap"><table class="table">
+        <thead><tr><th>Task</th><th>Category</th><th>Due Date</th><th>Assigned</th><th>Status</th><th></th></tr></thead>
+        <tbody>${sorted.map(t=>{
+          const due=t.dueDate?new Date(t.dueDate+'T00:00:00'):null;
+          const overdue=due&&due<today&&t.status!=='done';
+          return `<tr style="${overdue?'background:var(--red-light)':''}">
+            <td style="font-weight:${t.status==='done'?'400':'700'};${t.status==='done'?'text-decoration:line-through;color:var(--muted)':''}">
+              ${t.name}
+              ${t.startDate?`<div style="font-size:11px;color:var(--muted);font-weight:400;text-decoration:none">From ${formatDate(t.startDate)}</div>`:''}
+            </td>
+            <td><span class="status-badge badge-planning">${t.category}</span></td>
+            <td style="${overdue?'color:var(--red);font-weight:700':'color:var(--muted)'}">
+              ${t.dueDate?formatDate(t.dueDate):'—'}
+              ${overdue?'<div style="font-size:10px">OVERDUE</div>':''}
+            </td>
+            <td style="color:var(--muted);font-size:12px">${t.assignedTo||'—'}</td>
+            <td><span class="status-badge badge-${t.status==='done'?'won':t.status==='in-progress'?'in-conversation':t.status==='blocked'?'lost':'not-contacted'}">${TASK_STATUS[t.status]||t.status}</span></td>
+            <td style="text-align:right;white-space:nowrap">
+              <button class="btn btn-ghost btn-sm" onclick="cycleTaskStatus(${t.id})" title="Change status">↻</button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteTask(${t.id})">✕</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>`}
+    </div>`;
+}
+
+function openAddTaskModal() {
+  const p=currentProject;
+  const memberOpts=[...store.team.filter(m=>p.teamIds.includes(m.id)).map(m=>`<option>${m.name}</option>`), '<option>Adam</option>'].join('');
+  openModal(`
+    <div class="modal-title">Add Task / Milestone</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Task Name</label><input id="t-name" placeholder="e.g. Creative concepts presented to client"></div>
+      <div class="form-group"><label>Category</label><select id="t-cat">${TASK_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Status</label><select id="t-status"><option value="not-started">Not Started</option><option value="in-progress">In Progress</option><option value="done">Done</option><option value="blocked">Blocked</option></select></div>
+      <div class="form-group"><label>Start Date (optional)</label><input id="t-start" type="date"></div>
+      <div class="form-group"><label>Due Date</label><input id="t-due" type="date"></div>
+      <div class="form-group full"><label>Assigned To</label><select id="t-assign"><option value="">— Unassigned —</option>${memberOpts}</select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTask()">Add Task</button></div>`);
+}
+function addTask() {
+  const n=document.getElementById('t-name').value.trim(); if(!n){toast('Task name required');return;}
+  const p=currentProject;
+  p.tasks.push({id:store.nextId.tasks++,name:n,category:document.getElementById('t-cat').value,status:document.getElementById('t-status').value,startDate:document.getElementById('t-start').value,dueDate:document.getElementById('t-due').value,assignedTo:document.getElementById('t-assign').value});
+  closeModal();save();toast('Task added');render();
+}
+function deleteTask(id){currentProject.tasks=currentProject.tasks.filter(t=>t.id!==id);save();toast('Removed');render();}
+function cycleTaskStatus(id){
+  const cycle=['not-started','in-progress','done','blocked'];
+  const t=currentProject.tasks.find(x=>x.id===id);
+  t.status=cycle[(cycle.indexOf(t.status)+1)%cycle.length];
+  save();toast('Status: '+TASK_STATUS[t.status]);render();
+}
+
+// ─── ASSETS TAB ───────────────────────────────────────────────────────────────
+const ASSET_TYPES=['Document','Deck / Presentation','Moodboard','Brand Guidelines','Image / Photo','Video','Spreadsheet','Other'];
+
+function renderAssetsTab(p) {
+  const assets=p.assets||{driveFolder:'',files:[]};
+  return `
+    <div class="section-header"><div class="section-title">Assets</div></div>
+    <div class="crm-stat" style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div>
+        <div class="crm-stat-label">Google Drive Folder</div>
+        ${assets.driveFolder
+          ? `<a href="${assets.driveFolder}" target="_blank" style="color:var(--blue);font-weight:700;font-size:14px">Open project assets folder ↗</a>`
+          : `<div style="font-size:13px;color:var(--muted)">Link a Drive folder to store files, images and deliverables.</div>`}
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditAssetsFolderModal()">${assets.driveFolder?'Change':'Set Folder'}</button>
+    </div>
+    <div class="section-header"><div class="section-title">Linked Assets</div><button class="btn btn-primary btn-sm" onclick="openAddAssetModal()">+ Link Asset</button></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      ${assets.files.length===0?`<div class="empty-state"><div class="empty-icon">📎</div><p>No assets linked yet. Add links to key files — decks, moodboards, guidelines.</p></div>`:`<div class="table-wrap"><table class="table">
+        <thead><tr><th>Name</th><th>Type</th><th>Added</th><th></th></tr></thead>
+        <tbody>${assets.files.map(f=>`<tr>
+          <td style="font-weight:700"><a href="${f.url}" target="_blank" style="color:var(--blue);text-decoration:none">${f.name} ↗</a></td>
+          <td><span class="status-badge badge-pitched">${f.type}</span></td>
+          <td style="color:var(--muted)">${formatDate(f.addedDate)}</td>
+          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="deleteAsset(${f.id})">✕</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`}
+    </div>`;
+}
+function openEditAssetsFolderModal() {
+  const a=currentProject.assets||{};
+  openModal(`
+    <div class="modal-title">Project Assets Folder</div>
+    <div class="form-group full"><label>Google Drive folder link</label><input id="af-url" value="${a.driveFolder||''}" placeholder="https://drive.google.com/drive/folders/..."></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px">Right-click a Drive folder → Share → Copy link</div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAssetsFolder()">Save</button></div>`);
+}
+function saveAssetsFolder(){if(!currentProject.assets)currentProject.assets={driveFolder:'',files:[]};currentProject.assets.driveFolder=document.getElementById('af-url').value.trim();closeModal();save();toast('Folder saved');render();}
+function openAddAssetModal(){
+  openModal(`
+    <div class="modal-title">Link Asset</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Asset Name</label><input id="a-name" placeholder="e.g. Creative Brief v2"></div>
+      <div class="form-group"><label>Type</label><select id="a-type">${ASSET_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <div class="form-group full"><label>Link (Google Doc, Dropbox, etc.)</label><input id="a-url" placeholder="https://..."></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addAsset()">Link Asset</button></div>`);
+}
+function addAsset(){const n=document.getElementById('a-name').value.trim();if(!n){toast('Name required');return;}if(!currentProject.assets)currentProject.assets={driveFolder:'',files:[]};currentProject.assets.files.push({id:store.nextId.assets++,name:n,type:document.getElementById('a-type').value,url:document.getElementById('a-url').value.trim(),addedDate:new Date().toISOString().split('T')[0]});closeModal();save();toast('Asset linked');render();}
+function deleteAsset(id){currentProject.assets.files=currentProject.assets.files.filter(f=>f.id!==id);save();toast('Removed');render();}
+
+// ─── GLOBAL SUPPLIERS ─────────────────────────────────────────────────────────
+const SUPPLIER_CATS=['Fabrication','AV / Tech','Catering','Staffing','Photography / Video','Transport','Print','Venue','Other'];
+
+function renderGlobalSuppliers() {
+  return `
+    <div class="topbar"><div><div class="page-title">Suppliers & Contractors</div><div class="page-sub">${store.globalSuppliers.length} in database</div></div><button class="btn btn-primary" onclick="openAddGlobalSupplierModal()">+ Add</button></div>
+    <div class="content">
+      <div class="card" style="padding:0;overflow:hidden">
+        ${store.globalSuppliers.length===0?`<div class="empty-state"><div class="empty-icon">🏭</div><p>No suppliers yet. Add fabricators, AV companies, caterers and more.</p></div>`:`<div class="table-wrap"><table class="table">
+          <thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Phone</th><th>Email</th><th></th></tr></thead>
+          <tbody>${store.globalSuppliers.map(s=>`<tr>
+            <td><div style="font-weight:700">${s.company}</div>${s.notes?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${s.notes}</div>`:''}</td>
+            <td><span class="status-badge badge-planning">${s.category}</span></td>
+            <td style="color:var(--muted)">${s.contactName||'—'}</td>
+            <td><a href="tel:${s.contactPhone}" style="color:var(--blue);text-decoration:none">${s.contactPhone||'—'}</a></td>
+            <td><a href="mailto:${s.contactEmail}" style="color:var(--blue);text-decoration:none">${s.contactEmail||'—'}</a></td>
+            <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="openEditGlobalSupplierModal(${s.id})">Edit</button> <button class="btn btn-ghost btn-sm" onclick="deleteGlobalSupplier(${s.id})">✕</button></td>
+          </tr>`).join('')}</tbody>
+        </table></div>`}
+      </div>
+    </div>`;
+}
+function openAddGlobalSupplierModal(prefill){
+  const s=prefill||{};
+  openModal(`
+    <div class="modal-title">${prefill?'Edit':'Add'} Supplier</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Company</label><input id="gs-company" value="${s.company||''}" placeholder="Company name"></div>
+      <div class="form-group"><label>Category</label><select id="gs-cat">${SUPPLIER_CATS.map(c=>`<option ${s.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Contact Name</label><input id="gs-contact" value="${s.contactName||''}"></div>
+      <div class="form-group"><label>Phone</label><input id="gs-phone" value="${s.contactPhone||''}"></div>
+      <div class="form-group full"><label>Email</label><input id="gs-email" value="${s.contactEmail||''}"></div>
+      <div class="form-group full"><label>Notes</label><textarea id="gs-notes">${s.notes||''}</textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="${prefill?`saveGlobalSupplier(${s.id})`:'addGlobalSupplier()'}">Save</button></div>`);
+}
+function addGlobalSupplier(){const c=document.getElementById('gs-company').value.trim();if(!c){toast('Company required');return;}store.globalSuppliers.push({id:store.nextId.globalSuppliers++,company:c,category:document.getElementById('gs-cat').value,contactName:document.getElementById('gs-contact').value,contactPhone:document.getElementById('gs-phone').value,contactEmail:document.getElementById('gs-email').value,notes:document.getElementById('gs-notes').value});closeModal();save();toast('Supplier added');render();}
+function openEditGlobalSupplierModal(id){openAddGlobalSupplierModal(store.globalSuppliers.find(s=>s.id===id));}
+function saveGlobalSupplier(id){const s=store.globalSuppliers.find(x=>x.id===id);s.company=document.getElementById('gs-company').value.trim()||s.company;s.category=document.getElementById('gs-cat').value;s.contactName=document.getElementById('gs-contact').value;s.contactPhone=document.getElementById('gs-phone').value;s.contactEmail=document.getElementById('gs-email').value;s.notes=document.getElementById('gs-notes').value;closeModal();save();toast('Saved');render();}
+function deleteGlobalSupplier(id){store.globalSuppliers=store.globalSuppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
+
 // ─── CONTACTS ─────────────────────────────────────────────────────────────────
 function renderContacts() {
   return `
@@ -1375,7 +1628,7 @@ function saveLead(id){const l=store.leads.find(x=>x.id===id);l.company=document.
 function deleteLead(id){store.leads=store.leads.filter(l=>l.id!==id);toast('Lead removed');save();render();}
 
 function openNewProjectModal(){openModal(`<div class="modal-title">New Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" placeholder="e.g. Summer Pop-Up"></div><div class="form-group"><label>Client</label><input id="f-client"></div><div class="form-group"><label>Type</label><select id="f-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Creative Project</option><option>Event</option><option>Other</option></select></div><div class="form-group"><label>Status</label><select id="f-status"><option value="planning">Planning</option><option value="active">Active</option><option value="pitched">Pitched</option><option value="completed">Completed</option></select></div><div class="form-group"><label>Budget (£)</label><input id="f-budget" type="number" placeholder="0"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create Project</button></div>`);}
-function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}store.projects.push({id:store.nextId.projects++,name:n,client:document.getElementById('f-client').value||'—',type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff(),production:emptyProduction()});closeModal();toast('Project created');save();render();}
+function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}store.projects.push({id:store.nextId.projects++,name:n,client:document.getElementById('f-client').value||'—',type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff(),production:emptyProduction(),tasks:[],assets:{driveFolder:'',files:[]}});closeModal();toast('Project created');save();render();}
 function openEditProjectModal(){const p=currentProject;openModal(`<div class="modal-title">Edit Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" value="${p.name}"></div><div class="form-group"><label>Client</label><input id="f-client" value="${p.client}"></div><div class="form-group"><label>Type</label><select id="f-type">${['Brand Activation','Pop-Up','Branding','Creative Project','Event','Other'].map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Status</label><select id="f-status">${['planning','active','pitched','completed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="form-group"><label>Budget (£)</label><input id="f-budget" type="number" value="${p.budget}"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date" value="${p.startDate}"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date" value="${p.endDate}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Save</button></div>`);}
 function saveProject(){const p=currentProject;p.name=document.getElementById('f-name').value.trim()||p.name;p.client=document.getElementById('f-client').value;p.type=document.getElementById('f-type').value;p.status=document.getElementById('f-status').value;p.budget=parseInt(document.getElementById('f-budget').value)||0;p.startDate=document.getElementById('f-start').value;p.endDate=document.getElementById('f-end').value;closeModal();toast('Project saved');save();render();}
 function openEditBriefModal(){const p=currentProject;openModal(`<div class="modal-title">Edit Brief</div><div class="form-grid"><div class="form-group full"><label>Overview</label><textarea id="b-overview">${p.brief.overview}</textarea></div><div class="form-group full"><label>Objectives</label><textarea id="b-objectives">${p.brief.objectives}</textarea></div><div class="form-group full"><label>Deliverables</label><textarea id="b-deliverables">${p.brief.deliverables}</textarea></div><div class="form-group full"><label>Timeline Notes</label><textarea id="b-timeline">${p.brief.timeline}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBrief()">Save Brief</button></div>`);}
