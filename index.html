@@ -382,7 +382,7 @@ function emptySignoff() {
 }
 
 function emptyProduction() {
-  return { shootDays: [], suppliers: [], equipment: [], callSheetNotes: '' };
+  return { shootDays: [], suppliers: [], equipment: [], keyContacts: [], callSheetNotes: '' };
 }
 
 // ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
@@ -398,6 +398,7 @@ const defaultData = {
         shootDays:[
           {id:1,date:'2026-07-14',location:'Boxpark Shoreditch — Unit 12',callTime:'07:00',wrapTime:'22:00',notes:'Set build day. Crew of 8. Delivery window 7–9am.'},
           {id:2,date:'2026-07-15',location:'Boxpark Shoreditch — Unit 12',callTime:'08:00',wrapTime:'22:00',notes:'Day 1 live. Content creator on site from 10am.'},
+          {id:3,date:'2026-08-06',location:'Boxpark Shoreditch — Unit 12',callTime:'08:00',wrapTime:'21:00',notes:'Final live day + strike begins. All crew required.'},
         ],
         suppliers:[
           {id:1,company:'Forma Build',contact:'Dan Clarke',category:'Fabrication',status:'confirmed',cost:3800,notes:'Set build + strike. Contract signed.'},
@@ -409,7 +410,12 @@ const defaultData = {
           {id:2,item:'Branded Signage',qty:1,supplier:'Forma Build',status:'confirmed'},
           {id:3,item:'POS Terminals',qty:2,supplier:'Internal',status:'needed'},
         ],
-        callSheetNotes:'Emergency contact: Sofia Reyes — 07700 123456\nVenue manager: Jake (Boxpark) — 07700 654321\nParking: Loading bay on Bethnal Green Rd, 6–10am only.'
+        keyContacts:[
+          {id:1,productionRole:'Production Lead',name:'Sofia Reyes',phone:'07700 123456',email:'sofia@freelance.com'},
+          {id:2,productionRole:'Venue Manager',name:'Jake Whitfield',phone:'07700 654321',email:'jake@boxpark.co.uk'},
+          {id:3,productionRole:'Client Contact',name:'Rachel Kim',phone:'+44 7700 900123',email:'rachel@novadrinks.com'},
+        ],
+        callSheetNotes:'Parking: Loading bay on Bethnal Green Rd, 6–10am only.\nAccess code: 4821\nNearest A&E: Royal London Hospital, Whitechapel Rd.'
       }
     },
     { id:2, name:'Brand Identity — Studio Kern', client:'Studio Kern', status:'active', type:'Branding', startDate:'2026-07-01', endDate:'2026-09-01', budget:12000, spent:4200,
@@ -454,7 +460,7 @@ const defaultData = {
     {id:2,title:'Artist Residency Pop-Up',category:'Space',description:'A rotating artist residency inside a retail space — each month a different artist takes over.',submittedBy:'Tom Wright',date:'2026-07-28'},
     {id:3,title:'FELT Annual Report (as Zine)',category:'Print',description:'Instead of a boring PDF, FELT publishes an annual report as a beautiful printed zine.',submittedBy:'James Okafor',date:'2026-08-01'}
   ],
-  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:3,suppliers:4,equipment:4,payments:8}
+  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:4,suppliers:4,equipment:4,payments:8,keyContacts:4}
 };
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
@@ -463,10 +469,14 @@ function loadStore() { try { const s=localStorage.getItem(STORAGE_KEY); if(s) re
 function save() { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(store)); } catch(e){} }
 const store = loadStore();
 
+// Ensure nextId has keyContacts
+if (!store.nextId.keyContacts) store.nextId.keyContacts = 10;
+
 // Migration: ensure all projects have signoff + production
 store.projects.forEach(p => {
   if (!p.signoff) p.signoff = emptySignoff();
   if (!p.production) p.production = emptyProduction();
+  if (!p.production.keyContacts) p.production.keyContacts = [];
 });
 // Migration: ensure all team members have CRM fields
 store.team.forEach(m => {
@@ -739,6 +749,23 @@ function renderProductionTab(p) {
       ${equipHtml}
     </div>
 
+    <!-- KEY CONTACTS -->
+    <div class="prod-section">
+      <div class="section-header"><div class="section-title">Key Contacts</div><button class="btn btn-primary btn-sm" onclick="openAddKeyContactModal()">+ Add</button></div>
+      ${prod.keyContacts.length===0
+        ? `<div class="empty-state"><div class="empty-icon">📞</div><p>No key contacts added. Pull from Team, Contacts, or add manually.</p></div>`
+        : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
+            <thead><tr><th>Production Role</th><th>Name</th><th>Phone</th><th>Email</th><th></th></tr></thead>
+            <tbody>${prod.keyContacts.map(kc=>`<tr>
+              <td><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">${kc.productionRole}</span></td>
+              <td style="font-weight:700">${kc.name}</td>
+              <td><a href="tel:${kc.phone}" style="color:var(--blue);text-decoration:none">${kc.phone||'—'}</a></td>
+              <td><a href="mailto:${kc.email}" style="color:var(--blue);text-decoration:none">${kc.email||'—'}</a></td>
+              <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeKeyContact(${kc.id})">✕</button></td>
+            </tr>`).join('')}</tbody>
+          </table></div></div>`}
+    </div>
+
     <!-- CALL SHEET NOTES -->
     <div class="prod-section">
       <div class="section-header"><div class="section-title">Call Sheet Notes</div></div>
@@ -810,6 +837,63 @@ function addEquipment() {
 }
 function removeEquipment(id){const p=currentProject;p.production.equipment=p.production.equipment.filter(e=>e.id!==id);save();toast('Removed');render();}
 
+function openAddKeyContactModal() {
+  const teamOpts = store.team.map(m=>`<option value="team:${m.id}">${m.name} — ${m.role}</option>`).join('');
+  const contactOpts = store.contacts.map(c=>`<option value="contact:${c.id}">${c.name} — ${c.company}</option>`).join('');
+  openModal(`
+    <div class="modal-title">Add Key Contact</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Production Role</label><input id="kc-role" placeholder="e.g. Emergency Contact, Venue Manager, Client Contact"></div>
+      <div class="form-group full">
+        <label>Pull from existing</label>
+        <select id="kc-source" onchange="prefillKeyContact(this.value)">
+          <option value="">— Add manually below —</option>
+          <optgroup label="Team">${teamOpts}</optgroup>
+          <optgroup label="Contacts">${contactOpts}</optgroup>
+        </select>
+      </div>
+      <div class="form-group"><label>Name</label><input id="kc-name" placeholder="Full name"></div>
+      <div class="form-group"><label>Phone</label><input id="kc-phone" placeholder="07700 000000"></div>
+      <div class="form-group full"><label>Email</label><input id="kc-email" placeholder="email@example.com"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addKeyContact()">Add Contact</button></div>`);
+}
+function prefillKeyContact(val) {
+  if (!val) return;
+  const [type, id] = val.split(':');
+  const numId = parseInt(id);
+  let record;
+  if (type === 'team') record = store.team.find(m=>m.id===numId);
+  else record = store.contacts.find(c=>c.id===numId);
+  if (!record) return;
+  document.getElementById('kc-name').value = record.name || '';
+  document.getElementById('kc-phone').value = record.phone || '';
+  document.getElementById('kc-email').value = record.email || '';
+  if (!document.getElementById('kc-role').value) {
+    document.getElementById('kc-role').value = record.role || '';
+  }
+}
+function addKeyContact() {
+  const role = document.getElementById('kc-role').value.trim();
+  const name = document.getElementById('kc-name').value.trim();
+  if (!role || !name) { toast('Role and name required'); return; }
+  const p = currentProject;
+  if (!p.production.keyContacts) p.production.keyContacts = [];
+  p.production.keyContacts.push({
+    id: store.nextId.keyContacts++,
+    productionRole: role,
+    name,
+    phone: document.getElementById('kc-phone').value,
+    email: document.getElementById('kc-email').value,
+  });
+  closeModal(); save(); toast('Contact added'); render();
+}
+function removeKeyContact(id) {
+  const p = currentProject;
+  p.production.keyContacts = p.production.keyContacts.filter(kc=>kc.id!==id);
+  save(); toast('Removed'); render();
+}
+
 // ─── BRIEF TAB ────────────────────────────────────────────────────────────────
 function renderBriefTab(p) {
   return `
@@ -879,9 +963,36 @@ function renderCalendar() {
     return`<div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}"><div class="cal-day-num">${cell.date.getDate()}</div>${evHtml}</div>`;
   }
   const sorted=[...store.projects].filter(p=>p.startDate||p.endDate).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
+
+  // On the docket — next 5 days
+  const todayD=new Date(); todayD.setHours(0,0,0,0);
+  const in5=new Date(todayD); in5.setDate(in5.getDate()+5);
+  const docket=[];
+  store.projects.forEach(p=>{
+    if(p.startDate){const d=new Date(p.startDate+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:p.name,sublabel:'Project kicks off',icon:'▦',color:dc[p.status]||'var(--muted)',projectId:p.id});}
+    if(p.endDate){const d=new Date(p.endDate+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:p.name,sublabel:'Deadline',icon:'⚑',color:'var(--red)',projectId:p.id});}
+    if(p.production&&p.production.shootDays){p.production.shootDays.forEach(sd=>{const d=new Date(sd.date+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:sd.location||p.name,sublabel:p.name+(sd.callTime?' · Call '+sd.callTime:''),icon:'◉',color:'var(--orange)',projectId:p.id});});}
+  });
+  docket.sort((a,b)=>a.date-b.date);
+  const docketHtml = docket.length===0
+    ? `<div class="empty-state" style="padding:20px"><p>Nothing scheduled in the next 5 days.</p></div>`
+    : docket.map(item=>`<div class="cal-list-item" onclick="navigate('project-detail',${item.projectId})">
+        <div style="background:${item.color};color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">${item.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px">${item.label}</div>
+          <div style="font-size:12px;color:var(--muted)">${item.sublabel}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:12px;font-weight:700;color:var(--navy)">${item.date.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div>
+          <div style="font-size:11px;color:var(--muted)">${item.date.toDateString()===todayD.toDateString()?'Today':Math.ceil((item.date-todayD)/86400000)+' days away'}</div>
+        </div>
+      </div>`).join('');
+
   return `
     <div class="topbar"><div><div class="page-title">Calendar</div><div class="page-sub">Project timeline overview</div></div></div>
     <div class="content">
+      <div class="section-header"><div class="section-title">On the docket</div><div style="font-size:12px;color:var(--muted)">Next 5 days</div></div>
+      <div class="cal-list" style="margin-bottom:24px">${docketHtml}</div>
       <div class="cal-nav"><button class="btn btn-ghost btn-sm" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}render()">← Prev</button><div class="cal-month">${monthNames[calMonth]} ${calYear}</div><button class="btn btn-ghost btn-sm" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}render()">Next →</button></div>
       <div class="cal-grid"><div class="cal-header">${days.map(d=>`<div class="cal-header-cell">${d}</div>`).join('')}</div><div class="cal-body">${cells.map(c=>renderCell(c)).join('')}</div></div>
       <div class="section-header"><div class="section-title">All Projects</div></div>
