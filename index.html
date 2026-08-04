@@ -2,29 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>FELT — Studio</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   :root {
-    --bg: #F4F1EC;
+    --bg: #F2F0EB;
     --surface: #FFFFFF;
-    --border: #E2DDD6;
-    --text: #1C1C1A;
-    --muted: #8A857D;
-    --accent: #C4714A;
-    --accent-light: #F5E8E1;
-    --green: #4A7C59;
-    --green-light: #E3EDE7;
-    --blue: #3A5F8A;
-    --blue-light: #E1EAF5;
-    --yellow: #C4A44A;
-    --yellow-light: #F5F0E1;
-    --purple: #7A5F8A;
-    --purple-light: #EDE1F5;
-    --sidebar-w: 220px;
+    --border: #E0DBD2;
+    --text: #0F1F35;
+    --muted: #7A7570;
+    --accent: #F0C040;
+    --accent-dark: #D4A820;
+    --accent-light: #FEF8DC;
+    --navy: #0F1F35;
+    --navy-mid: #1A3A5C;
+    --blue: #2563EB;
+    --blue-light: #DBEAFE;
+    --green: #16A34A;
+    --green-light: #DCFCE7;
+    --red: #DC2626;
+    --red-light: #FEE2E2;
+    --purple: #7C3AED;
+    --purple-light: #EDE9FE;
+    --orange: #EA580C;
+    --orange-light: #FFEDD5;
     --radius: 10px;
+    --sidebar-w: 230px;
+    --bottom-nav-h: 64px;
   }
 
   body {
@@ -37,36 +43,37 @@
     font-size: 14px;
   }
 
-  /* SIDEBAR */
+  /* ── SIDEBAR (desktop) ─────────────────────────────────── */
   .sidebar {
     width: var(--sidebar-w);
-    background: var(--text);
+    background: var(--navy);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     padding: 0 0 24px;
+    z-index: 20;
   }
 
   .sidebar-logo {
-    padding: 28px 24px 24px;
+    padding: 26px 22px 22px;
     font-size: 22px;
     font-weight: 800;
     letter-spacing: 6px;
     color: #fff;
     border-bottom: 1px solid rgba(255,255,255,0.08);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   .sidebar-logo span { color: var(--accent); }
 
-  .nav-section { padding: 0 12px; margin-bottom: 4px; }
+  .nav-section { padding: 0 10px; margin-bottom: 2px; }
 
   .nav-label {
     font-size: 10px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.3);
-    padding: 10px 12px 6px;
+    color: rgba(255,255,255,0.28);
+    padding: 10px 12px 5px;
   }
 
   .nav-item {
@@ -76,25 +83,24 @@
     padding: 9px 12px;
     border-radius: 7px;
     cursor: pointer;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.55);
     font-size: 13.5px;
     transition: all 0.15s;
     user-select: none;
   }
 
   .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
-  .nav-item.active { background: var(--accent); color: #fff; }
-  .nav-item .icon { width: 16px; text-align: center; font-size: 15px; }
+  .nav-item.active { background: var(--accent); color: var(--navy); font-weight: 700; }
+  .nav-item .icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
 
-  .sidebar-footer { margin-top: auto; padding: 0 12px; }
+  .sidebar-footer { margin-top: auto; padding: 0 10px; }
 
   .user-chip {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    border-radius: 7px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.45);
     font-size: 13px;
   }
 
@@ -102,47 +108,90 @@
     width: 28px; height: 28px;
     border-radius: 50%;
     background: var(--accent);
-    color: #fff;
-    font-size: 11px; font-weight: 700;
+    color: var(--navy);
+    font-size: 11px; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
   }
 
-  /* MAIN */
-  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  /* ── BOTTOM NAV (mobile) ───────────────────────────────── */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: var(--bottom-nav-h);
+    background: var(--navy);
+    z-index: 50;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.45);
+    font-size: 10px;
+    transition: all 0.15s;
+    min-width: 52px;
+  }
+
+  .bottom-nav-item .bn-icon { font-size: 18px; line-height: 1; }
+  .bottom-nav-item.active { color: var(--accent); }
+  .bottom-nav-item.active .bn-icon { transform: scale(1.1); }
+
+  /* ── MAIN ──────────────────────────────────────────────── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
 
   .topbar {
     background: var(--bg);
-    padding: 24px 32px 0;
+    padding: 22px 28px 0;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 10;
+    gap: 12px;
   }
 
-  .page-title { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .page-title { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
   .page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
   .btn {
     padding: 8px 16px;
-    border-radius: 7px;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #b5623d; }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-primary { background: var(--accent); color: var(--navy); }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
   .btn-ghost:hover { background: var(--surface); color: var(--text); }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-blue:hover { background: #1d4ed8; }
   .btn-sm { padding: 5px 11px; font-size: 12px; }
 
-  .content { padding: 24px 32px 40px; }
+  .content { padding: 20px 28px 40px; }
 
-  /* CARDS */
   .card {
     background: var(--surface);
     border-radius: var(--radius);
@@ -150,336 +199,454 @@
     padding: 20px;
   }
 
-  /* STATS ROW */
+  /* ── STATS ─────────────────────────────────────────────── */
   .stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 28px;
+    gap: 14px;
+    margin-bottom: 24px;
   }
 
   .stat-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 18px 20px;
+    padding: 16px 18px;
   }
 
-  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px; }
-  .stat-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
-  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+  .stat-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; color: var(--navy); }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  /* PROJECTS GRID */
+  /* ── PROJECTS ───────────────────────────────────────────── */
   .projects-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 14px;
   }
 
   .project-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 18px;
     cursor: pointer;
     transition: all 0.15s;
     position: relative;
     overflow: hidden;
   }
 
-  .project-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  .project-card:hover { box-shadow: 0 4px 20px rgba(15,31,53,0.1); transform: translateY(-1px); }
 
   .project-card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: var(--accent);
   }
 
   .project-card.status-active::before { background: var(--green); }
-  .project-card.status-planning::before { background: var(--yellow); }
+  .project-card.status-planning::before { background: var(--accent); }
+  .project-card.status-pitched::before { background: var(--blue); }
   .project-card.status-completed::before { background: var(--muted); }
 
-  .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .project-name { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+  .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px; }
+  .project-name { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
   .project-client { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
   .status-badge {
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
     padding: 3px 8px;
     border-radius: 20px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .badge-active { background: var(--green-light); color: var(--green); }
-  .badge-planning { background: var(--yellow-light); color: var(--yellow); }
+  .badge-planning { background: var(--accent-light); color: #92700A; }
   .badge-completed { background: #f0f0f0; color: var(--muted); }
   .badge-pitched { background: var(--blue-light); color: var(--blue); }
   .badge-not-contacted { background: #f0f0f0; color: var(--muted); }
-  .badge-reached-out { background: var(--yellow-light); color: var(--yellow); }
+  .badge-reached-out { background: var(--accent-light); color: #92700A; }
   .badge-in-conversation { background: var(--blue-light); color: var(--blue); }
   .badge-proposal-sent { background: var(--purple-light); color: var(--purple); }
   .badge-won { background: var(--green-light); color: var(--green); }
-  .badge-lost { background: #fdecea; color: #c0392b; }
+  .badge-lost { background: var(--red-light); color: var(--red); }
 
   .project-meta {
     display: flex;
-    gap: 16px;
-    margin-top: 14px;
-    padding-top: 14px;
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid var(--border);
   }
 
-  .meta-item { font-size: 12px; color: var(--muted); }
-  .meta-item strong { color: var(--text); display: block; font-size: 13px; font-weight: 600; }
+  .meta-item { font-size: 11px; color: var(--muted); }
+  .meta-item strong { color: var(--text); display: block; font-size: 12px; font-weight: 600; }
+
+  .budget-bar { height: 5px; background: var(--border); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .budget-bar-fill { height: 100%; border-radius: 3px; background: var(--green); }
+  .budget-bar-fill.over { background: var(--red); }
 
   .team-avatars { display: flex; }
   .team-avatar-sm {
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--accent-light);
-    color: var(--accent);
-    font-size: 9px; font-weight: 700;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent-light); color: var(--navy);
+    font-size: 8px; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
     border: 2px solid var(--surface);
-    margin-right: -6px;
+    margin-right: -5px;
   }
 
-  /* PROJECT DETAIL */
+  /* ── PROJECT DETAIL ─────────────────────────────────────── */
   .back-btn {
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 5px;
     color: var(--muted); font-size: 13px; cursor: pointer;
-    margin-bottom: 16px;
-    width: fit-content;
+    margin-bottom: 14px; width: fit-content;
   }
   .back-btn:hover { color: var(--text); }
 
   .tabs {
     display: flex;
-    gap: 4px;
-    margin-bottom: 20px;
+    gap: 3px;
+    margin-bottom: 18px;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
     padding: 4px;
     width: fit-content;
+    overflow-x: auto;
+    max-width: 100%;
   }
 
   .tab {
-    padding: 7px 16px;
+    padding: 7px 14px;
     border-radius: 7px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
     color: var(--muted);
     transition: all 0.15s;
+    white-space: nowrap;
   }
 
   .tab:hover { color: var(--text); }
-  .tab.active { background: var(--text); color: #fff; font-weight: 600; }
+  .tab.active { background: var(--navy); color: var(--accent); font-weight: 700; }
 
-  /* FORMS */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  /* ── FORMS ──────────────────────────────────────────────── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
   .form-group.full { grid-column: 1 / -1; }
 
-  label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
   input, textarea, select {
     padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
     font-size: 14px;
     font-family: inherit;
     background: var(--bg);
     color: var(--text);
     transition: border 0.15s;
     outline: none;
+    width: 100%;
   }
 
   input:focus, textarea:focus, select:focus { border-color: var(--accent); background: #fff; }
-  textarea { resize: vertical; min-height: 100px; }
+  textarea { resize: vertical; min-height: 90px; }
 
-  /* BUDGET */
-  .budget-summary {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 20px;
-  }
+  /* ── BUDGET ─────────────────────────────────────────────── */
+  .budget-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
 
   .budget-stat {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 18px 20px;
+    padding: 16px 18px;
   }
 
-  .budget-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px; }
-  .budget-value { font-size: 24px; font-weight: 800; }
-  .budget-value.over { color: #c0392b; }
-  .budget-value.under { color: var(--green); }
+  .budget-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; font-weight: 700; }
+  .budget-value { font-size: 22px; font-weight: 800; color: var(--navy); }
+  .budget-value.over { color: var(--red); }
+  .budget-value.good { color: var(--green); }
 
-  .budget-bar {
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    margin-top: 8px;
-    overflow: hidden;
-  }
-
-  .budget-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: var(--green);
-    transition: width 0.3s;
-  }
-
-  .budget-bar-fill.over { background: #c0392b; }
-
-  /* TABLE */
-  .table { width: 100%; border-collapse: collapse; }
-  .table th {
-    text-align: left;
-    padding: 10px 14px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--muted);
-    border-bottom: 1px solid var(--border);
-  }
-  .table td {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13.5px;
-  }
+  /* ── TABLE ──────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; }
+  .table { width: 100%; border-collapse: collapse; min-width: 400px; }
+  .table th { text-align: left; padding: 9px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 1.5px solid var(--border); font-weight: 700; }
+  .table td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
   .table tr:last-child td { border-bottom: none; }
   .table tr:hover td { background: var(--bg); }
 
-  /* TEAM */
-  .team-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
-  }
+  /* ── TEAM ───────────────────────────────────────────────── */
+  .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
 
   .team-card {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    padding: 20px 16px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
   }
 
   .team-avatar-lg {
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    background: var(--accent-light);
-    color: var(--accent);
-    font-size: 18px; font-weight: 800;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--accent-light); color: var(--navy);
+    font-size: 16px; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    border: 2px solid var(--accent);
   }
 
-  .team-name { font-size: 15px; font-weight: 700; }
+  .team-name { font-size: 14px; font-weight: 700; }
   .team-role { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .team-rate { font-size: 13px; font-weight: 600; color: var(--accent); margin-top: 8px; }
+  .team-rate { font-size: 13px; font-weight: 700; color: var(--blue); margin-top: 6px; }
 
-  .skill-tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 10px; }
-  .skill-tag {
-    font-size: 10px;
-    padding: 3px 8px;
-    background: var(--accent-light);
-    color: var(--accent);
-    border-radius: 20px;
-    font-weight: 600;
-  }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 8px; }
+  .skill-tag { font-size: 10px; padding: 2px 7px; background: var(--navy); color: var(--accent); border-radius: 20px; font-weight: 700; }
 
-  /* CONTACTS */
+  /* ── CONTACTS ───────────────────────────────────────────── */
   .contact-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 0; border-bottom: 1px solid var(--border);
   }
-
   .contact-row:last-child { border-bottom: none; }
 
   .contact-avatar {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: var(--blue-light);
-    color: var(--blue);
-    font-size: 13px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--blue-light); color: var(--blue);
+    font-size: 12px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
 
   .contact-name { font-size: 14px; font-weight: 600; }
   .contact-detail { font-size: 12px; color: var(--muted); }
-  .contact-actions { margin-left: auto; display: flex; gap: 8px; }
+  .contact-actions { margin-left: auto; display: flex; gap: 6px; }
 
-  /* LEADS PIPELINE */
+  /* ── LEADS ──────────────────────────────────────────────── */
   .pipeline {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    margin-bottom: 28px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
   }
 
   .pipeline-col {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    padding: 14px 16px;
+    padding: 14px;
     text-align: center;
   }
 
-  .pipeline-col-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 4px; }
-  .pipeline-col-count { font-size: 26px; font-weight: 800; }
-  .pipeline-col-value { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .pipeline-col-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 4px; font-weight: 700; }
+  .pipeline-col-count { font-size: 24px; font-weight: 800; color: var(--navy); }
+  .pipeline-col-value { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  .lead-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border);
-  }
-
+  .lead-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
   .lead-row:last-child { border-bottom: none; }
 
   .lead-avatar {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: var(--purple-light);
-    color: var(--purple);
-    font-size: 13px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    margin-top: 2px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent-light); color: var(--navy);
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
   }
 
   .lead-name { font-size: 14px; font-weight: 700; }
   .lead-detail { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .lead-notes { font-size: 13px; color: var(--text); margin-top: 6px; line-height: 1.4; }
-  .lead-actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
+  .lead-notes { font-size: 13px; color: var(--text); margin-top: 5px; line-height: 1.45; }
+  .lead-actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
 
-  /* MODAL */
+  /* ── CALENDAR ───────────────────────────────────────────── */
+  .cal-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .cal-month { font-size: 18px; font-weight: 800; color: var(--navy); }
+
+  .cal-grid {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .cal-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .cal-header-cell {
+    padding: 8px 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .cal-body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .cal-day {
+    min-height: 80px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 6px;
+    position: relative;
+    vertical-align: top;
+  }
+
+  .cal-day:nth-child(7n) { border-right: none; }
+
+  .cal-day.other-month { background: var(--bg); }
+  .cal-day.today { background: var(--accent-light); }
+
+  .cal-day-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+
+  .cal-day.today .cal-day-num {
+    background: var(--accent);
+    color: var(--navy);
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+
+  .cal-event {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+
+  .cal-event.start { border-radius: 3px 0 0 3px; }
+  .cal-event.end { border-radius: 0 3px 3px 0; }
+  .cal-event.ev-active { background: var(--green-light); color: var(--green); }
+  .cal-event.ev-planning { background: var(--accent-light); color: #92700A; }
+  .cal-event.ev-pitched { background: var(--blue-light); color: var(--blue); }
+  .cal-event.ev-completed { background: #f0f0f0; color: var(--muted); }
+
+  .cal-list {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .cal-list-item {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .cal-list-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+
+  .cal-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── IDEAS PARK ─────────────────────────────────────────── */
+  .ideas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .idea-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative;
+    transition: all 0.15s;
+  }
+
+  .idea-card:hover { box-shadow: 0 4px 16px rgba(15,31,53,0.08); transform: translateY(-1px); }
+
+  .idea-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .idea-category-tag {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 20px;
+    width: fit-content;
+    background: var(--navy); color: var(--accent);
+  }
+
+  .idea-title { font-size: 15px; font-weight: 800; color: var(--navy); line-height: 1.3; }
+  .idea-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .idea-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 8px; border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+
+  .idea-by { font-size: 11px; color: var(--muted); }
+  .idea-by strong { color: var(--text); }
+
+  /* ── BRIEF ──────────────────────────────────────────────── */
+  .brief-content { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  .brief-section { margin-bottom: 20px; }
+  .brief-section:last-child { margin-bottom: 0; }
+  .brief-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 7px; font-weight: 700; }
+  .brief-section-content { font-size: 14px; line-height: 1.65; color: var(--text); white-space: pre-wrap; }
+
+  .allocate-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+  .allocate-row:last-child { border-bottom: none; }
+  .allocate-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+
+  /* ── SECTION HEADER ─────────────────────────────────────── */
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; }
+  .section-title { font-size: 15px; font-weight: 800; color: var(--navy); }
+
+  /* ── EMPTY STATE ────────────────────────────────────────── */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-state .empty-icon { font-size: 32px; margin-bottom: 10px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── DIVIDER ────────────────────────────────────────────── */
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+  /* ── MODAL ──────────────────────────────────────────────── */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(15,31,53,0.5);
     z-index: 100;
     display: flex; align-items: center; justify-content: center;
     opacity: 0; pointer-events: none;
     transition: opacity 0.2s;
+    padding: 16px;
   }
 
   .modal-overlay.open { opacity: 1; pointer-events: all; }
@@ -487,119 +654,136 @@
   .modal {
     background: var(--surface);
     border-radius: 14px;
-    padding: 28px;
-    width: 560px;
-    max-width: 90vw;
-    max-height: 85vh;
+    padding: 24px;
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
     overflow-y: auto;
-    transform: translateY(10px);
+    transform: translateY(12px);
     transition: transform 0.2s;
   }
 
   .modal-overlay.open .modal { transform: translateY(0); }
 
-  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; }
-  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 18px; color: var(--navy); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
-  /* SECTION HEADER */
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-
-  .section-title { font-size: 16px; font-weight: 700; }
-
-  /* EMPTY STATE */
-  .empty-state {
-    text-align: center;
-    padding: 48px 24px;
-    color: var(--muted);
-  }
-  .empty-state .empty-icon { font-size: 36px; margin-bottom: 12px; }
-  .empty-state p { font-size: 14px; }
-
-  /* BRIEF */
-  .brief-content {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-  }
-
-  .brief-section { margin-bottom: 24px; }
-  .brief-section:last-child { margin-bottom: 0; }
-  .brief-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; font-weight: 700; }
-  .brief-section-content { font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
-
-  /* ALLOCATE */
-  .allocate-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .allocate-row:last-child { border-bottom: none; }
-  .allocate-info { display: flex; align-items: center; gap: 10px; }
-
-  /* TOAST */
+  /* ── TOAST ──────────────────────────────────────────────── */
   .toast {
     position: fixed;
-    bottom: 24px; right: 24px;
-    background: var(--text);
-    color: #fff;
-    padding: 12px 20px;
+    bottom: 80px; right: 20px;
+    background: var(--navy);
+    color: var(--accent);
+    padding: 11px 18px;
     border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 13px; font-weight: 700;
     z-index: 200;
     transform: translateY(60px);
     opacity: 0;
     transition: all 0.3s;
   }
+
   .toast.show { transform: translateY(0); opacity: 1; }
 
-  .divider { height: 1px; background: var(--border); margin: 20px 0; }
-
-  ::-webkit-scrollbar { width: 6px; }
+  /* ── SCROLLBAR ──────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── RESPONSIVE ─────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+
+    .sidebar { display: none; }
+
+    .bottom-nav { display: flex; }
+
+    .main {
+      flex: 1;
+      padding-bottom: var(--bottom-nav-h);
+      height: calc(100vh - var(--bottom-nav-h));
+    }
+
+    .topbar { padding: 16px 16px 0; }
+    .page-title { font-size: 18px; }
+
+    .content { padding: 14px 16px 30px; }
+
+    .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-value { font-size: 22px; }
+
+    .projects-grid { grid-template-columns: 1fr; }
+
+    .team-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+
+    .ideas-grid { grid-template-columns: 1fr; }
+
+    .budget-summary { grid-template-columns: 1fr; gap: 10px; }
+
+    .pipeline { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .pipeline-col { padding: 10px 8px; }
+    .pipeline-col-count { font-size: 20px; }
+
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+
+    .modal { border-radius: 14px; padding: 20px; }
+
+    .cal-day { min-height: 52px; padding: 4px; }
+    .cal-day-num { font-size: 10px; }
+    .cal-event { display: none; }
+
+    .tabs { width: 100%; }
+    .tab { padding: 7px 10px; font-size: 12px; }
+
+    .toast { bottom: calc(var(--bottom-nav-h) + 12px); left: 16px; right: 16px; text-align: center; }
+
+    .btn { padding: 8px 12px; }
+  }
+
+  @media (max-width: 400px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .pipeline { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
 </head>
 <body>
 
+<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">FELT<span>.</span></div>
   <div class="nav-section">
     <div class="nav-label">Studio</div>
-    <div class="nav-item active" onclick="navigate('dashboard')">
-      <span class="icon">◈</span> Dashboard
-    </div>
-    <div class="nav-item" onclick="navigate('projects')">
-      <span class="icon">▦</span> Projects
-    </div>
-    <div class="nav-item" onclick="navigate('leads')">
-      <span class="icon">◉</span> Leads
-    </div>
+    <div class="nav-item active" onclick="navigate('dashboard')"><span class="icon">◈</span> Dashboard</div>
+    <div class="nav-item" onclick="navigate('projects')"><span class="icon">▦</span> Projects</div>
+    <div class="nav-item" onclick="navigate('leads')"><span class="icon">◉</span> Leads</div>
+    <div class="nav-item" onclick="navigate('calendar')"><span class="icon">◫</span> Calendar</div>
+    <div class="nav-item" onclick="navigate('ideas')"><span class="icon">✦</span> Ideas Park</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">Resources</div>
-    <div class="nav-item" onclick="navigate('team')">
-      <span class="icon">◎</span> Team
-    </div>
-    <div class="nav-item" onclick="navigate('contacts')">
-      <span class="icon">◇</span> Contacts
-    </div>
+    <div class="nav-item" onclick="navigate('team')"><span class="icon">◎</span> Team</div>
+    <div class="nav-item" onclick="navigate('contacts')"><span class="icon">◇</span> Contacts</div>
   </div>
   <div class="sidebar-footer">
-    <div class="user-chip">
-      <div class="avatar">AD</div>
-      Adam
-    </div>
+    <div class="user-chip"><div class="avatar">AD</div> Adam</div>
   </div>
 </aside>
 
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-item active" onclick="navigate('dashboard')"><div class="bn-icon">◈</div>Home</div>
+  <div class="bottom-nav-item" onclick="navigate('projects')"><div class="bn-icon">▦</div>Projects</div>
+  <div class="bottom-nav-item" onclick="navigate('leads')"><div class="bn-icon">◉</div>Leads</div>
+  <div class="bottom-nav-item" onclick="navigate('calendar')"><div class="bn-icon">◫</div>Calendar</div>
+  <div class="bottom-nav-item" onclick="navigate('ideas')"><div class="bn-icon">✦</div>Ideas</div>
+  <div class="bottom-nav-item" onclick="navigate('team')"><div class="bn-icon">◎</div>Team</div>
+</nav>
+
+<!-- MAIN -->
 <main class="main" id="main"></main>
 
+<!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
   <div class="modal" id="modal-content"></div>
 </div>
@@ -611,121 +795,109 @@
 const store = {
   projects: [
     {
-      id: 1, name: 'Summer Pop-Up — Shoreditch', client: 'Nova Drinks',
-      status: 'active', type: 'Pop-Up',
-      startDate: '2026-07-15', endDate: '2026-08-10',
-      budget: 18000, spent: 11200,
-      brief: {
-        overview: 'A 4-day immersive pop-up experience in Shoreditch to launch Nova\'s new summer range. The space should feel sun-drenched, tactile and social.',
-        objectives: 'Drive brand awareness among 18–30 demographic. Generate 500+ social check-ins. Distribute 2,000 product samples.',
-        deliverables: 'Full venue design & production, staffing, social content capture, on-site activation games.',
-        timeline: 'Set build: 14 July. Live: 15–18 July. Strike: 19 July.'
+      id:1, name:'Summer Pop-Up — Shoreditch', client:'Nova Drinks',
+      status:'active', type:'Pop-Up',
+      startDate:'2026-07-15', endDate:'2026-08-20',
+      budget:18000, spent:11200,
+      brief:{
+        overview:'A 4-day immersive pop-up experience in Shoreditch to launch Nova\'s new summer range. The space should feel sun-drenched, tactile and social.',
+        objectives:'Drive brand awareness among 18–30 demographic. Generate 500+ social check-ins. Distribute 2,000 product samples.',
+        deliverables:'Full venue design & production, staffing, social content capture, on-site activation games.',
+        timeline:'Set build: 14 July. Live: 15–18 July. Strike: 19 July.'
       },
-      teamIds: [1, 2, 3], contactIds: [1, 2],
-      expenses: [
-        { id: 1, description: 'Venue hire', amount: 4500, category: 'Venue', date: '2026-07-01' },
-        { id: 2, description: 'Set design & production', amount: 3800, category: 'Production', date: '2026-07-08' },
-        { id: 3, description: 'Staff (6 days)', amount: 1800, category: 'Staffing', date: '2026-07-15' },
-        { id: 4, description: 'AV & lighting', amount: 1100, category: 'Tech', date: '2026-07-10' },
+      teamIds:[1,2,3], contactIds:[1,2],
+      expenses:[
+        {id:1,description:'Venue hire',amount:4500,category:'Venue',date:'2026-07-01'},
+        {id:2,description:'Set design & production',amount:3800,category:'Production',date:'2026-07-08'},
+        {id:3,description:'Staff (6 days)',amount:1800,category:'Staffing',date:'2026-07-15'},
+        {id:4,description:'AV & lighting',amount:1100,category:'Tech',date:'2026-07-10'},
       ],
-      teamAllocation: { 1: 5, 2: 8, 3: 3 }
+      teamAllocation:{1:5,2:8,3:3}
     },
     {
-      id: 2, name: 'Brand Identity — Studio Kern', client: 'Studio Kern',
-      status: 'active', type: 'Branding',
-      startDate: '2026-07-01', endDate: '2026-09-01',
-      budget: 12000, spent: 4200,
-      brief: {
-        overview: 'Full brand identity for Studio Kern, a new architecture practice based in East London. Positioning: refined, human, material.',
-        objectives: 'Deliver a complete visual identity system including logo, typography, colour palette, and usage guidelines.',
-        deliverables: 'Logo suite, brand guidelines PDF, stationery templates, social templates.',
-        timeline: 'Discovery: July. Concepts: late July. Refinement: August. Delivery: 1 Sept.'
+      id:2, name:'Brand Identity — Studio Kern', client:'Studio Kern',
+      status:'active', type:'Branding',
+      startDate:'2026-07-01', endDate:'2026-09-01',
+      budget:12000, spent:4200,
+      brief:{
+        overview:'Full brand identity for Studio Kern, a new architecture practice in East London. Positioning: refined, human, material.',
+        objectives:'Deliver a complete visual identity system including logo, typography, colour palette, and usage guidelines.',
+        deliverables:'Logo suite, brand guidelines PDF, stationery templates, social templates.',
+        timeline:'Discovery: July. Concepts: late July. Refinement: August. Delivery: 1 Sept.'
       },
-      teamIds: [2, 4], contactIds: [3],
-      expenses: [
-        { id: 1, description: 'Brand strategy workshop', amount: 1500, category: 'Strategy', date: '2026-07-05' },
-        { id: 2, description: 'Design retainer — July', amount: 2700, category: 'Design', date: '2026-07-31' },
+      teamIds:[2,4], contactIds:[3],
+      expenses:[
+        {id:5,description:'Brand strategy workshop',amount:1500,category:'Strategy',date:'2026-07-05'},
+        {id:6,description:'Design retainer — July',amount:2700,category:'Design',date:'2026-07-31'},
       ],
-      teamAllocation: { 2: 10, 4: 6 }
+      teamAllocation:{2:10,4:6}
     },
     {
-      id: 3, name: 'Felt Zine — Issue 01', client: 'FELT Internal',
-      status: 'planning', type: 'Creative Project',
-      startDate: '2026-08-01', endDate: '2026-10-15',
-      budget: 5000, spent: 0,
-      brief: {
-        overview: 'FELT\'s first self-published zine exploring creative culture, brand activations, and the people behind the work.',
-        objectives: 'Establish FELT as a creative voice. 500 print run. Distributed at events and to clients.',
-        deliverables: 'Editorial direction, design, print production, distribution plan.',
-        timeline: 'Editorial: August. Design: September. Print: October.'
+      id:3, name:'Felt Zine — Issue 01', client:'FELT Internal',
+      status:'planning', type:'Creative Project',
+      startDate:'2026-08-01', endDate:'2026-10-15',
+      budget:5000, spent:0,
+      brief:{
+        overview:'FELT\'s first self-published zine exploring creative culture, brand activations, and the people behind the work.',
+        objectives:'Establish FELT as a creative voice. 500 print run. Distributed at events and to clients.',
+        deliverables:'Editorial direction, design, print production, distribution plan.',
+        timeline:'Editorial: August. Design: September. Print: October.'
       },
-      teamIds: [1, 4], contactIds: [],
-      expenses: [], teamAllocation: { 1: 4, 4: 8 }
+      teamIds:[1,4], contactIds:[],
+      expenses:[], teamAllocation:{1:4,4:8}
     },
     {
-      id: 4, name: 'Christmas Activation — Harrods', client: 'Harrods / TBC',
-      status: 'pitched', type: 'Brand Activation',
-      startDate: '2026-11-20', endDate: '2026-12-24',
-      budget: 65000, spent: 0,
-      brief: {
-        overview: 'Pitch for a large-scale Christmas brand activation within Harrods.',
-        objectives: 'Win the pitch. Drive footfall and dwell time within designated zone.',
-        deliverables: 'Pitch deck, concept visuals, production budget.',
-        timeline: 'Pitch: 15 Aug. Decision: Sept.'
+      id:4, name:'Christmas Activation — Harrods', client:'Harrods / TBC',
+      status:'pitched', type:'Brand Activation',
+      startDate:'2026-11-20', endDate:'2026-12-24',
+      budget:65000, spent:0,
+      brief:{
+        overview:'Pitch for a large-scale Christmas brand activation within Harrods.',
+        objectives:'Win the pitch. Drive footfall and dwell time within designated zone.',
+        deliverables:'Pitch deck, concept visuals, production budget.',
+        timeline:'Pitch: 15 Aug. Decision: Sept.'
       },
-      teamIds: [1, 2, 3, 4], contactIds: [4],
-      expenses: [], teamAllocation: {}
+      teamIds:[1,2,3,4], contactIds:[4],
+      expenses:[], teamAllocation:{}
     }
   ],
 
-  leads: [
-    {
-      id: 1, company: 'Glossier UK', contactName: 'Priya Shah', contactEmail: 'priya@glossier.com',
-      projectType: 'Brand Activation', estimatedValue: 25000,
-      status: 'in-conversation',
-      notes: 'Met at the Shoreditch pop-up. Interested in a similar format for their autumn launch. Follow up with deck by 10 Aug.'
-    },
-    {
-      id: 2, company: 'The Ace Hotel', contactName: 'Ben Holloway', contactEmail: 'ben@acehotel.com',
-      projectType: 'Event', estimatedValue: 12000,
-      status: 'reached-out',
-      notes: 'Emailed re: hosting a FELT event series in their lobby space. Waiting to hear back.'
-    },
-    {
-      id: 3, company: 'Rapha', contactName: 'Claire Moon', contactEmail: 'claire@rapha.cc',
-      projectType: 'Pop-Up', estimatedValue: 40000,
-      status: 'not-contacted',
-      notes: 'Strong fit for a cycling culture pop-up. Need to find the right intro — potentially via James.'
-    },
-    {
-      id: 4, company: 'Soho House', contactName: 'Tom Briggs', contactEmail: 'tbriggs@sohohouse.com',
-      projectType: 'Creative Project', estimatedValue: 8000,
-      status: 'proposal-sent',
-      notes: 'Sent proposal for member events programme. Decision expected end of August.'
-    },
+  leads:[
+    {id:1,company:'Glossier UK',contactName:'Priya Shah',contactEmail:'priya@glossier.com',projectType:'Brand Activation',estimatedValue:25000,status:'in-conversation',notes:'Met at the Shoreditch pop-up. Interested in a similar format for their autumn launch. Follow up with deck by 10 Aug.'},
+    {id:2,company:'The Ace Hotel',contactName:'Ben Holloway',contactEmail:'ben@acehotel.com',projectType:'Event',estimatedValue:12000,status:'reached-out',notes:'Emailed re: hosting a FELT event series in their lobby space. Waiting to hear back.'},
+    {id:3,company:'Rapha',contactName:'Claire Moon',contactEmail:'claire@rapha.cc',projectType:'Pop-Up',estimatedValue:40000,status:'not-contacted',notes:'Strong fit for a cycling culture pop-up. Need to find the right intro — potentially via James.'},
+    {id:4,company:'Soho House',contactName:'Tom Briggs',contactEmail:'tbriggs@sohohouse.com',projectType:'Creative Project',estimatedValue:8000,status:'proposal-sent',notes:'Sent proposal for member events programme. Decision expected end of August.'},
   ],
 
-  team: [
-    { id: 1, name: 'Maya Chen', role: 'Creative Director', email: 'maya@freelance.com', rate: 650, skills: ['Art Direction', 'Brand Strategy', 'Concepting'] },
-    { id: 2, name: 'James Okafor', role: 'Designer', email: 'james@freelance.com', rate: 450, skills: ['Brand Identity', 'Print', 'Motion'] },
-    { id: 3, name: 'Sofia Reyes', role: 'Producer', email: 'sofia@freelance.com', rate: 500, skills: ['Event Production', 'Logistics', 'Budgeting'] },
-    { id: 4, name: 'Tom Wright', role: 'Copywriter', email: 'tom@freelance.com', rate: 400, skills: ['Editorial', 'Brand Voice', 'Scripts'] },
+  team:[
+    {id:1,name:'Maya Chen',role:'Creative Director',email:'maya@freelance.com',rate:650,skills:['Art Direction','Brand Strategy','Concepting']},
+    {id:2,name:'James Okafor',role:'Designer',email:'james@freelance.com',rate:450,skills:['Brand Identity','Print','Motion']},
+    {id:3,name:'Sofia Reyes',role:'Producer',email:'sofia@freelance.com',rate:500,skills:['Event Production','Logistics','Budgeting']},
+    {id:4,name:'Tom Wright',role:'Copywriter',email:'tom@freelance.com',rate:400,skills:['Editorial','Brand Voice','Scripts']},
   ],
 
-  contacts: [
-    { id: 1, name: 'Rachel Kim', company: 'Nova Drinks', email: 'rachel@novadrinks.com', phone: '+44 7700 900123', role: 'Brand Manager' },
-    { id: 2, name: 'David Park', company: 'Nova Drinks', email: 'david@novadrinks.com', phone: '+44 7700 900456', role: 'Head of Marketing' },
-    { id: 3, name: 'Ellie Kern', company: 'Studio Kern', email: 'ellie@studiokern.com', phone: '+44 7700 900789', role: 'Founder' },
-    { id: 4, name: 'Marcus Webb', company: 'Harrods', email: 'marcus.webb@harrods.com', phone: '+44 7700 900321', role: 'Events Director' },
+  contacts:[
+    {id:1,name:'Rachel Kim',company:'Nova Drinks',email:'rachel@novadrinks.com',phone:'+44 7700 900123',role:'Brand Manager'},
+    {id:2,name:'David Park',company:'Nova Drinks',email:'david@novadrinks.com',phone:'+44 7700 900456',role:'Head of Marketing'},
+    {id:3,name:'Ellie Kern',company:'Studio Kern',email:'ellie@studiokern.com',phone:'+44 7700 900789',role:'Founder'},
+    {id:4,name:'Marcus Webb',company:'Harrods',email:'marcus.webb@harrods.com',phone:'+44 7700 900321',role:'Events Director'},
   ],
 
-  nextId: { projects: 5, team: 5, contacts: 5, leads: 5, expenses: 10 }
+  ideas:[
+    {id:1,title:'Rooftop Cinema Series',category:'Event',description:'Partner with a drinks brand to run a rooftop cinema series across London summer nights. Branded but feels organic — curated film selections, good food, intimate scale.',submittedBy:'Maya Chen',date:'2026-07-20'},
+    {id:2,title:'Artist Residency Pop-Up',category:'Space',description:'A rotating artist residency inside a retail space — each month a different artist takes over. The brand becomes associated with creative discovery.',submittedBy:'Tom Wright',date:'2026-07-28'},
+    {id:3,title:'FELT Annual Report (as Zine)',category:'Print',description:'Instead of a boring PDF, FELT publishes an annual report as a beautiful printed zine. Sent to clients, potential clients, and press.',submittedBy:'James Okafor',date:'2026-08-01'},
+  ],
+
+  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4}
 };
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
 let currentView = 'dashboard';
 let currentProject = null;
 let currentTab = 'brief';
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
 
 function navigate(view, projectId) {
   currentView = view;
@@ -734,9 +906,14 @@ function navigate(view, projectId) {
     currentTab = 'brief';
   }
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const navMap = { dashboard: 0, projects: 1, leads: 2, team: 3, contacts: 4 };
+  document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
+  const navMap = {dashboard:0,projects:1,leads:2,calendar:3,ideas:4,team:5,contacts:6};
+  const bnMap  = {dashboard:0,projects:1,leads:2,calendar:3,ideas:4,team:5};
   const items = document.querySelectorAll('.nav-item');
-  if (navMap[view] !== undefined) items[navMap[view]].classList.add('active');
+  const bnItems = document.querySelectorAll('.bottom-nav-item');
+  if (navMap[view] !== undefined) items[navMap[view]]?.classList.add('active');
+  if (bnMap[view] !== undefined) bnItems[bnMap[view]]?.classList.add('active');
+  document.getElementById('main').scrollTo(0,0);
   render();
 }
 
@@ -746,6 +923,8 @@ function render() {
   else if (currentView === 'projects') main.innerHTML = renderProjects();
   else if (currentView === 'project-detail') main.innerHTML = renderProjectDetail();
   else if (currentView === 'leads') main.innerHTML = renderLeads();
+  else if (currentView === 'calendar') main.innerHTML = renderCalendar();
+  else if (currentView === 'ideas') main.innerHTML = renderIdeas();
   else if (currentView === 'team') main.innerHTML = renderTeam();
   else if (currentView === 'contacts') main.innerHTML = renderContacts();
 }
@@ -753,15 +932,15 @@ function render() {
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function renderDashboard() {
   const active = store.projects.filter(p => p.status === 'active').length;
-  const totalBudget = store.projects.reduce((s, p) => s + p.budget, 0);
-  const totalSpent = store.projects.reduce((s, p) => s + p.spent, 0);
+  const totalBudget = store.projects.reduce((s,p) => s+p.budget, 0);
+  const totalSpent = store.projects.reduce((s,p) => s+p.spent, 0);
   const hotLeads = store.leads.filter(l => ['in-conversation','proposal-sent'].includes(l.status)).length;
 
   return `
     <div class="topbar">
       <div>
         <div class="page-title">Good morning, Adam.</div>
-        <div class="page-sub">Here's what's happening at FELT today.</div>
+        <div class="page-sub">Here's what's happening at FELT.</div>
       </div>
     </div>
     <div class="content">
@@ -777,17 +956,16 @@ function renderDashboard() {
           <div class="stat-sub">${hotLeads} in progress</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Total Budget</div>
+          <div class="stat-label">Budget</div>
           <div class="stat-value">£${(totalBudget/1000).toFixed(0)}k</div>
-          <div class="stat-sub">Across all projects</div>
+          <div class="stat-sub">Total across projects</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Spent to Date</div>
+          <div class="stat-label">Spent</div>
           <div class="stat-value">£${(totalSpent/1000).toFixed(0)}k</div>
-          <div class="stat-sub">${Math.round(totalSpent/totalBudget*100)}% of total budget</div>
+          <div class="stat-sub">${totalBudget>0?Math.round(totalSpent/totalBudget*100):0}% of budget</div>
         </div>
       </div>
-
       <div class="section-header">
         <div class="section-title">Active Projects</div>
         <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all</button>
@@ -795,8 +973,7 @@ function renderDashboard() {
       <div class="projects-grid">
         ${store.projects.slice(0,4).map(p => renderProjectCard(p)).join('')}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ─── PROJECTS ─────────────────────────────────────────────────────────────────
@@ -807,34 +984,30 @@ function renderProjects() {
         <div class="page-title">Projects</div>
         <div class="page-sub">${store.projects.length} projects total</div>
       </div>
-      <button class="btn btn-primary" onclick="openNewProjectModal()">+ New Project</button>
+      <button class="btn btn-primary" onclick="openNewProjectModal()">+ New</button>
     </div>
     <div class="content">
-      <div class="projects-grid">
-        ${store.projects.map(p => renderProjectCard(p)).join('')}
-      </div>
-    </div>
-  `;
+      <div class="projects-grid">${store.projects.map(p => renderProjectCard(p)).join('')}</div>
+    </div>`;
 }
 
 function renderProjectCard(p) {
-  const pct = p.budget > 0 ? Math.round(p.spent / p.budget * 100) : 0;
+  const pct = p.budget > 0 ? Math.round(p.spent/p.budget*100) : 0;
   const teamInitials = p.teamIds.slice(0,3).map(id => {
-    const m = store.team.find(t => t.id === id);
+    const m = store.team.find(t => t.id===id);
     return m ? `<div class="team-avatar-sm">${initials(m.name)}</div>` : '';
   }).join('');
-
   return `
-    <div class="project-card status-${p.status}" onclick="navigate('project-detail', ${p.id})">
+    <div class="project-card status-${p.status}" onclick="navigate('project-detail',${p.id})">
       <div class="project-header">
-        <div>
+        <div style="min-width:0">
           <div class="project-name">${p.name}</div>
           <div class="project-client">${p.client}</div>
         </div>
         <div class="status-badge badge-${p.status}">${p.status}</div>
       </div>
-      <div style="margin-top:12px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px">
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">
           <span>Budget used</span><span>£${p.spent.toLocaleString()} / £${p.budget.toLocaleString()}</span>
         </div>
         <div class="budget-bar"><div class="budget-bar-fill ${pct>100?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
@@ -842,71 +1015,197 @@ function renderProjectCard(p) {
       <div class="project-meta">
         <div class="meta-item"><strong>${p.type}</strong>Type</div>
         <div class="meta-item"><strong>${formatDate(p.endDate)}</strong>Deadline</div>
-        <div class="meta-item" style="margin-left:auto">
-          <div class="team-avatars">${teamInitials}</div>
-        </div>
+        <div class="meta-item" style="margin-left:auto"><div class="team-avatars">${teamInitials}</div></div>
+      </div>
+    </div>`;
+}
+
+// ─── CALENDAR ─────────────────────────────────────────────────────────────────
+function renderCalendar() {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay = new Date(calYear, calMonth+1, 0);
+  const startDow = (firstDay.getDay()+6)%7; // Mon=0
+  const totalDays = lastDay.getDate();
+  const today = new Date();
+
+  // Build calendar cells
+  let cells = [];
+  // Leading blanks
+  for (let i=0; i<startDow; i++) {
+    const d = new Date(calYear, calMonth, -startDow+i+1);
+    cells.push({date:d, thisMonth:false});
+  }
+  for (let d=1; d<=totalDays; d++) {
+    cells.push({date: new Date(calYear,calMonth,d), thisMonth:true});
+  }
+  // Trailing blanks
+  while (cells.length%7!==0) {
+    const last = cells[cells.length-1].date;
+    cells.push({date: new Date(last.getFullYear(),last.getMonth(),last.getDate()+1), thisMonth:false});
+  }
+
+  const statusColor = {active:'ev-active',planning:'ev-planning',pitched:'ev-pitched',completed:'ev-completed'};
+
+  function renderCell(cell) {
+    const isToday = cell.thisMonth &&
+      cell.date.getDate()===today.getDate() &&
+      cell.date.getMonth()===today.getMonth() &&
+      cell.date.getFullYear()===today.getFullYear();
+
+    const events = store.projects.filter(p => {
+      if (!p.startDate || !p.endDate) return false;
+      const s = new Date(p.startDate), e = new Date(p.endDate);
+      return cell.date >= s && cell.date <= e;
+    });
+
+    const evHtml = events.slice(0,2).map(p => {
+      const s = new Date(p.startDate);
+      const isStart = cell.date.toDateString()===s.toDateString();
+      return `<div class="cal-event ${statusColor[p.status]||''}" onclick="event.stopPropagation();navigate('project-detail',${p.id})">${isStart?p.name.split('—')[0].trim():'·'}</div>`;
+    }).join('');
+
+    return `
+      <div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}">
+        <div class="cal-day-num">${cell.date.getDate()}</div>
+        ${evHtml}
+      </div>`;
+  }
+
+  // List view of projects sorted by date
+  const sorted = [...store.projects]
+    .filter(p => p.startDate || p.endDate)
+    .sort((a,b) => new Date(a.startDate)-new Date(b.startDate));
+
+  const dotColor = {active:'var(--green)',planning:'var(--accent)',pitched:'var(--blue)',completed:'var(--muted)'};
+
+  return `
+    <div class="topbar">
+      <div>
+        <div class="page-title">Calendar</div>
+        <div class="page-sub">Project timeline overview</div>
       </div>
     </div>
-  `;
+    <div class="content">
+      <div class="cal-nav">
+        <button class="btn btn-ghost btn-sm" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}render()">← Prev</button>
+        <div class="cal-month">${monthNames[calMonth]} ${calYear}</div>
+        <button class="btn btn-ghost btn-sm" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}render()">Next →</button>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-header">
+          ${days.map(d=>`<div class="cal-header-cell">${d}</div>`).join('')}
+        </div>
+        <div class="cal-body">
+          ${cells.map(c => renderCell(c)).join('')}
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top:8px">
+        <div class="section-title">All Projects</div>
+      </div>
+      <div class="cal-list">
+        ${sorted.map(p => `
+          <div class="cal-list-item" onclick="navigate('project-detail',${p.id})">
+            <div class="cal-dot" style="background:${dotColor[p.status]||'var(--muted)'}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:14px">${p.name}</div>
+              <div style="font-size:12px;color:var(--muted)">${p.client}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:12px;font-weight:600">${formatDate(p.startDate)}</div>
+              <div style="font-size:11px;color:var(--muted)">→ ${formatDate(p.endDate)}</div>
+            </div>
+            <div class="status-badge badge-${p.status}">${p.status}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+// ─── IDEAS PARK ────────────────────────────────────────────────────────────────
+function renderIdeas() {
+  const categories = [...new Set(store.ideas.map(i=>i.category))];
+  return `
+    <div class="topbar">
+      <div>
+        <div class="page-title">Ideas Park</div>
+        <div class="page-sub">A space for wild, half-formed, and brilliant ideas.</div>
+      </div>
+      <button class="btn btn-primary" onclick="openNewIdeaModal()">+ Add Idea</button>
+    </div>
+    <div class="content">
+      ${store.ideas.length===0 ? `<div class="empty-state"><div class="empty-icon">✦</div><p>No ideas yet. Drop the first one.</p></div>` : ''}
+      <div class="ideas-grid">
+        ${store.ideas.map(idea => `
+          <div class="idea-card">
+            <div class="idea-category-tag">${idea.category}</div>
+            <div class="idea-title">${idea.title}</div>
+            <div class="idea-desc">${idea.description}</div>
+            <div class="idea-footer">
+              <div class="idea-by">By <strong>${idea.submittedBy}</strong> · ${formatDate(idea.date)}</div>
+              <button class="btn btn-ghost btn-sm" onclick="deleteIdea(${idea.id})">✕</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
 }
 
 // ─── LEADS ────────────────────────────────────────────────────────────────────
 const LEAD_STATUSES = [
-  { key: 'not-contacted', label: 'Not Contacted' },
-  { key: 'reached-out', label: 'Reached Out' },
-  { key: 'in-conversation', label: 'In Conversation' },
-  { key: 'proposal-sent', label: 'Proposal Sent' },
-  { key: 'won', label: 'Won' },
-  { key: 'lost', label: 'Lost' },
+  {key:'not-contacted',label:'Not Contacted'},
+  {key:'reached-out',label:'Reached Out'},
+  {key:'in-conversation',label:'In Conversation'},
+  {key:'proposal-sent',label:'Proposal Sent'},
+  {key:'won',label:'Won'},
+  {key:'lost',label:'Lost'},
 ];
 
 function renderLeads() {
-  const pipeline = LEAD_STATUSES.map(s => ({
+  const activePipeline = LEAD_STATUSES.filter(s => !['won','lost'].includes(s.key)).map(s => ({
     ...s,
-    leads: store.leads.filter(l => l.status === s.key),
-    value: store.leads.filter(l => l.status === s.key).reduce((sum, l) => sum + (l.estimatedValue || 0), 0)
+    leads: store.leads.filter(l=>l.status===s.key),
+    value: store.leads.filter(l=>l.status===s.key).reduce((sum,l)=>sum+(l.estimatedValue||0),0)
   }));
-
-  const activePipeline = pipeline.filter(s => !['won','lost'].includes(s.key));
-  const totalPipelineValue = store.leads
-    .filter(l => !['won','lost'].includes(l.status))
-    .reduce((s, l) => s + (l.estimatedValue || 0), 0);
+  const totalValue = store.leads.filter(l=>!['won','lost'].includes(l.status)).reduce((s,l)=>s+(l.estimatedValue||0),0);
 
   return `
     <div class="topbar">
       <div>
         <div class="page-title">Leads</div>
-        <div class="page-sub">${store.leads.length} leads · £${totalPipelineValue.toLocaleString()} pipeline value</div>
+        <div class="page-sub">${store.leads.length} leads · £${totalValue.toLocaleString()} pipeline</div>
       </div>
-      <button class="btn btn-primary" onclick="openNewLeadModal()">+ Add Lead</button>
+      <button class="btn btn-primary" onclick="openNewLeadModal()">+ Add</button>
     </div>
     <div class="content">
       <div class="pipeline">
-        ${activePipeline.map(s => `
+        ${activePipeline.map(s=>`
           <div class="pipeline-col">
             <div class="pipeline-col-label">${s.label}</div>
             <div class="pipeline-col-count">${s.leads.length}</div>
-            ${s.value > 0 ? `<div class="pipeline-col-value">£${s.value.toLocaleString()}</div>` : ''}
+            ${s.value>0?`<div class="pipeline-col-value">£${s.value.toLocaleString()}</div>`:''}
           </div>
         `).join('')}
       </div>
-
       <div class="section-header">
         <div class="section-title">All Leads</div>
       </div>
       <div class="card">
-        ${store.leads.length === 0 ? `<div class="empty-state"><div class="empty-icon">◉</div><p>No leads yet. Add your first one.</p></div>` : ''}
-        ${store.leads.map(l => `
+        ${store.leads.length===0?`<div class="empty-state"><div class="empty-icon">◉</div><p>No leads yet.</p></div>`:''}
+        ${store.leads.map(l=>`
           <div class="lead-row">
             <div class="lead-avatar">${initials(l.company)}</div>
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <div class="lead-name">${l.company}</div>
-                <div class="status-badge badge-${l.status}">${LEAD_STATUSES.find(s=>s.key===l.status)?.label || l.status}</div>
+                <div class="status-badge badge-${l.status}">${LEAD_STATUSES.find(s=>s.key===l.status)?.label||l.status}</div>
               </div>
-              <div class="lead-detail">${l.contactName}${l.contactEmail ? ' · ' + l.contactEmail : ''} · ${l.projectType}</div>
-              ${l.estimatedValue ? `<div class="lead-detail" style="color:var(--accent);font-weight:600">Est. £${l.estimatedValue.toLocaleString()}</div>` : ''}
-              ${l.notes ? `<div class="lead-notes">${l.notes}</div>` : ''}
+              <div class="lead-detail">${l.contactName}${l.contactEmail?' · '+l.contactEmail:''} · ${l.projectType}</div>
+              ${l.estimatedValue?`<div class="lead-detail" style="color:var(--blue);font-weight:700">Est. £${l.estimatedValue.toLocaleString()}</div>`:''}
+              ${l.notes?`<div class="lead-notes">${l.notes}</div>`:''}
             </div>
             <div class="lead-actions">
               <button class="btn btn-ghost btn-sm" onclick="openEditLeadModal(${l.id})">Edit</button>
@@ -915,19 +1214,17 @@ function renderLeads() {
           </div>
         `).join('')}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ─── PROJECT DETAIL ───────────────────────────────────────────────────────────
 function renderProjectDetail() {
   const p = currentProject;
   if (!p) return '';
-
   return `
     <div class="topbar">
       <div>
-        <div class="back-btn" onclick="navigate('projects')">← Back to projects</div>
+        <div class="back-btn" onclick="navigate('projects')">← Projects</div>
         <div class="page-title">${p.name}</div>
         <div class="page-sub">${p.client} · <span class="status-badge badge-${p.status}">${p.status}</span></div>
       </div>
@@ -940,44 +1237,30 @@ function renderProjectDetail() {
         <div class="tab ${currentTab==='budget'?'active':''}" onclick="switchTab('budget')">Budget</div>
         <div class="tab ${currentTab==='contacts'?'active':''}" onclick="switchTab('contacts')">Contacts</div>
       </div>
-      ${currentTab === 'brief' ? renderBriefTab(p) : ''}
-      ${currentTab === 'team' ? renderTeamTab(p) : ''}
-      ${currentTab === 'budget' ? renderBudgetTab(p) : ''}
-      ${currentTab === 'contacts' ? renderContactsTab(p) : ''}
-    </div>
-  `;
+      ${currentTab==='brief'?renderBriefTab(p):''}
+      ${currentTab==='team'?renderTeamTab(p):''}
+      ${currentTab==='budget'?renderBudgetTab(p):''}
+      ${currentTab==='contacts'?renderContactsTab(p):''}
+    </div>`;
 }
 
-function switchTab(tab) { currentTab = tab; render(); }
+function switchTab(tab) { currentTab=tab; render(); }
 
 function renderBriefTab(p) {
   return `
     <div class="section-header">
       <div class="section-title">Project Brief</div>
-      <button class="btn btn-ghost btn-sm" onclick="openEditBriefModal()">Edit Brief</button>
+      <button class="btn btn-ghost btn-sm" onclick="openEditBriefModal()">Edit</button>
     </div>
     <div class="brief-content">
-      <div class="brief-section">
-        <div class="brief-section-title">Overview</div>
-        <div class="brief-section-content">${p.brief.overview || '—'}</div>
-      </div>
+      <div class="brief-section"><div class="brief-section-title">Overview</div><div class="brief-section-content">${p.brief.overview||'—'}</div></div>
       <div class="divider"></div>
-      <div class="brief-section">
-        <div class="brief-section-title">Objectives</div>
-        <div class="brief-section-content">${p.brief.objectives || '—'}</div>
-      </div>
+      <div class="brief-section"><div class="brief-section-title">Objectives</div><div class="brief-section-content">${p.brief.objectives||'—'}</div></div>
       <div class="divider"></div>
-      <div class="brief-section">
-        <div class="brief-section-title">Deliverables</div>
-        <div class="brief-section-content">${p.brief.deliverables || '—'}</div>
-      </div>
+      <div class="brief-section"><div class="brief-section-title">Deliverables</div><div class="brief-section-content">${p.brief.deliverables||'—'}</div></div>
       <div class="divider"></div>
-      <div class="brief-section">
-        <div class="brief-section-title">Timeline Notes</div>
-        <div class="brief-section-content">${p.brief.timeline || '—'}</div>
-      </div>
-    </div>
-  `;
+      <div class="brief-section"><div class="brief-section-title">Timeline Notes</div><div class="brief-section-content">${p.brief.timeline||'—'}</div></div>
+    </div>`;
 }
 
 function renderTeamTab(p) {
@@ -988,75 +1271,66 @@ function renderTeamTab(p) {
       <button class="btn btn-primary btn-sm" onclick="openAllocateModal()">+ Allocate</button>
     </div>
     <div class="card">
-      ${assigned.length === 0 ? `<div class="empty-state"><div class="empty-icon">◎</div><p>No team members assigned yet.</p></div>` : ''}
-      ${assigned.map(m => {
-        const days = (p.teamAllocation && p.teamAllocation[m.id]) || 0;
+      ${assigned.length===0?`<div class="empty-state"><div class="empty-icon">◎</div><p>No team members assigned yet.</p></div>`:''}
+      ${assigned.map(m=>{
+        const days=(p.teamAllocation&&p.teamAllocation[m.id])||0;
         return `
           <div class="allocate-row">
             <div class="allocate-info">
-              <div class="team-avatar-lg" style="width:38px;height:38px;font-size:13px">${initials(m.name)}</div>
-              <div>
-                <div style="font-weight:600;font-size:14px">${m.name}</div>
+              <div class="team-avatar-lg" style="width:36px;height:36px;font-size:12px;margin-bottom:0">${initials(m.name)}</div>
+              <div style="min-width:0">
+                <div style="font-weight:700;font-size:13px">${m.name}</div>
                 <div style="font-size:12px;color:var(--muted)">${m.role} · £${m.rate}/day</div>
               </div>
             </div>
-            <div style="display:flex;align-items:center;gap:20px">
+            <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
               <div style="text-align:right">
-                <div style="font-size:13px;font-weight:600">${days} days</div>
-                <div style="font-size:12px;color:var(--muted)">£${(days * m.rate).toLocaleString()}</div>
+                <div style="font-size:13px;font-weight:700">${days} days</div>
+                <div style="font-size:11px;color:var(--muted)">£${(days*m.rate).toLocaleString()}</div>
               </div>
               <button class="btn btn-ghost btn-sm" onclick="removeTeamMember(${m.id})">Remove</button>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('')}
-    </div>
-  `;
+    </div>`;
 }
 
 function renderBudgetTab(p) {
-  const spent = p.spent;
-  const remaining = p.budget - spent;
-  const pct = p.budget > 0 ? Math.round(spent / p.budget * 100) : 0;
-  const over = spent > p.budget;
+  const spent=p.spent, remaining=p.budget-spent;
+  const pct=p.budget>0?Math.round(spent/p.budget*100):0;
+  const over=spent>p.budget;
   return `
     <div class="budget-summary">
-      <div class="budget-stat">
-        <div class="budget-label">Total Budget</div>
-        <div class="budget-value">£${p.budget.toLocaleString()}</div>
-      </div>
+      <div class="budget-stat"><div class="budget-label">Total Budget</div><div class="budget-value">£${p.budget.toLocaleString()}</div></div>
       <div class="budget-stat">
         <div class="budget-label">Spent</div>
         <div class="budget-value ${over?'over':''}">£${spent.toLocaleString()}</div>
-        <div class="budget-bar"><div class="budget-bar-fill ${over?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
+        <div class="budget-bar" style="margin-top:6px"><div class="budget-bar-fill ${over?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
       </div>
-      <div class="budget-stat">
-        <div class="budget-label">Remaining</div>
-        <div class="budget-value ${over?'over':'under'}">£${Math.abs(remaining).toLocaleString()} ${over?'over':''}</div>
-      </div>
+      <div class="budget-stat"><div class="budget-label">Remaining</div><div class="budget-value ${over?'over':'good'}">£${Math.abs(remaining).toLocaleString()} ${over?'over':''}</div></div>
     </div>
     <div class="section-header">
       <div class="section-title">Expenses</div>
-      <button class="btn btn-primary btn-sm" onclick="openAddExpenseModal()">+ Add Expense</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddExpenseModal()">+ Add</button>
     </div>
     <div class="card" style="padding:0;overflow:hidden">
-      ${p.expenses.length === 0 ? `<div class="empty-state"><div class="empty-icon">£</div><p>No expenses logged yet.</p></div>` : `
+      ${p.expenses.length===0?`<div class="empty-state"><div class="empty-icon">£</div><p>No expenses logged yet.</p></div>`:`
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Description</th><th>Category</th><th>Date</th><th style="text-align:right">Amount</th><th></th></tr></thead>
         <tbody>
-          ${p.expenses.map(e => `
+          ${p.expenses.map(e=>`
             <tr>
               <td>${e.description}</td>
               <td><span class="status-badge badge-planning">${e.category}</span></td>
               <td style="color:var(--muted)">${formatDate(e.date)}</td>
-              <td style="text-align:right;font-weight:600">£${e.amount.toLocaleString()}</td>
+              <td style="text-align:right;font-weight:700">£${e.amount.toLocaleString()}</td>
               <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="deleteExpense(${e.id})">✕</button></td>
-            </tr>
-          `).join('')}
+            </tr>`).join('')}
         </tbody>
-      </table>`}
-    </div>
-  `;
+      </table>
+      </div>`}
+    </div>`;
 }
 
 function renderContactsTab(p) {
@@ -1064,11 +1338,11 @@ function renderContactsTab(p) {
   return `
     <div class="section-header">
       <div class="section-title">Project Contacts</div>
-      <button class="btn btn-primary btn-sm" onclick="openAddContactToProjectModal()">+ Add Contact</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddContactToProjectModal()">+ Add</button>
     </div>
     <div class="card">
-      ${assigned.length === 0 ? `<div class="empty-state"><div class="empty-icon">◇</div><p>No contacts linked to this project.</p></div>` : ''}
-      ${assigned.map(c => `
+      ${assigned.length===0?`<div class="empty-state"><div class="empty-icon">◇</div><p>No contacts linked.</p></div>`:''}
+      ${assigned.map(c=>`
         <div class="contact-row">
           <div class="contact-avatar">${initials(c.name)}</div>
           <div>
@@ -1079,55 +1353,45 @@ function renderContactsTab(p) {
           <div class="contact-actions">
             <button class="btn btn-ghost btn-sm" onclick="removeContact(${c.id})">Remove</button>
           </div>
-        </div>
-      `).join('')}
-    </div>
-  `;
+        </div>`).join('')}
+    </div>`;
 }
 
 // ─── TEAM ─────────────────────────────────────────────────────────────────────
 function renderTeam() {
   return `
     <div class="topbar">
-      <div>
-        <div class="page-title">Team</div>
-        <div class="page-sub">${store.team.length} freelancers</div>
-      </div>
-      <button class="btn btn-primary" onclick="openNewMemberModal()">+ Add Member</button>
+      <div><div class="page-title">Team</div><div class="page-sub">${store.team.length} freelancers</div></div>
+      <button class="btn btn-primary" onclick="openNewMemberModal()">+ Add</button>
     </div>
     <div class="content">
       <div class="team-grid">
-        ${store.team.map(m => `
+        ${store.team.map(m=>`
           <div class="team-card">
             <div class="team-avatar-lg">${initials(m.name)}</div>
             <div class="team-name">${m.name}</div>
             <div class="team-role">${m.role}</div>
             <div class="team-rate">£${m.rate}/day</div>
-            <div class="skill-tags">${m.skills.map(s => `<span class="skill-tag">${s}</span>`).join('')}</div>
-            <div style="margin-top:14px;display:flex;gap:8px">
+            <div class="skill-tags">${m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join('')}</div>
+            <div style="margin-top:12px;display:flex;gap:6px">
               <button class="btn btn-ghost btn-sm" onclick="openEditMemberModal(${m.id})">Edit</button>
               <button class="btn btn-ghost btn-sm" onclick="deleteMember(${m.id})">Remove</button>
             </div>
-          </div>
-        `).join('')}
+          </div>`).join('')}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ─── CONTACTS ─────────────────────────────────────────────────────────────────
 function renderContacts() {
   return `
     <div class="topbar">
-      <div>
-        <div class="page-title">Contacts</div>
-        <div class="page-sub">${store.contacts.length} contacts</div>
-      </div>
-      <button class="btn btn-primary" onclick="openNewContactModal()">+ Add Contact</button>
+      <div><div class="page-title">Contacts</div><div class="page-sub">${store.contacts.length} contacts</div></div>
+      <button class="btn btn-primary" onclick="openNewContactModal()">+ Add</button>
     </div>
     <div class="content">
       <div class="card">
-        ${store.contacts.map(c => `
+        ${store.contacts.map(c=>`
           <div class="contact-row">
             <div class="contact-avatar">${initials(c.name)}</div>
             <div>
@@ -1137,71 +1401,86 @@ function renderContacts() {
             </div>
             <div class="contact-actions">
               <button class="btn btn-ghost btn-sm" onclick="openEditContactModal(${c.id})">Edit</button>
-              <button class="btn btn-ghost btn-sm" onclick="deleteContact(${c.id})">Remove</button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteContact(${c.id})">✕</button>
             </div>
-          </div>
-        `).join('')}
+          </div>`).join('')}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
-function openModal(html) {
-  document.getElementById('modal-content').innerHTML = html;
-  document.getElementById('modal').classList.add('open');
-}
+function openModal(html) { document.getElementById('modal-content').innerHTML=html; document.getElementById('modal').classList.add('open'); }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
-function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+function closeModalOutside(e) { if(e.target===document.getElementById('modal')) closeModal(); }
+function statusOpts(sel) { return LEAD_STATUSES.map(s=>`<option value="${s.key}" ${sel===s.key?'selected':''}>${s.label}</option>`).join(''); }
 
-function statusOptions(selected) {
-  return LEAD_STATUSES.map(s => `<option value="${s.key}" ${selected===s.key?'selected':''}>${s.label}</option>`).join('');
+// IDEAS
+function openNewIdeaModal() {
+  const memberNames = store.team.map(m=>`<option>${m.name}</option>`).join('');
+  openModal(`
+    <div class="modal-title">✦ New Idea</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Idea Title</label><input id="i-title" placeholder="Give it a name..."></div>
+      <div class="form-group"><label>Category</label>
+        <select id="i-cat"><option>Brand</option><option>Event</option><option>Space</option><option>Print</option><option>Digital</option><option>Product</option><option>Other</option></select>
+      </div>
+      <div class="form-group"><label>Submitted By</label>
+        <select id="i-by"><option value="">— Select —</option>${memberNames}<option value="Other">Other</option></select>
+      </div>
+      <div class="form-group full"><label>Description</label><textarea id="i-desc" placeholder="Describe the idea — no filter needed..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createIdea()">Add Idea</button>
+    </div>`);
 }
 
+function createIdea() {
+  const title = document.getElementById('i-title').value.trim();
+  if (!title) { toast('Give the idea a title'); return; }
+  store.ideas.unshift({
+    id: store.nextId.ideas++,
+    title,
+    category: document.getElementById('i-cat').value,
+    description: document.getElementById('i-desc').value,
+    submittedBy: document.getElementById('i-by').value || 'Anonymous',
+    date: new Date().toISOString().split('T')[0]
+  });
+  closeModal(); toast('Idea added ✦'); render();
+}
+
+function deleteIdea(id) { store.ideas=store.ideas.filter(i=>i.id!==id); toast('Idea removed'); render(); }
+
+// LEADS
 function openNewLeadModal() {
   openModal(`
     <div class="modal-title">Add Lead</div>
     <div class="form-grid">
       <div class="form-group"><label>Company</label><input id="l-company" placeholder="Company name"></div>
       <div class="form-group"><label>Contact Name</label><input id="l-contact" placeholder="Full name"></div>
-      <div class="form-group"><label>Contact Email</label><input id="l-email" type="email" placeholder="email@example.com"></div>
+      <div class="form-group"><label>Contact Email</label><input id="l-email" type="email"></div>
       <div class="form-group"><label>Project Type</label>
-        <select id="l-type">
-          <option>Brand Activation</option><option>Pop-Up</option><option>Branding</option>
-          <option>Event</option><option>Creative Project</option><option>Other</option>
-        </select>
+        <select id="l-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Event</option><option>Creative Project</option><option>Other</option></select>
       </div>
       <div class="form-group"><label>Estimated Value (£)</label><input id="l-value" type="number" placeholder="0"></div>
-      <div class="form-group"><label>Status</label><select id="l-status">${statusOptions('not-contacted')}</select></div>
+      <div class="form-group"><label>Status</label><select id="l-status">${statusOpts('not-contacted')}</select></div>
       <div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes" placeholder="Context, how you met, what to do next..."></textarea></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="createLead()">Add Lead</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function createLead() {
-  const company = document.getElementById('l-company').value.trim();
-  if (!company) { toast('Company name required'); return; }
-  store.leads.push({
-    id: store.nextId.leads++,
-    company,
-    contactName: document.getElementById('l-contact').value,
-    contactEmail: document.getElementById('l-email').value,
-    projectType: document.getElementById('l-type').value,
-    estimatedValue: parseInt(document.getElementById('l-value').value) || 0,
-    status: document.getElementById('l-status').value,
-    notes: document.getElementById('l-notes').value,
-  });
-  closeModal();
-  toast('Lead added');
-  render();
+  const company=document.getElementById('l-company').value.trim();
+  if(!company){toast('Company name required');return;}
+  store.leads.push({id:store.nextId.leads++,company,contactName:document.getElementById('l-contact').value,contactEmail:document.getElementById('l-email').value,projectType:document.getElementById('l-type').value,estimatedValue:parseInt(document.getElementById('l-value').value)||0,status:document.getElementById('l-status').value,notes:document.getElementById('l-notes').value});
+  closeModal();toast('Lead added');render();
 }
 
 function openEditLeadModal(id) {
-  const l = store.leads.find(x => x.id === id);
+  const l=store.leads.find(x=>x.id===id);
   openModal(`
     <div class="modal-title">Edit Lead</div>
     <div class="form-grid">
@@ -1209,38 +1488,33 @@ function openEditLeadModal(id) {
       <div class="form-group"><label>Contact Name</label><input id="l-contact" value="${l.contactName}"></div>
       <div class="form-group"><label>Contact Email</label><input id="l-email" value="${l.contactEmail}"></div>
       <div class="form-group"><label>Project Type</label>
-        <select id="l-type">
-          ${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}
-        </select>
+        <select id="l-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select>
       </div>
-      <div class="form-group"><label>Estimated Value (£)</label><input id="l-value" type="number" value="${l.estimatedValue || 0}"></div>
-      <div class="form-group"><label>Status</label><select id="l-status">${statusOptions(l.status)}</select></div>
-      <div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes">${l.notes || ''}</textarea></div>
+      <div class="form-group"><label>Estimated Value (£)</label><input id="l-value" type="number" value="${l.estimatedValue||0}"></div>
+      <div class="form-group"><label>Status</label><select id="l-status">${statusOpts(l.status)}</select></div>
+      <div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes">${l.notes||''}</textarea></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveLead(${id})">Save</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function saveLead(id) {
-  const l = store.leads.find(x => x.id === id);
-  l.company = document.getElementById('l-company').value.trim() || l.company;
-  l.contactName = document.getElementById('l-contact').value;
-  l.contactEmail = document.getElementById('l-email').value;
-  l.projectType = document.getElementById('l-type').value;
-  l.estimatedValue = parseInt(document.getElementById('l-value').value) || 0;
-  l.status = document.getElementById('l-status').value;
-  l.notes = document.getElementById('l-notes').value;
-  closeModal(); toast('Lead saved'); render();
+  const l=store.leads.find(x=>x.id===id);
+  l.company=document.getElementById('l-company').value.trim()||l.company;
+  l.contactName=document.getElementById('l-contact').value;
+  l.contactEmail=document.getElementById('l-email').value;
+  l.projectType=document.getElementById('l-type').value;
+  l.estimatedValue=parseInt(document.getElementById('l-value').value)||0;
+  l.status=document.getElementById('l-status').value;
+  l.notes=document.getElementById('l-notes').value;
+  closeModal();toast('Lead saved');render();
 }
 
-function deleteLead(id) {
-  store.leads = store.leads.filter(l => l.id !== id);
-  toast('Lead removed'); render();
-}
+function deleteLead(id){store.leads=store.leads.filter(l=>l.id!==id);toast('Lead removed');render();}
 
+// PROJECTS
 function openNewProjectModal() {
   openModal(`
     <div class="modal-title">New Project</div>
@@ -1254,36 +1528,25 @@ function openNewProjectModal() {
         <select id="f-status"><option value="planning">Planning</option><option value="active">Active</option><option value="pitched">Pitched</option><option value="completed">Completed</option></select>
       </div>
       <div class="form-group"><label>Budget (£)</label><input id="f-budget" type="number" placeholder="0"></div>
+      <div class="form-group"></div>
       <div class="form-group"><label>Start Date</label><input id="f-start" type="date"></div>
       <div class="form-group"><label>End Date</label><input id="f-end" type="date"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="createProject()">Create Project</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function createProject() {
-  const name = document.getElementById('f-name').value.trim();
-  if (!name) { toast('Project name is required'); return; }
-  store.projects.push({
-    id: store.nextId.projects++, name,
-    client: document.getElementById('f-client').value || '—',
-    type: document.getElementById('f-type').value,
-    status: document.getElementById('f-status').value,
-    budget: parseInt(document.getElementById('f-budget').value) || 0,
-    spent: 0,
-    startDate: document.getElementById('f-start').value,
-    endDate: document.getElementById('f-end').value,
-    brief: { overview: '', objectives: '', deliverables: '', timeline: '' },
-    teamIds: [], contactIds: [], expenses: [], teamAllocation: {}
-  });
-  closeModal(); toast('Project created'); render();
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){toast('Project name required');return;}
+  store.projects.push({id:store.nextId.projects++,name,client:document.getElementById('f-client').value||'—',type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{}});
+  closeModal();toast('Project created');render();
 }
 
 function openEditProjectModal() {
-  const p = currentProject;
+  const p=currentProject;
   openModal(`
     <div class="modal-title">Edit Project</div>
     <div class="form-grid">
@@ -1296,30 +1559,30 @@ function openEditProjectModal() {
         <select id="f-status">${['planning','active','pitched','completed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}</select>
       </div>
       <div class="form-group"><label>Budget (£)</label><input id="f-budget" type="number" value="${p.budget}"></div>
+      <div class="form-group"></div>
       <div class="form-group"><label>Start Date</label><input id="f-start" type="date" value="${p.startDate}"></div>
       <div class="form-group"><label>End Date</label><input id="f-end" type="date" value="${p.endDate}"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveProject()">Save Changes</button>
-    </div>
-  `);
+      <button class="btn btn-primary" onclick="saveProject()">Save</button>
+    </div>`);
 }
 
 function saveProject() {
-  const p = currentProject;
-  p.name = document.getElementById('f-name').value.trim() || p.name;
-  p.client = document.getElementById('f-client').value;
-  p.type = document.getElementById('f-type').value;
-  p.status = document.getElementById('f-status').value;
-  p.budget = parseInt(document.getElementById('f-budget').value) || 0;
-  p.startDate = document.getElementById('f-start').value;
-  p.endDate = document.getElementById('f-end').value;
-  closeModal(); toast('Project saved'); render();
+  const p=currentProject;
+  p.name=document.getElementById('f-name').value.trim()||p.name;
+  p.client=document.getElementById('f-client').value;
+  p.type=document.getElementById('f-type').value;
+  p.status=document.getElementById('f-status').value;
+  p.budget=parseInt(document.getElementById('f-budget').value)||0;
+  p.startDate=document.getElementById('f-start').value;
+  p.endDate=document.getElementById('f-end').value;
+  closeModal();toast('Project saved');render();
 }
 
 function openEditBriefModal() {
-  const p = currentProject;
+  const p=currentProject;
   openModal(`
     <div class="modal-title">Edit Brief</div>
     <div class="form-grid">
@@ -1331,25 +1594,24 @@ function openEditBriefModal() {
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveBrief()">Save Brief</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function saveBrief() {
-  const p = currentProject;
-  p.brief.overview = document.getElementById('b-overview').value;
-  p.brief.objectives = document.getElementById('b-objectives').value;
-  p.brief.deliverables = document.getElementById('b-deliverables').value;
-  p.brief.timeline = document.getElementById('b-timeline').value;
-  closeModal(); toast('Brief saved'); render();
+  const p=currentProject;
+  p.brief.overview=document.getElementById('b-overview').value;
+  p.brief.objectives=document.getElementById('b-objectives').value;
+  p.brief.deliverables=document.getElementById('b-deliverables').value;
+  p.brief.timeline=document.getElementById('b-timeline').value;
+  closeModal();toast('Brief saved');render();
 }
 
 function openAllocateModal() {
-  const p = currentProject;
-  const available = store.team.filter(m => !p.teamIds.includes(m.id));
+  const p=currentProject;
+  const available=store.team.filter(m=>!p.teamIds.includes(m.id));
   openModal(`
     <div class="modal-title">Allocate Team Member</div>
-    ${available.length === 0 ? '<p style="color:var(--muted)">All team members are already assigned.</p>' : `
+    ${available.length===0?'<p style="color:var(--muted)">All team members already assigned.</p>':`
     <div class="form-grid">
       <div class="form-group"><label>Team Member</label>
         <select id="f-member">${available.map(m=>`<option value="${m.id}">${m.name} — ${m.role} (£${m.rate}/day)</option>`).join('')}</select>
@@ -1358,26 +1620,25 @@ function openAllocateModal() {
     </div>`}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      ${available.length > 0 ? `<button class="btn btn-primary" onclick="allocateMember()">Add to Project</button>` : ''}
-    </div>
-  `);
+      ${available.length>0?`<button class="btn btn-primary" onclick="allocateMember()">Add to Project</button>`:''}
+    </div>`);
 }
 
 function allocateMember() {
-  const memberId = parseInt(document.getElementById('f-member').value);
-  const days = parseInt(document.getElementById('f-days').value) || 0;
-  const p = currentProject;
+  const memberId=parseInt(document.getElementById('f-member').value);
+  const days=parseInt(document.getElementById('f-days').value)||0;
+  const p=currentProject;
   p.teamIds.push(memberId);
-  if (!p.teamAllocation) p.teamAllocation = {};
-  p.teamAllocation[memberId] = days;
-  closeModal(); toast('Team member added'); render();
+  if(!p.teamAllocation) p.teamAllocation={};
+  p.teamAllocation[memberId]=days;
+  closeModal();toast('Team member added');render();
 }
 
 function removeTeamMember(id) {
-  const p = currentProject;
-  p.teamIds = p.teamIds.filter(tid => tid !== id);
-  if (p.teamAllocation) delete p.teamAllocation[id];
-  toast('Team member removed'); render();
+  const p=currentProject;
+  p.teamIds=p.teamIds.filter(tid=>tid!==id);
+  if(p.teamAllocation) delete p.teamAllocation[id];
+  toast('Removed');render();
 }
 
 function openAddExpenseModal() {
@@ -1394,54 +1655,49 @@ function openAddExpenseModal() {
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="addExpense()">Add Expense</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function addExpense() {
-  const amount = parseFloat(document.getElementById('f-amount').value) || 0;
-  const desc = document.getElementById('f-desc').value.trim();
-  if (!desc) { toast('Description required'); return; }
-  const p = currentProject;
-  p.expenses.push({ id: store.nextId.expenses++, description: desc, category: document.getElementById('f-cat').value, amount, date: document.getElementById('f-date').value });
-  p.spent = p.expenses.reduce((s, e) => s + e.amount, 0);
-  closeModal(); toast('Expense added'); render();
+  const amount=parseFloat(document.getElementById('f-amount').value)||0;
+  const desc=document.getElementById('f-desc').value.trim();
+  if(!desc){toast('Description required');return;}
+  const p=currentProject;
+  p.expenses.push({id:store.nextId.expenses++,description:desc,category:document.getElementById('f-cat').value,amount,date:document.getElementById('f-date').value});
+  p.spent=p.expenses.reduce((s,e)=>s+e.amount,0);
+  closeModal();toast('Expense added');render();
 }
 
 function deleteExpense(id) {
-  const p = currentProject;
-  p.expenses = p.expenses.filter(e => e.id !== id);
-  p.spent = p.expenses.reduce((s, e) => s + e.amount, 0);
-  toast('Expense removed'); render();
+  const p=currentProject;
+  p.expenses=p.expenses.filter(e=>e.id!==id);
+  p.spent=p.expenses.reduce((s,e)=>s+e.amount,0);
+  toast('Removed');render();
 }
 
 function openAddContactToProjectModal() {
-  const p = currentProject;
-  const available = store.contacts.filter(c => !p.contactIds.includes(c.id));
+  const p=currentProject;
+  const available=store.contacts.filter(c=>!p.contactIds.includes(c.id));
   openModal(`
-    <div class="modal-title">Add Contact to Project</div>
-    ${available.length === 0 ? '<p style="color:var(--muted)">All contacts are already linked.</p>' : `
+    <div class="modal-title">Add Contact</div>
+    ${available.length===0?'<p style="color:var(--muted)">All contacts already linked.</p>':`
     <div class="form-group">
       <label>Select Contact</label>
       <select id="f-contact">${available.map(c=>`<option value="${c.id}">${c.name} — ${c.company}</option>`).join('')}</select>
     </div>`}
-    <div style="margin-top:12px;color:var(--muted);font-size:12px">Don't see who you need? <a onclick="closeModal();navigate('contacts')" style="color:var(--accent);cursor:pointer">Add them to contacts first.</a></div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">Don't see them? <a onclick="closeModal();navigate('contacts')" style="color:var(--blue);cursor:pointer">Add to contacts first.</a></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      ${available.length > 0 ? `<button class="btn btn-primary" onclick="addContactToProject()">Add Contact</button>` : ''}
-    </div>
-  `);
+      ${available.length>0?`<button class="btn btn-primary" onclick="addContactToProject()">Add</button>`:''}
+    </div>`);
 }
 
 function addContactToProject() {
   currentProject.contactIds.push(parseInt(document.getElementById('f-contact').value));
-  closeModal(); toast('Contact added'); render();
+  closeModal();toast('Contact added');render();
 }
 
-function removeContact(id) {
-  currentProject.contactIds = currentProject.contactIds.filter(cid => cid !== id);
-  toast('Contact removed'); render();
-}
+function removeContact(id) { currentProject.contactIds=currentProject.contactIds.filter(cid=>cid!==id);toast('Removed');render(); }
 
 function openNewMemberModal() {
   openModal(`
@@ -1456,19 +1712,18 @@ function openNewMemberModal() {
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="createMember()">Add Member</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function createMember() {
-  const name = document.getElementById('f-name').value.trim();
-  if (!name) { toast('Name required'); return; }
-  store.team.push({ id: store.nextId.team++, name, role: document.getElementById('f-role').value || 'Freelancer', email: document.getElementById('f-email').value, rate: parseInt(document.getElementById('f-rate').value) || 0, skills: document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean) });
-  closeModal(); toast('Team member added'); render();
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){toast('Name required');return;}
+  store.team.push({id:store.nextId.team++,name,role:document.getElementById('f-role').value||'Freelancer',email:document.getElementById('f-email').value,rate:parseInt(document.getElementById('f-rate').value)||0,skills:document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean)});
+  closeModal();toast('Team member added');render();
 }
 
 function openEditMemberModal(id) {
-  const m = store.team.find(t => t.id === id);
+  const m=store.team.find(t=>t.id===id);
   openModal(`
     <div class="modal-title">Edit Team Member</div>
     <div class="form-grid">
@@ -1481,31 +1736,27 @@ function openEditMemberModal(id) {
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveMember(${id})">Save</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function saveMember(id) {
-  const m = store.team.find(t => t.id === id);
-  m.name = document.getElementById('f-name').value.trim() || m.name;
-  m.role = document.getElementById('f-role').value;
-  m.email = document.getElementById('f-email').value;
-  m.rate = parseInt(document.getElementById('f-rate').value) || 0;
-  m.skills = document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean);
-  closeModal(); toast('Saved'); render();
+  const m=store.team.find(t=>t.id===id);
+  m.name=document.getElementById('f-name').value.trim()||m.name;
+  m.role=document.getElementById('f-role').value;
+  m.email=document.getElementById('f-email').value;
+  m.rate=parseInt(document.getElementById('f-rate').value)||0;
+  m.skills=document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean);
+  closeModal();toast('Saved');render();
 }
 
-function deleteMember(id) {
-  store.team = store.team.filter(m => m.id !== id);
-  toast('Team member removed'); render();
-}
+function deleteMember(id){store.team=store.team.filter(m=>m.id!==id);toast('Removed');render();}
 
 function openNewContactModal() {
   openModal(`
     <div class="modal-title">Add Contact</div>
     <div class="form-grid">
       <div class="form-group"><label>Full Name</label><input id="f-name" placeholder="Full name"></div>
-      <div class="form-group"><label>Company</label><input id="f-company" placeholder="Company"></div>
+      <div class="form-group"><label>Company</label><input id="f-company"></div>
       <div class="form-group"><label>Role</label><input id="f-role" placeholder="e.g. Brand Manager"></div>
       <div class="form-group"><label>Email</label><input id="f-email" type="email"></div>
       <div class="form-group"><label>Phone</label><input id="f-phone" placeholder="+44..."></div>
@@ -1513,19 +1764,18 @@ function openNewContactModal() {
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="createContact()">Add Contact</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function createContact() {
-  const name = document.getElementById('f-name').value.trim();
-  if (!name) { toast('Name required'); return; }
-  store.contacts.push({ id: store.nextId.contacts++, name, company: document.getElementById('f-company').value, role: document.getElementById('f-role').value, email: document.getElementById('f-email').value, phone: document.getElementById('f-phone').value });
-  closeModal(); toast('Contact added'); render();
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){toast('Name required');return;}
+  store.contacts.push({id:store.nextId.contacts++,name,company:document.getElementById('f-company').value,role:document.getElementById('f-role').value,email:document.getElementById('f-email').value,phone:document.getElementById('f-phone').value});
+  closeModal();toast('Contact added');render();
 }
 
 function openEditContactModal(id) {
-  const c = store.contacts.find(x => x.id === id);
+  const c=store.contacts.find(x=>x.id===id);
   openModal(`
     <div class="modal-title">Edit Contact</div>
     <div class="form-grid">
@@ -1538,33 +1788,25 @@ function openEditContactModal(id) {
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveContact(${id})">Save</button>
-    </div>
-  `);
+    </div>`);
 }
 
 function saveContact(id) {
-  const c = store.contacts.find(x => x.id === id);
-  c.name = document.getElementById('f-name').value.trim() || c.name;
-  c.company = document.getElementById('f-company').value;
-  c.role = document.getElementById('f-role').value;
-  c.email = document.getElementById('f-email').value;
-  c.phone = document.getElementById('f-phone').value;
-  closeModal(); toast('Contact saved'); render();
+  const c=store.contacts.find(x=>x.id===id);
+  c.name=document.getElementById('f-name').value.trim()||c.name;
+  c.company=document.getElementById('f-company').value;
+  c.role=document.getElementById('f-role').value;
+  c.email=document.getElementById('f-email').value;
+  c.phone=document.getElementById('f-phone').value;
+  closeModal();toast('Saved');render();
 }
 
-function deleteContact(id) {
-  store.contacts = store.contacts.filter(c => c.id !== id);
-  toast('Contact removed'); render();
-}
+function deleteContact(id){store.contacts=store.contacts.filter(c=>c.id!==id);toast('Removed');render();}
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
-function initials(name) { return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2); }
-function formatDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
-}
+function initials(name){return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);}
+function formatDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
 render();
 </script>
