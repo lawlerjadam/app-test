@@ -12,6 +12,7 @@
     --navy: #0F1F35; --blue: #2563EB; --blue-light: #DBEAFE;
     --green: #16A34A; --green-light: #DCFCE7; --red: #DC2626; --red-light: #FEE2E2;
     --purple: #7C3AED; --purple-light: #EDE9FE;
+    --orange: #EA580C; --orange-light: #FFEDD5;
     --radius: 10px; --sidebar-w: 230px; --bottom-nav-h: 64px;
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
@@ -27,7 +28,7 @@
   .nav-item .icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
   .sidebar-footer { margin-top: auto; padding: 0 10px; }
   .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: rgba(255,255,255,0.45); font-size: 13px; }
-  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--navy); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--navy); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 
   .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-h); background: var(--navy); z-index: 50; align-items: center; justify-content: space-around; padding: 0 4px; border-top: 1px solid rgba(255,255,255,0.08); }
   .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 6px; cursor: pointer; color: rgba(255,255,255,0.45); font-size: 10px; transition: all 0.15s; min-width: 44px; }
@@ -46,6 +47,7 @@
   .btn-ghost:hover { background: var(--surface); color: var(--text); }
   .btn-green { background: var(--green); color: #fff; border: none; }
   .btn-green:hover { background: #15803d; }
+  .btn-red { background: var(--red); color: #fff; border: none; }
   .btn-sm { padding: 5px 11px; font-size: 12px; }
 
   .content { padding: 20px 28px 40px; }
@@ -80,6 +82,12 @@
   .badge-proposal-sent { background: var(--purple-light); color: var(--purple); }
   .badge-won { background: var(--green-light); color: var(--green); }
   .badge-lost { background: var(--red-light); color: var(--red); }
+  .badge-confirmed { background: var(--green-light); color: var(--green); }
+  .badge-pending { background: var(--accent-light); color: #92700A; }
+  .badge-cancelled { background: var(--red-light); color: var(--red); }
+  .badge-needed { background: #f0f0f0; color: var(--muted); }
+  .badge-on-site { background: var(--blue-light); color: var(--blue); }
+  .badge-returned { background: var(--green-light); color: var(--green); }
 
   .project-meta { display: flex; gap: 14px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
   .meta-item { font-size: 11px; color: var(--muted); }
@@ -150,54 +158,45 @@
   .lead-actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
 
   /* ── SIGN-OFF ─────────────────────────────────────────── */
-  .signoff-header {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-  .signoff-progress-label {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8px;
-  }
+  .signoff-header { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .signoff-progress-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .signoff-progress-text { font-size: 13px; font-weight: 700; color: var(--navy); }
   .signoff-progress-pct { font-size: 12px; color: var(--muted); }
   .signoff-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
   .signoff-bar-fill { height: 100%; border-radius: 4px; background: var(--green); transition: width 0.4s; }
   .signoff-current { font-size: 12px; color: var(--muted); margin-top: 8px; }
   .signoff-current strong { color: var(--navy); }
-
   .signoff-list { display: flex; flex-direction: column; gap: 6px; }
-
-  .signoff-step {
-    display: flex; align-items: center; gap: 14px;
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    transition: all 0.15s;
-  }
-
+  .signoff-step { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; transition: all 0.15s; }
   .signoff-step.completed { border-color: var(--green-light); background: #FAFFFE; }
   .signoff-step.current { border-color: var(--accent); background: var(--accent-light); }
   .signoff-step.future { opacity: 0.55; }
-
-  .signoff-icon {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 800; flex-shrink: 0;
-  }
+  .signoff-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; flex-shrink: 0; }
   .signoff-icon.done { background: var(--green); color: #fff; }
   .signoff-icon.next { background: var(--accent); color: var(--navy); }
   .signoff-icon.pending { background: var(--border); color: var(--muted); }
-
   .signoff-step-info { flex: 1; min-width: 0; }
   .signoff-step-label { font-size: 14px; font-weight: 700; color: var(--navy); }
   .signoff-step-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .signoff-step-meta strong { color: var(--green); }
-
   .signoff-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  /* ── PRODUCTION ───────────────────────────────────────── */
+  .prod-section { margin-bottom: 24px; }
+  .prod-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+  .prod-day-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; gap: 16px; align-items: flex-start; position: relative; }
+  .prod-day-date { background: var(--navy); color: var(--accent); border-radius: 8px; padding: 10px 12px; text-align: center; flex-shrink: 0; min-width: 58px; }
+  .prod-day-date .day-num { font-size: 22px; font-weight: 800; line-height: 1; }
+  .prod-day-date .day-mon { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+  .prod-day-info { flex: 1; min-width: 0; }
+  .prod-day-location { font-size: 14px; font-weight: 700; }
+  .prod-day-times { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .prod-day-notes { font-size: 13px; color: var(--text); margin-top: 6px; line-height: 1.45; }
+  .prod-days-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .prod-remove { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 5px; }
+  .prod-remove:hover { color: var(--red); }
+  .callsheet-area { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .callsheet-textarea { width: 100%; border: none; background: transparent; font-size: 13px; font-family: inherit; color: var(--text); resize: vertical; min-height: 120px; outline: none; line-height: 1.6; }
 
   /* ── CALENDAR ─────────────────────────────────────────── */
   .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -290,6 +289,7 @@
     .toast { bottom: calc(var(--bottom-nav-h) + 12px); left: 16px; right: 16px; text-align: center; }
     .signoff-step { padding: 12px; gap: 10px; }
     .signoff-step-label { font-size: 13px; }
+    .prod-days-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -331,19 +331,19 @@
 <script>
 // ─── SIGN-OFF STEPS ───────────────────────────────────────────────────────────
 const SIGNOFF_STEPS = [
-  { id: 'brief',         label: 'Brief signed off' },
-  { id: 'budget',        label: 'Budget approved' },
-  { id: 'timeline',      label: 'Timeline confirmed' },
-  { id: 'team',          label: 'Internal team confirmed' },
-  { id: 'fabricators',   label: 'Fabricators confirmed' },
-  { id: 'contracts',     label: 'Contracts sent' },
-  { id: 'fab-timeline',  label: 'Fabricator timeline confirmed' },
-  { id: 'creative',      label: 'Creative sign off' },
-  { id: 'pre-prod',      label: 'Pre-Production' },
-  { id: 'prod-ready',    label: 'Production ready' },
-  { id: 'delivered',     label: 'Live / delivered' },
-  { id: 'invoice',       label: 'Invoice sent' },
-  { id: 'closed',        label: 'Closed' },
+  { id: 'brief',        label: 'Brief signed off' },
+  { id: 'budget',       label: 'Budget approved' },
+  { id: 'timeline',     label: 'Timeline confirmed' },
+  { id: 'team',         label: 'Internal team confirmed' },
+  { id: 'fabricators',  label: 'Fabricators confirmed' },
+  { id: 'contracts',    label: 'Contracts sent' },
+  { id: 'fab-timeline', label: 'Fabricator timeline confirmed' },
+  { id: 'creative',     label: 'Creative sign off' },
+  { id: 'pre-prod',     label: 'Pre-Production' },
+  { id: 'prod-ready',   label: 'Production ready' },
+  { id: 'delivered',    label: 'Live / delivered' },
+  { id: 'invoice',      label: 'Invoice sent' },
+  { id: 'closed',       label: 'Closed' },
 ];
 
 function emptySignoff() {
@@ -352,30 +352,54 @@ function emptySignoff() {
   return s;
 }
 
+function emptyProduction() {
+  return { shootDays: [], suppliers: [], equipment: [], callSheetNotes: '' };
+}
+
 // ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
 const defaultData = {
   projects: [
-    {id:1,name:'Summer Pop-Up — Shoreditch',client:'Nova Drinks',status:'active',type:'Pop-Up',startDate:'2026-07-15',endDate:'2026-08-20',budget:18000,spent:11200,
+    { id:1, name:'Summer Pop-Up — Shoreditch', client:'Nova Drinks', status:'active', type:'Pop-Up', startDate:'2026-07-15', endDate:'2026-08-20', budget:18000, spent:11200,
       brief:{overview:'A 4-day immersive pop-up in Shoreditch to launch Nova\'s new summer range.',objectives:'Drive brand awareness among 18–30 demographic. Generate 500+ social check-ins.',deliverables:'Full venue design & production, staffing, social content capture.',timeline:'Set build: 14 July. Live: 15–18 July. Strike: 19 July.'},
-      teamIds:[1,2,3],contactIds:[1,2],
+      teamIds:[1,2,3], contactIds:[1,2],
       expenses:[{id:1,description:'Venue hire',amount:4500,category:'Venue',date:'2026-07-01'},{id:2,description:'Set design & production',amount:3800,category:'Production',date:'2026-07-08'},{id:3,description:'Staff (6 days)',amount:1800,category:'Staffing',date:'2026-07-15'},{id:4,description:'AV & lighting',amount:1100,category:'Tech',date:'2026-07-10'}],
       teamAllocation:{1:5,2:8,3:3},
-      signoff:{brief:{completed:true,completedBy:'Adam',completedAt:'2026-07-01'},budget:{completed:true,completedBy:'Adam',completedAt:'2026-07-02'},timeline:{completed:true,completedBy:'Maya Chen',completedAt:'2026-07-03'},team:{completed:true,completedBy:'Maya Chen',completedAt:'2026-07-04'},fabricators:{completed:true,completedBy:'Sofia Reyes',completedAt:'2026-07-06'},contracts:{completed:true,completedBy:'Adam',completedAt:'2026-07-08'},'fab-timeline':{completed:false,completedBy:'',completedAt:''},creative:{completed:false,completedBy:'',completedAt:''},'pre-prod':{completed:false,completedBy:'',completedAt:''},'prod-ready':{completed:false,completedBy:'',completedAt:''},delivered:{completed:false,completedBy:'',completedAt:''},invoice:{completed:false,completedBy:'',completedAt:''},closed:{completed:false,completedBy:'',completedAt:''}}
+      signoff:{brief:{completed:true,completedBy:'Adam',completedAt:'2026-07-01'},budget:{completed:true,completedBy:'Adam',completedAt:'2026-07-02'},timeline:{completed:true,completedBy:'Maya Chen',completedAt:'2026-07-03'},team:{completed:true,completedBy:'Maya Chen',completedAt:'2026-07-04'},fabricators:{completed:true,completedBy:'Sofia Reyes',completedAt:'2026-07-06'},contracts:{completed:true,completedBy:'Adam',completedAt:'2026-07-08'},'fab-timeline':{completed:false,completedBy:'',completedAt:''},creative:{completed:false,completedBy:'',completedAt:''},'pre-prod':{completed:false,completedBy:'',completedAt:''},'prod-ready':{completed:false,completedBy:'',completedAt:''},delivered:{completed:false,completedBy:'',completedAt:''},invoice:{completed:false,completedBy:'',completedAt:''},closed:{completed:false,completedBy:'',completedAt:''}},
+      production:{
+        shootDays:[
+          {id:1,date:'2026-07-14',location:'Boxpark Shoreditch — Unit 12',callTime:'07:00',wrapTime:'22:00',notes:'Set build day. Crew of 8. Delivery window 7–9am.'},
+          {id:2,date:'2026-07-15',location:'Boxpark Shoreditch — Unit 12',callTime:'08:00',wrapTime:'22:00',notes:'Day 1 live. Content creator on site from 10am.'},
+        ],
+        suppliers:[
+          {id:1,company:'Forma Build',contact:'Dan Clarke',category:'Fabrication',status:'confirmed',cost:3800,notes:'Set build + strike. Contract signed.'},
+          {id:2,company:'Luminos AV',contact:'Sarah Yip',category:'AV / Tech',status:'confirmed',cost:1100,notes:'LED walls + speaker rig.'},
+          {id:3,company:'Street Eats Co.',contact:'Mo Hassan',category:'Catering',status:'pending',cost:600,notes:'Staff catering for build day. Awaiting confirmation.'},
+        ],
+        equipment:[
+          {id:1,item:'LED Wall Panels (x4)',qty:4,supplier:'Luminos AV',status:'confirmed'},
+          {id:2,item:'Branded Signage',qty:1,supplier:'Forma Build',status:'confirmed'},
+          {id:3,item:'POS Terminals',qty:2,supplier:'Internal',status:'needed'},
+        ],
+        callSheetNotes:'Emergency contact: Sofia Reyes — 07700 123456\nVenue manager: Jake (Boxpark) — 07700 654321\nParking: Loading bay on Bethnal Green Rd, 6–10am only.'
+      }
     },
-    {id:2,name:'Brand Identity — Studio Kern',client:'Studio Kern',status:'active',type:'Branding',startDate:'2026-07-01',endDate:'2026-09-01',budget:12000,spent:4200,
+    { id:2, name:'Brand Identity — Studio Kern', client:'Studio Kern', status:'active', type:'Branding', startDate:'2026-07-01', endDate:'2026-09-01', budget:12000, spent:4200,
       brief:{overview:'Full brand identity for Studio Kern, a new architecture practice in East London.',objectives:'Deliver a complete visual identity system.',deliverables:'Logo suite, brand guidelines PDF, stationery templates.',timeline:'Discovery: July. Concepts: late July. Refinement: Aug. Delivery: 1 Sept.'},
-      teamIds:[2,4],contactIds:[3],
+      teamIds:[2,4], contactIds:[3],
       expenses:[{id:5,description:'Brand strategy workshop',amount:1500,category:'Strategy',date:'2026-07-05'},{id:6,description:'Design retainer — July',amount:2700,category:'Design',date:'2026-07-31'}],
       teamAllocation:{2:10,4:6},
-      signoff:{brief:{completed:true,completedBy:'Adam',completedAt:'2026-07-02'},budget:{completed:true,completedBy:'Adam',completedAt:'2026-07-02'},timeline:{completed:true,completedBy:'James Okafor',completedAt:'2026-07-03'},team:{completed:true,completedBy:'Adam',completedAt:'2026-07-03'},fabricators:{completed:false,completedBy:'',completedAt:''},contracts:{completed:false,completedBy:'',completedAt:''},'fab-timeline':{completed:false,completedBy:'',completedAt:''},creative:{completed:false,completedBy:'',completedAt:''},'pre-prod':{completed:false,completedBy:'',completedAt:''},'prod-ready':{completed:false,completedBy:'',completedAt:''},delivered:{completed:false,completedBy:'',completedAt:''},invoice:{completed:false,completedBy:'',completedAt:''},closed:{completed:false,completedBy:'',completedAt:''}}
+      signoff:{brief:{completed:true,completedBy:'Adam',completedAt:'2026-07-02'},budget:{completed:true,completedBy:'Adam',completedAt:'2026-07-02'},timeline:{completed:true,completedBy:'James Okafor',completedAt:'2026-07-03'},team:{completed:true,completedBy:'Adam',completedAt:'2026-07-03'},fabricators:{completed:false,completedBy:'',completedAt:''},contracts:{completed:false,completedBy:'',completedAt:''},'fab-timeline':{completed:false,completedBy:'',completedAt:''},creative:{completed:false,completedBy:'',completedAt:''},'pre-prod':{completed:false,completedBy:'',completedAt:''},'prod-ready':{completed:false,completedBy:'',completedAt:''},delivered:{completed:false,completedBy:'',completedAt:''},invoice:{completed:false,completedBy:'',completedAt:''},closed:{completed:false,completedBy:'',completedAt:''}},
+      production: emptyProduction()
     },
-    {id:3,name:'Felt Zine — Issue 01',client:'FELT Internal',status:'planning',type:'Creative Project',startDate:'2026-08-01',endDate:'2026-10-15',budget:5000,spent:0,
+    { id:3, name:'Felt Zine — Issue 01', client:'FELT Internal', status:'planning', type:'Creative Project', startDate:'2026-08-01', endDate:'2026-10-15', budget:5000, spent:0,
       brief:{overview:'FELT\'s first self-published zine exploring creative culture.',objectives:'Establish FELT as a creative voice. 500 print run.',deliverables:'Editorial direction, design, print production.',timeline:'Editorial: August. Design: September. Print: October.'},
-      teamIds:[1,4],contactIds:[],expenses:[],teamAllocation:{1:4,4:8},signoff:emptySignoff()
+      teamIds:[1,4], contactIds:[], expenses:[], teamAllocation:{1:4,4:8},
+      signoff: emptySignoff(), production: emptyProduction()
     },
-    {id:4,name:'Christmas Activation — Harrods',client:'Harrods / TBC',status:'pitched',type:'Brand Activation',startDate:'2026-11-20',endDate:'2026-12-24',budget:65000,spent:0,
+    { id:4, name:'Christmas Activation — Harrods', client:'Harrods / TBC', status:'pitched', type:'Brand Activation', startDate:'2026-11-20', endDate:'2026-12-24', budget:65000, spent:0,
       brief:{overview:'Pitch for a large-scale Christmas brand activation within Harrods.',objectives:'Win the pitch.',deliverables:'Pitch deck, concept visuals, production budget.',timeline:'Pitch: 15 Aug. Decision: Sept.'},
-      teamIds:[1,2,3,4],contactIds:[4],expenses:[],teamAllocation:{},signoff:emptySignoff()
+      teamIds:[1,2,3,4], contactIds:[4], expenses:[], teamAllocation:{},
+      signoff: emptySignoff(), production: emptyProduction()
     }
   ],
   leads:[
@@ -401,17 +425,20 @@ const defaultData = {
     {id:2,title:'Artist Residency Pop-Up',category:'Space',description:'A rotating artist residency inside a retail space — each month a different artist takes over.',submittedBy:'Tom Wright',date:'2026-07-28'},
     {id:3,title:'FELT Annual Report (as Zine)',category:'Print',description:'Instead of a boring PDF, FELT publishes an annual report as a beautiful printed zine.',submittedBy:'James Okafor',date:'2026-08-01'}
   ],
-  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4}
+  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:3,suppliers:4,equipment:4}
 };
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'felt-studio-v2';
+const STORAGE_KEY = 'felt-studio-v3';
 function loadStore() { try { const s=localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); } catch(e){} return JSON.parse(JSON.stringify(defaultData)); }
 function save() { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(store)); } catch(e){} }
 const store = loadStore();
 
-// Ensure all projects have signoff data (migration for older saves)
-store.projects.forEach(p => { if (!p.signoff) p.signoff = emptySignoff(); });
+// Migration: ensure all projects have signoff + production
+store.projects.forEach(p => {
+  if (!p.signoff) p.signoff = emptySignoff();
+  if (!p.production) p.production = emptyProduction();
+});
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
 let currentView='dashboard', currentProject=null, currentTab='brief';
@@ -440,6 +467,11 @@ function render() {
   else if(currentView==='ideas') m.innerHTML=renderIdeas();
   else if(currentView==='team') m.innerHTML=renderTeam();
   else if(currentView==='contacts') m.innerHTML=renderContacts();
+  // Bind callsheet autosave after render
+  if(currentTab==='production') {
+    const ta=document.getElementById('callsheet-notes');
+    if(ta) ta.addEventListener('input',function(){currentProject.production.callSheetNotes=this.value;save();});
+  }
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -449,7 +481,7 @@ function renderDashboard() {
   const totalSpent=store.projects.reduce((s,p)=>s+p.spent,0);
   const hotLeads=store.leads.filter(l=>['in-conversation','proposal-sent'].includes(l.status)).length;
   return `
-    <div class="topbar"><div><div class="page-title">Good morning, Adam.</div><div class="page-sub">Here's what's happening at FELT.</div></div><div class="storage-badge">● Saved</div></div>
+    <div class="topbar"><div><div class="page-title">How you feeling, Adam?</div><div class="page-sub">Here's what's happening at FELT.</div></div><div class="storage-badge">● Saved</div></div>
     <div class="content">
       <div class="stats-row">
         <div class="stat-card"><div class="stat-label">Projects</div><div class="stat-value">${store.projects.length}</div><div class="stat-sub">${active} active</div></div>
@@ -507,12 +539,14 @@ function renderProjectDetail() {
       <div class="tabs">
         <div class="tab ${currentTab==='brief'?'active':''}" onclick="switchTab('brief')">Brief</div>
         <div class="tab ${currentTab==='signoff'?'active':''}" onclick="switchTab('signoff')">Sign-Off</div>
+        <div class="tab ${currentTab==='production'?'active':''}" onclick="switchTab('production')">Production</div>
         <div class="tab ${currentTab==='team'?'active':''}" onclick="switchTab('team')">Team</div>
         <div class="tab ${currentTab==='budget'?'active':''}" onclick="switchTab('budget')">Budget</div>
         <div class="tab ${currentTab==='contacts'?'active':''}" onclick="switchTab('contacts')">Contacts</div>
       </div>
       ${currentTab==='brief'?renderBriefTab(p):''}
       ${currentTab==='signoff'?renderSignoffTab(p):''}
+      ${currentTab==='production'?renderProductionTab(p):''}
       ${currentTab==='team'?renderTeamTab(p):''}
       ${currentTab==='budget'?renderBudgetTab(p):''}
       ${currentTab==='contacts'?renderContactsTab(p):''}
@@ -529,7 +563,6 @@ function renderSignoffTab(p) {
   const pct=Math.round(completed/total*100);
   const nextStep=SIGNOFF_STEPS.find(s=>!p.signoff[s.id]?.completed);
   const allDone=completed===total;
-
   return `
     <div class="signoff-header">
       <div class="signoff-progress-label">
@@ -539,27 +572,25 @@ function renderSignoffTab(p) {
       <div class="signoff-bar"><div class="signoff-bar-fill" style="width:${pct}%"></div></div>
       ${!allDone&&nextStep?`<div class="signoff-current">Next up: <strong>${nextStep.label}</strong></div>`:''}
     </div>
-
     <div class="signoff-list">
-      ${SIGNOFF_STEPS.map((step, i) => {
-        const data = p.signoff[step.id] || {};
-        const isDone = data.completed;
-        const isNext = !isDone && SIGNOFF_STEPS.slice(0,i).every(s=>p.signoff[s.id]?.completed);
-        const stateClass = isDone ? 'completed' : isNext ? 'current' : 'future';
-        const iconClass = isDone ? 'done' : isNext ? 'next' : 'pending';
-        const iconChar = isDone ? '✓' : (i+1);
-
+      ${SIGNOFF_STEPS.map((step,i)=>{
+        const data=p.signoff[step.id]||{};
+        const isDone=data.completed;
+        const isNext=!isDone&&SIGNOFF_STEPS.slice(0,i).every(s=>p.signoff[s.id]?.completed);
+        const stateClass=isDone?'completed':isNext?'current':'future';
+        const iconClass=isDone?'done':isNext?'next':'pending';
+        const iconChar=isDone?'✓':(i+1);
         return `
           <div class="signoff-step ${stateClass}">
             <div class="signoff-icon ${iconClass}">${iconChar}</div>
             <div class="signoff-step-info">
               <div class="signoff-step-label">${step.label}</div>
-              ${isDone ? `<div class="signoff-step-meta"><strong>${data.completedBy}</strong> · ${formatDate(data.completedAt)}</div>` : ''}
-              ${isNext ? `<div class="signoff-step-meta">Ready to sign off</div>` : ''}
+              ${isDone?`<div class="signoff-step-meta"><strong>${data.completedBy}</strong> · ${formatDate(data.completedAt)}</div>`:''}
+              ${isNext?`<div class="signoff-step-meta">Ready to sign off</div>`:''}
             </div>
             <div class="signoff-actions">
-              ${isDone ? `<button class="btn btn-ghost btn-sm" onclick="undoSignoff('${step.id}')">Undo</button>` : ''}
-              ${isNext ? `<button class="btn btn-green btn-sm" onclick="openSignoffModal('${step.id}')">Sign Off</button>` : ''}
+              ${isDone?`<button class="btn btn-ghost btn-sm" onclick="undoSignoff('${step.id}')">Undo</button>`:''}
+              ${isNext?`<button class="btn btn-green btn-sm" onclick="openSignoffModal('${step.id}')">Sign Off</button>`:''}
             </div>
           </div>`;
       }).join('')}
@@ -567,60 +598,175 @@ function renderSignoffTab(p) {
 }
 
 function openSignoffModal(stepId) {
-  const step = SIGNOFF_STEPS.find(s=>s.id===stepId);
-  const memberNames = store.team.map(m=>`<option>${m.name}</option>`).join('');
+  const step=SIGNOFF_STEPS.find(s=>s.id===stepId);
+  const memberNames=store.team.map(m=>`<option>${m.name}</option>`).join('');
   openModal(`
     <div class="modal-title">Sign Off: ${step.label}</div>
     <div class="form-grid">
-      <div class="form-group full">
-        <label>Signed off by</label>
-        <select id="so-name">
-          <option value="">— Select —</option>
-          ${memberNames}
-          <option value="Adam">Adam</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <div class="form-group full" id="so-other-wrap" style="display:none">
-        <label>Name</label>
-        <input id="so-other" placeholder="Enter name">
-      </div>
-      <div class="form-group full">
-        <label>Date</label>
-        <input id="so-date" type="date" value="${new Date().toISOString().split('T')[0]}">
-      </div>
+      <div class="form-group full"><label>Signed off by</label><select id="so-name"><option value="">— Select —</option>${memberNames}<option value="Adam">Adam</option><option value="Other">Other</option></select></div>
+      <div class="form-group full" id="so-other-wrap" style="display:none"><label>Name</label><input id="so-other" placeholder="Enter name"></div>
+      <div class="form-group full"><label>Date</label><input id="so-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-green" onclick="confirmSignoff('${stepId}')">Confirm Sign Off</button>
-    </div>`);
-  document.getElementById('so-name').addEventListener('change', function() {
-    document.getElementById('so-other-wrap').style.display = this.value==='Other' ? 'flex' : 'none';
-  });
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-green" onclick="confirmSignoff('${stepId}')">Confirm Sign Off</button></div>`);
+  document.getElementById('so-name').addEventListener('change',function(){document.getElementById('so-other-wrap').style.display=this.value==='Other'?'flex':'none';});
 }
-
 function confirmSignoff(stepId) {
-  const nameEl = document.getElementById('so-name');
-  let name = nameEl.value;
-  if (name==='Other') name = document.getElementById('so-other').value.trim();
-  if (!name) { toast('Please select a name'); return; }
-  const date = document.getElementById('so-date').value;
-  const p = currentProject;
-  if (!p.signoff) p.signoff = emptySignoff();
-  p.signoff[stepId] = { completed: true, completedBy: name, completedAt: date };
-  closeModal();
-  save();
-  toast('✓ Signed off');
-  render();
+  const nameEl=document.getElementById('so-name');let name=nameEl.value;
+  if(name==='Other')name=document.getElementById('so-other').value.trim();
+  if(!name){toast('Please select a name');return;}
+  const date=document.getElementById('so-date').value;
+  const p=currentProject;if(!p.signoff)p.signoff=emptySignoff();
+  p.signoff[stepId]={completed:true,completedBy:name,completedAt:date};
+  closeModal();save();toast('✓ Signed off');render();
+}
+function undoSignoff(stepId) {
+  const p=currentProject;if(p.signoff)p.signoff[stepId]={completed:false,completedBy:'',completedAt:''};
+  save();toast('Sign-off removed');render();
 }
 
-function undoSignoff(stepId) {
-  const p = currentProject;
-  if (p.signoff) p.signoff[stepId] = { completed: false, completedBy: '', completedAt: '' };
-  save();
-  toast('Sign-off removed');
-  render();
+// ─── PRODUCTION TAB ───────────────────────────────────────────────────────────
+function renderProductionTab(p) {
+  if(!p.production) p.production=emptyProduction();
+  const prod=p.production;
+  const supplierTotal=prod.suppliers.reduce((s,x)=>s+x.cost,0);
+
+  // Shoot Days
+  const daysHtml = prod.shootDays.length===0
+    ? `<div class="empty-state"><div class="empty-icon">📅</div><p>No production days added yet.</p></div>`
+    : `<div class="prod-days-grid">${prod.shootDays.sort((a,b)=>a.date.localeCompare(b.date)).map(d=>{
+        const dt=new Date(d.date+'T12:00:00');
+        const dayNum=dt.toLocaleDateString('en-GB',{day:'numeric'});
+        const mon=dt.toLocaleDateString('en-GB',{month:'short'});
+        return `<div class="prod-day-card">
+          <div class="prod-day-date"><div class="day-num">${dayNum}</div><div class="day-mon">${mon}</div></div>
+          <div class="prod-day-info">
+            <div class="prod-day-location">${d.location||'Location TBC'}</div>
+            <div class="prod-day-times">${d.callTime?'Call: '+d.callTime:''}${d.wrapTime?' · Wrap: '+d.wrapTime:''}</div>
+            ${d.notes?`<div class="prod-day-notes">${d.notes}</div>`:''}
+          </div>
+          <button class="prod-remove" onclick="removeShootDay(${d.id})">✕</button>
+        </div>`;
+      }).join('')}</div>`;
+
+  // Suppliers
+  const suppliersHtml = prod.suppliers.length===0
+    ? `<div class="empty-state"><div class="empty-icon">🏭</div><p>No suppliers added yet.</p></div>`
+    : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
+        <thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Status</th><th style="text-align:right">Cost</th><th></th></tr></thead>
+        <tbody>${prod.suppliers.map(s=>`<tr>
+          <td><div style="font-weight:700">${s.company}</div>${s.notes?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${s.notes}</div>`:''}</td>
+          <td style="color:var(--muted)">${s.category}</td>
+          <td style="color:var(--muted)">${s.contact||'—'}</td>
+          <td><span class="status-badge badge-${s.status}">${s.status}</span></td>
+          <td style="text-align:right;font-weight:700">£${s.cost.toLocaleString()}</td>
+          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeSupplier(${s.id})">✕</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div></div>
+      <div style="text-align:right;font-size:12px;color:var(--muted);margin-top:8px;font-weight:700">Supplier total: £${supplierTotal.toLocaleString()}</div>`;
+
+  // Equipment
+  const equipHtml = prod.equipment.length===0
+    ? `<div class="empty-state"><div class="empty-icon">📦</div><p>No equipment added yet.</p></div>`
+    : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Supplier</th><th>Status</th><th></th></tr></thead>
+        <tbody>${prod.equipment.map(e=>`<tr>
+          <td style="font-weight:600">${e.item}</td>
+          <td style="color:var(--muted)">${e.qty}</td>
+          <td style="color:var(--muted)">${e.supplier||'—'}</td>
+          <td><span class="status-badge badge-${e.status}">${e.status}</span></td>
+          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeEquipment(${e.id})">✕</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div></div>`;
+
+  return `
+    <!-- SHOOT DAYS -->
+    <div class="prod-section">
+      <div class="section-header"><div class="section-title">Production Days</div><button class="btn btn-primary btn-sm" onclick="openAddShootDayModal()">+ Add Day</button></div>
+      ${daysHtml}
+    </div>
+
+    <!-- SUPPLIERS -->
+    <div class="prod-section">
+      <div class="section-header"><div class="section-title">Suppliers & Contractors</div><button class="btn btn-primary btn-sm" onclick="openAddSupplierModal()">+ Add</button></div>
+      ${suppliersHtml}
+    </div>
+
+    <!-- EQUIPMENT -->
+    <div class="prod-section">
+      <div class="section-header"><div class="section-title">Equipment & Assets</div><button class="btn btn-primary btn-sm" onclick="openAddEquipmentModal()">+ Add</button></div>
+      ${equipHtml}
+    </div>
+
+    <!-- CALL SHEET NOTES -->
+    <div class="prod-section">
+      <div class="section-header"><div class="section-title">Call Sheet Notes</div></div>
+      <div class="callsheet-area">
+        <textarea class="callsheet-textarea" id="callsheet-notes" placeholder="Emergency contacts, parking, access codes, run-of-show notes...">${prod.callSheetNotes||''}</textarea>
+      </div>
+    </div>`;
 }
+
+function openAddShootDayModal() {
+  openModal(`
+    <div class="modal-title">Add Production Day</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Date</label><input id="sd-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="form-group full"><label>Location</label><input id="sd-location" placeholder="e.g. Boxpark Shoreditch — Unit 12"></div>
+      <div class="form-group"><label>Call Time</label><input id="sd-call" type="time" value="08:00"></div>
+      <div class="form-group"><label>Wrap Time</label><input id="sd-wrap" type="time" value="22:00"></div>
+      <div class="form-group full"><label>Notes</label><textarea id="sd-notes" placeholder="Deliveries, crew, access, anything important..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addShootDay()">Add Day</button></div>`);
+}
+function addShootDay() {
+  const d=document.getElementById('sd-date').value;if(!d){toast('Date required');return;}
+  const p=currentProject;if(!p.production)p.production=emptyProduction();
+  p.production.shootDays.push({id:store.nextId.shootDays++,date:d,location:document.getElementById('sd-location').value,callTime:document.getElementById('sd-call').value,wrapTime:document.getElementById('sd-wrap').value,notes:document.getElementById('sd-notes').value});
+  closeModal();save();toast('Day added');render();
+}
+function removeShootDay(id){const p=currentProject;p.production.shootDays=p.production.shootDays.filter(d=>d.id!==id);save();toast('Removed');render();}
+
+function openAddSupplierModal() {
+  openModal(`
+    <div class="modal-title">Add Supplier / Contractor</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Company</label><input id="sup-company" placeholder="Company name"></div>
+      <div class="form-group"><label>Contact Name</label><input id="sup-contact"></div>
+      <div class="form-group"><label>Category</label><select id="sup-cat"><option>Fabrication</option><option>AV / Tech</option><option>Catering</option><option>Staffing</option><option>Photography / Video</option><option>Transport</option><option>Print</option><option>Venue</option><option>Other</option></select></div>
+      <div class="form-group"><label>Status</label><select id="sup-status"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></div>
+      <div class="form-group"><label>Cost (£)</label><input id="sup-cost" type="number" placeholder="0"></div>
+      <div class="form-group"></div>
+      <div class="form-group full"><label>Notes</label><textarea id="sup-notes" placeholder="Contract status, key dates, anything important..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addSupplier()">Add Supplier</button></div>`);
+}
+function addSupplier() {
+  const c=document.getElementById('sup-company').value.trim();if(!c){toast('Company name required');return;}
+  const p=currentProject;if(!p.production)p.production=emptyProduction();
+  p.production.suppliers.push({id:store.nextId.suppliers++,company:c,contact:document.getElementById('sup-contact').value,category:document.getElementById('sup-cat').value,status:document.getElementById('sup-status').value,cost:parseFloat(document.getElementById('sup-cost').value)||0,notes:document.getElementById('sup-notes').value});
+  closeModal();save();toast('Supplier added');render();
+}
+function removeSupplier(id){const p=currentProject;p.production.suppliers=p.production.suppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
+
+function openAddEquipmentModal() {
+  const supplierNames=[...new Set(currentProject.production?.suppliers.map(s=>s.company)||[])];
+  openModal(`
+    <div class="modal-title">Add Equipment / Asset</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Item</label><input id="eq-item" placeholder="e.g. LED Wall Panels"></div>
+      <div class="form-group"><label>Quantity</label><input id="eq-qty" type="number" value="1" min="1"></div>
+      <div class="form-group"><label>Status</label><select id="eq-status"><option value="needed">Needed</option><option value="confirmed">Confirmed</option><option value="on-site">On Site</option><option value="returned">Returned</option></select></div>
+      <div class="form-group full"><label>Supplier</label><input id="eq-supplier" list="supplier-list" placeholder="Supplier or source"><datalist id="supplier-list">${supplierNames.map(n=>`<option>${n}</option>`).join('')}<option>Internal</option></datalist></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addEquipment()">Add Item</button></div>`);
+}
+function addEquipment() {
+  const item=document.getElementById('eq-item').value.trim();if(!item){toast('Item name required');return;}
+  const p=currentProject;if(!p.production)p.production=emptyProduction();
+  p.production.equipment.push({id:store.nextId.equipment++,item,qty:parseInt(document.getElementById('eq-qty').value)||1,supplier:document.getElementById('eq-supplier').value,status:document.getElementById('eq-status').value});
+  closeModal();save();toast('Item added');render();
+}
+function removeEquipment(id){const p=currentProject;p.production.equipment=p.production.equipment.filter(e=>e.id!==id);save();toast('Removed');render();}
 
 // ─── BRIEF TAB ────────────────────────────────────────────────────────────────
 function renderBriefTab(p) {
@@ -759,12 +905,11 @@ function saveLead(id){const l=store.leads.find(x=>x.id===id);l.company=document.
 function deleteLead(id){store.leads=store.leads.filter(l=>l.id!==id);toast('Lead removed');save();render();}
 
 function openNewProjectModal(){openModal(`<div class="modal-title">New Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" placeholder="e.g. Summer Pop-Up"></div><div class="form-group"><label>Client</label><input id="f-client"></div><div class="form-group"><label>Type</label><select id="f-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Creative Project</option><option>Event</option><option>Other</option></select></div><div class="form-group"><label>Status</label><select id="f-status"><option value="planning">Planning</option><option value="active">Active</option><option value="pitched">Pitched</option><option value="completed">Completed</option></select></div><div class="form-group"><label>Budget (£)</label><input id="f-budget" type="number" placeholder="0"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create Project</button></div>`);}
-function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}store.projects.push({id:store.nextId.projects++,name:n,client:document.getElementById('f-client').value||'—',type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff()});closeModal();toast('Project created');save();render();}
+function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}store.projects.push({id:store.nextId.projects++,name:n,client:document.getElementById('f-client').value||'—',type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff(),production:emptyProduction()});closeModal();toast('Project created');save();render();}
 function openEditProjectModal(){const p=currentProject;openModal(`<div class="modal-title">Edit Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" value="${p.name}"></div><div class="form-group"><label>Client</label><input id="f-client" value="${p.client}"></div><div class="form-group"><label>Type</label><select id="f-type">${['Brand Activation','Pop-Up','Branding','Creative Project','Event','Other'].map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Status</label><select id="f-status">${['planning','active','pitched','completed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="form-group"><label>Budget (£)</label><input id="f-budget" type="number" value="${p.budget}"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date" value="${p.startDate}"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date" value="${p.endDate}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Save</button></div>`);}
 function saveProject(){const p=currentProject;p.name=document.getElementById('f-name').value.trim()||p.name;p.client=document.getElementById('f-client').value;p.type=document.getElementById('f-type').value;p.status=document.getElementById('f-status').value;p.budget=parseInt(document.getElementById('f-budget').value)||0;p.startDate=document.getElementById('f-start').value;p.endDate=document.getElementById('f-end').value;closeModal();toast('Project saved');save();render();}
 function openEditBriefModal(){const p=currentProject;openModal(`<div class="modal-title">Edit Brief</div><div class="form-grid"><div class="form-group full"><label>Overview</label><textarea id="b-overview">${p.brief.overview}</textarea></div><div class="form-group full"><label>Objectives</label><textarea id="b-objectives">${p.brief.objectives}</textarea></div><div class="form-group full"><label>Deliverables</label><textarea id="b-deliverables">${p.brief.deliverables}</textarea></div><div class="form-group full"><label>Timeline Notes</label><textarea id="b-timeline">${p.brief.timeline}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBrief()">Save Brief</button></div>`);}
 function saveBrief(){const p=currentProject;p.brief.overview=document.getElementById('b-overview').value;p.brief.objectives=document.getElementById('b-objectives').value;p.brief.deliverables=document.getElementById('b-deliverables').value;p.brief.timeline=document.getElementById('b-timeline').value;closeModal();toast('Brief saved');save();render();}
-
 function openAllocateModal(){const p=currentProject;const av=store.team.filter(m=>!p.teamIds.includes(m.id));openModal(`<div class="modal-title">Allocate Team Member</div>${av.length===0?'<p style="color:var(--muted)">All team members already assigned.</p>':`<div class="form-grid"><div class="form-group"><label>Team Member</label><select id="f-member">${av.map(m=>`<option value="${m.id}">${m.name} — ${m.role} (£${m.rate}/day)</option>`).join('')}</select></div><div class="form-group"><label>Days Allocated</label><input id="f-days" type="number" value="1" min="0"></div></div>`}<div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>${av.length>0?`<button class="btn btn-primary" onclick="allocateMember()">Add to Project</button>`:''}</div>`);}
 function allocateMember(){const mid=parseInt(document.getElementById('f-member').value),days=parseInt(document.getElementById('f-days').value)||0,p=currentProject;p.teamIds.push(mid);if(!p.teamAllocation)p.teamAllocation={};p.teamAllocation[mid]=days;closeModal();toast('Team member added');save();render();}
 function removeTeamMember(id){const p=currentProject;p.teamIds=p.teamIds.filter(t=>t!==id);if(p.teamAllocation)delete p.teamAllocation[id];toast('Removed');save();render();}
