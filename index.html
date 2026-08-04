@@ -338,7 +338,7 @@
     <div class="nav-label">Resources</div>
     <div class="nav-item" onclick="navigate('team')"><span class="icon">◎</span> Team</div>
     <div class="nav-item" onclick="navigate('contacts')"><span class="icon">◇</span> Contacts</div>
-    <div class="nav-item" onclick="navigate('global-suppliers')"><span class="icon">🏭</span> Suppliers</div>
+    <div class="nav-item" onclick="navigate('global-suppliers')"><span class="icon">◧</span> Suppliers</div>
   </div>
   <div class="sidebar-footer">
     <div class="user-chip"><div class="avatar">AD</div> Adam</div>
@@ -493,7 +493,7 @@ const defaultData = {
 };
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'felt-studio-v3';
+const STORAGE_KEY = 'felt-studio-v4';
 function loadStore() { try { const s=localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); } catch(e){} return JSON.parse(JSON.stringify(defaultData)); }
 function save() { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(store)); } catch(e){} }
 const store = loadStore();
