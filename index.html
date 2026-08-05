@@ -147,6 +147,9 @@
   .budget-value { font-size: 22px; font-weight: 800; color: var(--navy); }
   .budget-value.over { color: var(--red); }
   .budget-value.good { color: var(--green); }
+  .budget-desktop-table { display: block; }
+  .budget-mobile-cards { display: none; }
+  .budget-forecast-val:hover { background: var(--accent-light); }
 
   .table-wrap { overflow-x: auto; }
   .table { width: 100%; border-collapse: collapse; min-width: 400px; }
@@ -370,7 +373,10 @@
     .cal-mobile-view { display: block; }
     .cal-desktop-view { display: none; }
     .ideas-grid { grid-template-columns: 1fr; }
-    .budget-summary { grid-template-columns: 1fr; gap: 10px; }
+    .budget-summary { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .budget-value { font-size: 16px; }
+    .budget-desktop-table { display: none; }
+    .budget-mobile-cards { display: block; }
     .pipeline { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .form-grid { grid-template-columns: 1fr; }
     .form-group.full { grid-column: 1; }
@@ -1321,18 +1327,87 @@ function renderTeamTab(p) {
     </div>`;
 }
 
+function ensureBudgetLines(p) {
+  if (!p.budgetLines) {
+    p.budgetLines = ['Fabrication','Furniture & Décor','AV + Content Tech','Team','Uniforms & Materials','Print Collateral','Production Misc.','Other'].map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
+  }
+}
 function renderBudgetTab(p) {
-  const spent=p.spent,remaining=p.budget-spent,pct=p.budget>0?Math.round(spent/p.budget*100):0,over=spent>p.budget;
+  ensureBudgetLines(p);
+  const fTotal=p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
+  const aTotal=p.budgetLines.reduce((s,l)=>s+(l.actuals||0),0);
+  const remaining=fTotal-aTotal, over=aTotal>fTotal;
+  const pct=fTotal>0?Math.round(aTotal/fTotal*100):0;
+
+  const tableRows=p.budgetLines.map((line,idx)=>{
+    const variance=(line.forecast||0)-(line.actuals||0), varOver=variance<0;
+    return `<tr>
+      <td style="font-weight:600">${line.category}</td>
+      <td style="text-align:right"><span class="budget-forecast-val" onclick="editBudgetLineForecast(${idx})" style="cursor:pointer;font-weight:700;color:var(--navy);padding:3px 8px;border-radius:6px;display:inline-block;transition:background 0.15s" title="Click to edit">$${(line.forecast||0).toLocaleString()}</span></td>
+      <td style="text-align:right;color:var(--muted)">$${(line.actuals||0).toLocaleString()}</td>
+      <td style="text-align:right;font-weight:700;color:${varOver?'var(--red)':variance===0?'var(--muted)':'var(--green)'}">${varOver?'−':''}$${Math.abs(variance).toLocaleString()}</td>
+      <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeBudgetLine(${idx})" style="padding:2px 7px">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  const mobileCards=p.budgetLines.map((line,idx)=>{
+    const variance=(line.forecast||0)-(line.actuals||0), varOver=variance<0;
+    return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700;color:var(--navy)">${line.category}</div>
+        <button class="btn btn-ghost btn-sm" onclick="removeBudgetLine(${idx})" style="padding:2px 6px;font-size:11px">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
+        <div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Forecast</div>
+          <div style="font-size:15px;font-weight:800;color:var(--navy);cursor:pointer" onclick="editBudgetLineForecast(${idx})">$${(line.forecast||0).toLocaleString()}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">tap to edit</div>
+        </div>
+        <div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Actuals</div>
+          <div style="font-size:15px;font-weight:800;color:var(--muted)">$${(line.actuals||0).toLocaleString()}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Variance</div>
+          <div style="font-size:15px;font-weight:800;color:${varOver?'var(--red)':variance===0?'var(--muted)':'var(--green)'}">${varOver?'−':''}$${Math.abs(variance).toLocaleString()}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
   return `
     <div class="budget-summary">
-      <div class="budget-stat"><div class="budget-label">Total Budget</div><div class="budget-value">$${p.budget.toLocaleString()}</div></div>
-      <div class="budget-stat"><div class="budget-label">Spent</div><div class="budget-value ${over?'over':''}">$${spent.toLocaleString()}</div><div class="budget-bar" style="margin-top:6px"><div class="budget-bar-fill ${over?'over':''}" style="width:${Math.min(pct,100)}%"></div></div></div>
-      <div class="budget-stat"><div class="budget-label">Remaining</div><div class="budget-value ${over?'over':'good'}">$${Math.abs(remaining).toLocaleString()} ${over?'over':''}</div></div>
+      <div class="budget-stat">
+        <div class="budget-label">Forecast</div>
+        <div class="budget-value">$${fTotal.toLocaleString()}</div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-label">Actuals</div>
+        <div class="budget-value ${over?'over':''}">$${aTotal.toLocaleString()}</div>
+        <div class="budget-bar" style="margin-top:6px"><div class="budget-bar-fill ${over?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-label">Remaining</div>
+        <div class="budget-value ${over?'over':fTotal>0?'good':''}">${over?'−':''}$${Math.abs(remaining).toLocaleString()}${over?' over':''}</div>
+      </div>
     </div>
-    <div class="section-header"><div class="section-title">Expenses</div><button class="btn btn-primary btn-sm" onclick="openAddExpenseModal()">+ Add</button></div>
-    <div class="card" style="padding:0;overflow:hidden">
-      ${p.expenses.length===0?`<div class="empty-state"><div class="empty-icon">$</div><p>No expenses logged yet.</p></div>`:`<div class="table-wrap"><table class="table"><thead><tr><th>Description</th><th>Category</th><th>Date</th><th style="text-align:right">Amount</th><th></th></tr></thead><tbody>${p.expenses.map(e=>`<tr><td>${e.description}</td><td><span class="status-badge badge-planning">${e.category}</span></td><td style="color:var(--muted)">${formatDate(e.date)}</td><td style="text-align:right;font-weight:700">$${e.amount.toLocaleString()}</td><td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="deleteExpense(${e.id})">✕</button></td></tr>`).join('')}</tbody></table></div>`}
-    </div>`;
+    <div class="section-header"><div class="section-title">Budget Breakdown</div><button class="btn btn-primary btn-sm" onclick="addBudgetLine()">+ Add Line</button></div>
+    <div class="card budget-desktop-table" style="padding:0;overflow:hidden">
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Category</th><th style="text-align:right">Forecast</th><th style="text-align:right">Actuals</th><th style="text-align:right">Variance</th><th></th></tr></thead>
+          <tbody>${tableRows}</tbody>
+          <tfoot><tr style="background:var(--bg)">
+            <td style="font-weight:800;color:var(--navy);padding-top:12px">Total</td>
+            <td style="text-align:right;font-weight:800;color:var(--navy);padding-top:12px">$${fTotal.toLocaleString()}</td>
+            <td style="text-align:right;font-weight:800;color:var(--muted);padding-top:12px">$${aTotal.toLocaleString()}</td>
+            <td style="text-align:right;font-weight:800;padding-top:12px;color:${over?'var(--red)':fTotal>0?'var(--green)':'var(--muted)'}">${over?'−':''}$${Math.abs(remaining).toLocaleString()}</td>
+            <td></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+    <div class="budget-mobile-cards">${mobileCards}</div>`;
 }
 
 function renderContactsTab(p) {
@@ -2071,6 +2146,11 @@ function saveBrief(){const p=currentProject;p.brief.overview=document.getElement
 function openAllocateModal(){const p=currentProject;const av=store.team.filter(m=>!p.teamIds.includes(m.id));openModal(`<div class="modal-title">Allocate Team Member</div>${av.length===0?'<p style="color:var(--muted)">All team members already assigned.</p>':`<div class="form-grid"><div class="form-group"><label>Team Member</label><select id="f-member">${av.map(m=>`<option value="${m.id}">${m.name} — ${m.role} ($${m.rate}/day)</option>`).join('')}</select></div><div class="form-group"><label>Days Allocated</label><input id="f-days" type="number" value="1" min="0"></div></div>`}<div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>${av.length>0?`<button class="btn btn-primary" onclick="allocateMember()">Add to Project</button>`:''}</div>`);}
 function allocateMember(){const mid=parseInt(document.getElementById('f-member').value),days=parseInt(document.getElementById('f-days').value)||0,p=currentProject;p.teamIds.push(mid);if(!p.teamAllocation)p.teamAllocation={};p.teamAllocation[mid]=days;closeModal();toast('Team member added');save();render();}
 function removeTeamMember(id){const p=currentProject;p.teamIds=p.teamIds.filter(t=>t!==id);if(p.teamAllocation)delete p.teamAllocation[id];toast('Removed');save();render();}
+function editBudgetLineForecast(idx){const p=currentProject;ensureBudgetLines(p);const line=p.budgetLines[idx];openModal(`<div class="modal-title">Set Forecast</div><div class="form-grid"><div class="form-group full"><label>Category</label><div style="font-size:16px;font-weight:700;color:var(--navy);padding:4px 0">${line.category}</div></div><div class="form-group full"><label>Forecast Amount ($)</label><input id="f-forecast" type="number" value="${line.forecast||0}" placeholder="0"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBudgetLineForecast(${idx})">Save</button></div>`);}
+function saveBudgetLineForecast(idx){currentProject.budgetLines[idx].forecast=parseFloat(document.getElementById('f-forecast').value)||0;closeModal();save();render();}
+function addBudgetLine(){openModal(`<div class="modal-title">Add Budget Line</div><div class="form-grid"><div class="form-group full"><label>Category Name</label><input id="f-cat" placeholder="e.g. Catering"></div><div class="form-group full"><label>Forecast Amount ($)</label><input id="f-forecast" type="number" placeholder="0"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewBudgetLine()">Add</button></div>`);}
+function saveNewBudgetLine(){const cat=document.getElementById('f-cat').value.trim();if(!cat){toast('Category name required');return;}const p=currentProject;ensureBudgetLines(p);const newId=Math.max(0,...p.budgetLines.map(l=>l.id))+1;p.budgetLines.push({id:newId,category:cat,forecast:parseFloat(document.getElementById('f-forecast').value)||0,actuals:0});closeModal();toast('Budget line added');save();render();}
+function removeBudgetLine(idx){currentProject.budgetLines.splice(idx,1);toast('Removed');save();render();}
 function openAddExpenseModal(){openModal(`<div class="modal-title">Add Expense</div><div class="form-grid"><div class="form-group full"><label>Description</label><input id="f-desc" placeholder="e.g. Venue hire"></div><div class="form-group"><label>Category</label><select id="f-cat"><option>Venue</option><option>Production</option><option>Staffing</option><option>Tech</option><option>Design</option><option>Travel</option><option>Other</option></select></div><div class="form-group"><label>Amount ($)</label><input id="f-amount" type="number" placeholder="0"></div><div class="form-group"><label>Date</label><input id="f-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addExpense()">Add Expense</button></div>`);}
 function addExpense(){const a=parseFloat(document.getElementById('f-amount').value)||0,d=document.getElementById('f-desc').value.trim();if(!d){toast('Description required');return;}const p=currentProject;p.expenses.push({id:store.nextId.expenses++,description:d,category:document.getElementById('f-cat').value,amount:a,date:document.getElementById('f-date').value});p.spent=p.expenses.reduce((s,e)=>s+e.amount,0);closeModal();toast('Expense added');save();render();}
 function deleteExpense(id){const p=currentProject;p.expenses=p.expenses.filter(e=>e.id!==id);p.spent=p.expenses.reduce((s,e)=>s+e.amount,0);toast('Removed');save();render();}
