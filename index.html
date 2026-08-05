@@ -661,7 +661,7 @@ const defaultData = {
     {id:2,company:'Luminos AV',category:'AV / Tech',contactName:'Sarah Yip',contactEmail:'sarah@luminosav.com',contactPhone:'(416) 555-0222',website:'',notes:'Great for LED walls and speaker rigs.'},
     {id:3,company:'Street Eats Co.',category:'Catering',contactName:'Mo Hassan',contactEmail:'mo@streeteatesco.com',contactPhone:'(416) 555-0333',website:'',notes:'Staff catering specialists. Min. 48hrs notice.'},
   ],
-  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:4,suppliers:4,equipment:4,payments:8,keyContacts:4,contracts:7,templates:2,tasks:15,assets:1,globalSuppliers:4}
+  nextId:{projects:5,team:5,contacts:5,leads:5,expenses:10,ideas:4,shootDays:4,suppliers:4,equipment:4,payments:8,keyContacts:4,contracts:7,templates:2,tasks:15,assets:1,globalSuppliers:4,invoices:1}
 };
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
@@ -688,6 +688,7 @@ store.projects.forEach((p,i) => {
   if (!p.tasks) p.tasks = [];
   if (!p.assets) p.assets = {driveFolder:'', files:[]};
   if (!p.color) p.color = PROJECT_COLORS[i % PROJECT_COLORS.length];
+  if (!p.invoices) p.invoices = [];
 });
 // Migration: ensure all team members have CRM fields
 store.team.forEach(m => {
@@ -927,11 +928,10 @@ function signoffProgress(p) {
 }
 
 function getBudgetTotals(p) {
-  if (!p.budgetLines) p.budgetLines = ['Fabrication','Furniture & Décor','AV + Content Tech','Team','Uniforms & Materials','Print Collateral','Production Misc.','Other'].map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
-  return {
-    forecast: p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0),
-    actuals:  p.budgetLines.reduce((s,l)=>s+(l.actuals||0),0)
-  };
+  if (!p.budgetLines) p.budgetLines = BUDGET_CATS.map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
+  const forecast = p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
+  const actuals  = (p.invoices||[]).filter(i=>i.status==='paid').reduce((s,i)=>s+(i.amount||0),0);
+  return { forecast, actuals };
 }
 
 function getProjectHealth(p) {
@@ -996,6 +996,7 @@ function renderProjectDetail() {
         <div class="tab ${currentTab==='assets'?'active':''}" onclick="switchTab('assets')">Assets</div>
         <div class="tab ${currentTab==='team'?'active':''}" onclick="switchTab('team')">Team</div>
         <div class="tab ${currentTab==='budget'?'active':''}" onclick="switchTab('budget')">Budget</div>
+        <div class="tab ${currentTab==='invoices'?'active':''}" onclick="switchTab('invoices')">Invoices</div>
         <div class="tab ${currentTab==='contacts'?'active':''}" onclick="switchTab('contacts')">Contacts</div>
       </div>
       ${currentTab==='brief'?renderBriefTab(p):''}
@@ -1005,6 +1006,7 @@ function renderProjectDetail() {
       ${currentTab==='assets'?renderAssetsTab(p):''}
       ${currentTab==='team'?renderTeamTab(p):''}
       ${currentTab==='budget'?renderBudgetTab(p):''}
+      ${currentTab==='invoices'?renderInvoicesTab(p):''}
       ${currentTab==='contacts'?renderContactsTab(p):''}
     </div>`;
 }
@@ -1084,7 +1086,6 @@ function undoSignoff(stepId) {
 function renderProductionTab(p) {
   if(!p.production) p.production=emptyProduction();
   const prod=p.production;
-  const supplierTotal=prod.suppliers.reduce((s,x)=>s+x.cost,0);
 
   // Shoot Days
   const daysHtml = prod.shootDays.length===0
@@ -1108,17 +1109,15 @@ function renderProductionTab(p) {
   const suppliersHtml = prod.suppliers.length===0
     ? `<div class="empty-state"><div class="empty-icon">🏭</div><p>No suppliers added yet.</p></div>`
     : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
-        <thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Status</th><th style="text-align:right">Cost</th><th></th></tr></thead>
+        <thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Status</th><th></th></tr></thead>
         <tbody>${prod.suppliers.map(s=>`<tr>
           <td><div style="font-weight:700">${s.company}</div>${s.notes?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${s.notes}</div>`:''}</td>
           <td style="color:var(--muted)">${s.category}</td>
           <td style="color:var(--muted)">${s.contact||'—'}</td>
           <td><span class="status-badge badge-${s.status}">${s.status}</span></td>
-          <td style="text-align:right;font-weight:700">$${s.cost.toLocaleString()}</td>
           <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeSupplier(${s.id})">✕</button></td>
         </tr>`).join('')}</tbody>
-      </table></div></div>
-      <div style="text-align:right;font-size:12px;color:var(--muted);margin-top:8px;font-weight:700">Supplier total: $${supplierTotal.toLocaleString()}</div>`;
+      </table></div></div>`;
 
   // Equipment
   const equipHtml = prod.equipment.length===0
@@ -1209,8 +1208,6 @@ function openAddSupplierModal() {
       <div class="form-group"><label>Contact Name</label><input id="sup-contact"></div>
       <div class="form-group"><label>Category</label><select id="sup-cat">${SUPPLIER_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="form-group"><label>Status</label><select id="sup-status"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></div>
-      <div class="form-group"><label>Cost ($)</label><input id="sup-cost" type="number" placeholder="0"></div>
-      <div class="form-group"></div>
       <div class="form-group full"><label>Notes</label><textarea id="sup-notes" placeholder="Contract status, key dates, anything important..."></textarea></div>
     </div>
     <div class="modal-footer">
@@ -1230,7 +1227,7 @@ function prefillSupplier(id) {
 function addSupplier() {
   const c=document.getElementById('sup-company').value.trim();if(!c){toast('Company name required');return;}
   const p=currentProject;if(!p.production)p.production=emptyProduction();
-  p.production.suppliers.push({id:store.nextId.suppliers++,company:c,contact:document.getElementById('sup-contact').value,category:document.getElementById('sup-cat').value,status:document.getElementById('sup-status').value,cost:parseFloat(document.getElementById('sup-cost').value)||0,notes:document.getElementById('sup-notes').value});
+  p.production.suppliers.push({id:store.nextId.suppliers++,company:c,contact:document.getElementById('sup-contact').value,category:document.getElementById('sup-cat').value,status:document.getElementById('sup-status').value,notes:document.getElementById('sup-notes').value});
   closeModal();save();toast('Supplier added');render();
 }
 function removeSupplier(id){const p=currentProject;p.production.suppliers=p.production.suppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
@@ -1337,31 +1334,36 @@ function renderTeamTab(p) {
     </div>`;
 }
 
+const BUDGET_CATS = ['Fabrication','Furniture & Décor','AV + Content Tech','Team','Uniforms & Materials','Print Collateral','Production Misc.','Other'];
 function ensureBudgetLines(p) {
   if (!p.budgetLines) {
-    p.budgetLines = ['Fabrication','Furniture & Décor','AV + Content Tech','Team','Uniforms & Materials','Print Collateral','Production Misc.','Other'].map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
+    p.budgetLines = BUDGET_CATS.map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
   }
 }
 function renderBudgetTab(p) {
   ensureBudgetLines(p);
+  const paidByCat={};
+  (p.invoices||[]).filter(i=>i.status==='paid').forEach(i=>{paidByCat[i.category]=(paidByCat[i.category]||0)+(i.amount||0);});
   const fTotal=p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
-  const aTotal=p.budgetLines.reduce((s,l)=>s+(l.actuals||0),0);
+  const aTotal=Object.values(paidByCat).reduce((s,v)=>s+v,0);
   const remaining=fTotal-aTotal, over=aTotal>fTotal;
   const pct=fTotal>0?Math.round(aTotal/fTotal*100):0;
 
   const tableRows=p.budgetLines.map((line,idx)=>{
-    const variance=(line.forecast||0)-(line.actuals||0), varOver=variance<0;
+    const lineActuals=paidByCat[line.category]||0;
+    const variance=(line.forecast||0)-lineActuals, varOver=variance<0;
     return `<tr>
       <td style="font-weight:600">${line.category}</td>
       <td style="text-align:right"><span class="budget-forecast-val" onclick="editBudgetLineForecast(${idx})" style="cursor:pointer;font-weight:700;color:var(--navy);padding:3px 8px;border-radius:6px;display:inline-block;transition:background 0.15s" title="Click to edit">$${(line.forecast||0).toLocaleString()}</span></td>
-      <td style="text-align:right;color:var(--muted)">$${(line.actuals||0).toLocaleString()}</td>
+      <td style="text-align:right;color:var(--muted)">$${lineActuals.toLocaleString()}</td>
       <td style="text-align:right;font-weight:700;color:${varOver?'var(--red)':variance===0?'var(--muted)':'var(--green)'}">${varOver?'−':''}$${Math.abs(variance).toLocaleString()}</td>
       <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeBudgetLine(${idx})" style="padding:2px 7px">✕</button></td>
     </tr>`;
   }).join('');
 
   const mobileCards=p.budgetLines.map((line,idx)=>{
-    const variance=(line.forecast||0)-(line.actuals||0), varOver=variance<0;
+    const lineActuals=paidByCat[line.category]||0;
+    const variance=(line.forecast||0)-lineActuals, varOver=variance<0;
     return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-size:14px;font-weight:700;color:var(--navy)">${line.category}</div>
@@ -1375,7 +1377,7 @@ function renderBudgetTab(p) {
         </div>
         <div>
           <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Actuals</div>
-          <div style="font-size:15px;font-weight:800;color:var(--muted)">$${(line.actuals||0).toLocaleString()}</div>
+          <div style="font-size:15px;font-weight:800;color:var(--muted)">$${lineActuals.toLocaleString()}</div>
         </div>
         <div>
           <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Variance</div>
@@ -1428,6 +1430,96 @@ function renderContactsTab(p) {
       ${assigned.length===0?`<div class="empty-state"><div class="empty-icon">◇</div><p>No contacts linked.</p></div>`:''}
       ${assigned.map(c=>`<div class="contact-row"><div class="contact-avatar">${initials(c.name)}</div><div><div class="contact-name">${c.name}</div><div class="contact-detail">${c.role} · ${c.company}</div><div class="contact-detail">${c.email}</div></div><div class="contact-actions"><button class="btn btn-ghost btn-sm" onclick="removeContact(${c.id})">Remove</button></div></div>`).join('')}
     </div>`;
+}
+
+// ─── INVOICES TAB ─────────────────────────────────────────────────────────────
+function renderInvoicesTab(p) {
+  if (!p.invoices) p.invoices = [];
+  const invoices = p.invoices;
+  const totalInvoiced = invoices.reduce((s,i)=>s+(i.amount||0),0);
+  const totalPaid     = invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+(i.amount||0),0);
+  const totalPending  = invoices.filter(i=>i.status==='pending').reduce((s,i)=>s+(i.amount||0),0);
+
+  // Desktop table
+  const tableHtml = invoices.length===0
+    ? `<div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices yet. Add one when a cost is agreed.</p></div>`
+    : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
+        <thead><tr><th>Supplier</th><th>Category</th><th>Date</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody>${invoices.map(inv=>`<tr>
+          <td style="font-weight:600">${inv.supplier}</td>
+          <td style="color:var(--muted);font-size:12px">${inv.category}</td>
+          <td style="color:var(--muted)">${inv.date?formatDate(inv.date):'—'}</td>
+          <td style="text-align:right;font-weight:700">$${(inv.amount||0).toLocaleString()}</td>
+          <td><button onclick="toggleInvoicePaid(${inv.id})" style="border:none;background:none;cursor:pointer;padding:0">
+            <span class="status-badge badge-${inv.status==='paid'?'paid':'pending'}" style="cursor:pointer">${inv.status==='paid'?'✓ Paid':'Pending'}</span>
+          </button></td>
+          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="deleteInvoice(${inv.id})">✕</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div></div>`;
+
+  // Mobile cards
+  const mobileHtml = invoices.length===0 ? '' : invoices.map(inv=>`
+    <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy)">${inv.supplier}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${inv.category} · ${inv.date?formatDate(inv.date):'—'}</div>
+        </div>
+        <div style="font-size:16px;font-weight:800;color:var(--navy)">$${(inv.amount||0).toLocaleString()}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <button onclick="toggleInvoicePaid(${inv.id})" style="border:none;background:none;cursor:pointer;padding:0">
+          <span class="status-badge badge-${inv.status==='paid'?'paid':'pending'}">${inv.status==='paid'?'✓ Paid':'Pending'}</span>
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteInvoice(${inv.id})">✕</button>
+      </div>
+    </div>`).join('');
+
+  return `
+    <div class="budget-summary" style="margin-bottom:18px">
+      <div class="budget-stat"><div class="budget-label">Total Invoiced</div><div class="budget-value">$${totalInvoiced.toLocaleString()}</div></div>
+      <div class="budget-stat"><div class="budget-label">Paid</div><div class="budget-value good">$${totalPaid.toLocaleString()}</div></div>
+      <div class="budget-stat"><div class="budget-label">Pending</div><div class="budget-value" style="color:var(--orange)">$${totalPending.toLocaleString()}</div></div>
+    </div>
+    <div class="section-header"><div class="section-title">Invoices</div><button class="btn btn-primary btn-sm" onclick="openAddInvoiceModal()">+ Add Invoice</button></div>
+    <div class="budget-desktop-table">${tableHtml}</div>
+    <div class="budget-mobile-cards">${mobileHtml}${invoices.length===0?`<div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices yet.</p></div>`:''}</div>`;
+}
+
+function openAddInvoiceModal() {
+  const supplierNames=[...new Set((currentProject.production?.suppliers||[]).map(s=>s.company))];
+  const catOptions = BUDGET_CATS.map(c=>`<option>${c}</option>`).join('');
+  const supplierDatalist = supplierNames.length ? `<datalist id="inv-sup-list">${supplierNames.map(n=>`<option>${n}</option>`).join('')}</datalist>` : '';
+  openModal(`<div class="modal-title">Add Invoice</div><div class="form-grid">
+    <div class="form-group full"><label>Supplier / Contractor</label><input id="inv-supplier" list="inv-sup-list" placeholder="e.g. Forma Build">${supplierDatalist}</div>
+    <div class="form-group"><label>Budget Category</label><select id="inv-cat">${catOptions}</select></div>
+    <div class="form-group"><label>Amount ($)</label><input id="inv-amount" type="number" placeholder="0"></div>
+    <div class="form-group"><label>Invoice Date</label><input id="inv-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+    <div class="form-group"><label>Status</label><select id="inv-status"><option value="pending">Pending</option><option value="paid">Paid</option></select></div>
+    <div class="form-group"><label>Notes</label><input id="inv-notes" placeholder="Optional"></div>
+  </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addInvoice()">Add Invoice</button></div>`);
+}
+function addInvoice() {
+  const supplier=document.getElementById('inv-supplier').value.trim();
+  if(!supplier){toast('Supplier name required');return;}
+  const amount=parseFloat(document.getElementById('inv-amount').value)||0;
+  if(!amount){toast('Amount required');return;}
+  const p=currentProject;
+  if(!p.invoices) p.invoices=[];
+  if(!store.nextId.invoices) store.nextId.invoices=1;
+  p.invoices.push({id:store.nextId.invoices++,supplier,category:document.getElementById('inv-cat').value,amount,date:document.getElementById('inv-date').value,status:document.getElementById('inv-status').value,notes:document.getElementById('inv-notes').value});
+  closeModal();save();toast('Invoice added');render();
+}
+function toggleInvoicePaid(id) {
+  const p=currentProject;
+  const inv=p.invoices.find(i=>i.id===id);
+  if(!inv) return;
+  inv.status=inv.status==='paid'?'pending':'paid';
+  save();render();
+}
+function deleteInvoice(id) {
+  currentProject.invoices=currentProject.invoices.filter(i=>i.id!==id);
+  save();toast('Removed');render();
 }
 
 // ─── CALENDAR ─────────────────────────────────────────────────────────────────
@@ -2147,7 +2239,7 @@ function saveLead(id){const l=store.leads.find(x=>x.id===id);l.company=document.
 function deleteLead(id){store.leads=store.leads.filter(l=>l.id!==id);toast('Lead removed');save();render();}
 
 function openNewProjectModal(){const swatches=PROJECT_COLORS.map((c,i)=>`<div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="selectProjectColor('${c}')"></div>`).join('');openModal(`<div class="modal-title">New Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" placeholder="e.g. Summer Pop-Up"></div><div class="form-group"><label>Client</label><input id="f-client"></div><div class="form-group"><label>Type</label><select id="f-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Creative Project</option><option>Event</option><option>Other</option></select></div><div class="form-group"><label>Status</label><select id="f-status"><option value="planning">Planning</option><option value="active">Active</option><option value="pitched">Pitched</option><option value="completed">Completed</option></select></div><div class="form-group"><label>Budget ($)</label><input id="f-budget" type="number" placeholder="0"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date"></div><div class="form-group full"><label>Project Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="f-color" value="${PROJECT_COLORS[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create Project</button></div>`);}
-function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}store.projects.push({id:store.nextId.projects++,name:n,client:document.getElementById('f-client').value||'—',type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,color:document.getElementById('f-color').value||PROJECT_COLORS[0],budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff(),production:emptyProduction(),tasks:[],assets:{driveFolder:'',files:[]}});closeModal();toast('Project created');save();render();}
+function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}store.projects.push({id:store.nextId.projects++,name:n,client:document.getElementById('f-client').value||'—',type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,color:document.getElementById('f-color').value||PROJECT_COLORS[0],budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff(),production:emptyProduction(),tasks:[],assets:{driveFolder:'',files:[]},invoices:[]});closeModal();toast('Project created');save();render();}
 function openEditProjectModal(){const p=currentProject;const swatches=PROJECT_COLORS.map(c=>`<div class="color-swatch ${p.color===c?'selected':''}" style="background:${c}" onclick="selectProjectColor('${c}')"></div>`).join('');openModal(`<div class="modal-title">Edit Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" value="${p.name}"></div><div class="form-group"><label>Client</label><input id="f-client" value="${p.client}"></div><div class="form-group"><label>Type</label><select id="f-type">${['Brand Activation','Pop-Up','Branding','Creative Project','Event','Other'].map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Status</label><select id="f-status">${['planning','active','pitched','completed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="form-group"><label>Budget ($)</label><input id="f-budget" type="number" value="${p.budget}"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date" value="${p.startDate}"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date" value="${p.endDate}"></div><div class="form-group full"><label>Project Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="f-color" value="${p.color||PROJECT_COLORS[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Save</button></div>`);}
 function saveProject(){const p=currentProject;p.name=document.getElementById('f-name').value.trim()||p.name;p.client=document.getElementById('f-client').value;p.type=document.getElementById('f-type').value;p.status=document.getElementById('f-status').value;p.color=document.getElementById('f-color').value||p.color;p.budget=parseInt(document.getElementById('f-budget').value)||0;p.startDate=document.getElementById('f-start').value;p.endDate=document.getElementById('f-end').value;closeModal();toast('Project saved');save();render();}
 function selectProjectColor(c){document.getElementById('f-color').value=c;document.querySelectorAll('.color-swatch').forEach(el=>el.classList.remove('selected'));document.querySelectorAll('.color-swatch').forEach(el=>{if(el.style.background===c)el.classList.add('selected');});}
