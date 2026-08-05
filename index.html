@@ -230,7 +230,7 @@
   .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1.5px solid var(--border); }
   .cal-header-cell { padding: 8px 0; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
   .cal-body { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .cal-day { min-height: 80px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 6px; }
+  .cal-day { min-height: 90px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 6px; overflow: hidden; }
   .cal-day:nth-child(7n) { border-right: none; }
   .cal-day.other-month { background: var(--bg); }
   .cal-day.today { background: var(--accent-light); }
@@ -831,14 +831,36 @@ function signoffProgress(p) {
   return SIGNOFF_STEPS.filter(s=>p.signoff[s.id]?.completed).length;
 }
 
+function getProjectHealth(p) {
+  if(p.status==='completed'||p.status==='pitched') return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  let score=0;
+  const budgetPct=p.budget>0?p.spent/p.budget:0;
+  if(budgetPct>=1) score=Math.max(score,2);
+  else if(budgetPct>=0.85) score=Math.max(score,1);
+  if(p.endDate&&p.status==='active'){
+    const end=new Date(p.endDate+'T12:00:00');
+    const daysLeft=Math.ceil((end-today)/86400000);
+    if(daysLeft<0) score=Math.max(score,2);
+    else if(daysLeft<=7) score=Math.max(score,2);
+    else if(daysLeft<=14) score=Math.max(score,1);
+  }
+  if(p.status==='active'){
+    const soPct=signoffProgress(p)/SIGNOFF_STEPS.length;
+    if(soPct<0.3&&budgetPct>0.5) score=Math.max(score,1);
+  }
+  return [{color:'#16A34A',label:'On track'},{color:'#D97706',label:'Needs attention'},{color:'#DC2626',label:'At risk'}][score];
+}
+
 function renderProjectCard(p) {
   const pct=p.budget>0?Math.round(p.spent/p.budget*100):0;
   const teamInitials=p.teamIds.slice(0,3).map(id=>{const m=store.team.find(t=>t.id===id);return m?`<div class="team-avatar-sm">${initials(m.name)}</div>`:''}).join('');
   const soProgress=signoffProgress(p);
   const soTotal=SIGNOFF_STEPS.length;
+  const health=getProjectHealth(p);
   return `
     <div class="project-card status-${p.status}" style="--project-color:${p.color||'#2563EB'}" onclick="navigate('project-detail',${p.id})">
-      <div class="project-header"><div style="min-width:0"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div></div><div class="status-badge badge-${p.status}">${p.status}</div></div>
+      <div class="project-header"><div style="min-width:0"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${health?`<div title="${health.label}" style="width:9px;height:9px;border-radius:50%;background:${health.color};flex-shrink:0;box-shadow:0 0 0 2px ${health.color}30"></div>`:''}<div class="status-badge badge-${p.status}">${p.status}</div></div></div>
       <div style="margin-top:10px">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Budget</span><span>$${p.spent.toLocaleString()} / $${p.budget.toLocaleString()}</span></div>
         <div class="budget-bar"><div class="budget-bar-fill ${pct>100?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
@@ -1247,8 +1269,25 @@ function renderCalendar() {
   while(cells.length%7!==0){const last=cells[cells.length-1].date;cells.push({date:new Date(last.getFullYear(),last.getMonth(),last.getDate()+1),thisMonth:false});}
   function renderCell(cell) {
     const isToday=cell.thisMonth&&cell.date.getDate()===today.getDate()&&cell.date.getMonth()===today.getMonth()&&cell.date.getFullYear()===today.getFullYear();
-    const events=store.projects.filter(p=>{if(!p.startDate||!p.endDate)return false;return cell.date>=new Date(p.startDate)&&cell.date<=new Date(p.endDate);});
-    const evHtml=events.slice(0,2).map(p=>{const clr=p.color||'#2563EB';const isStart=cell.date.toDateString()===new Date(p.startDate).toDateString();return`<div class="cal-event" style="background:${clr}25;color:${clr}" onclick="event.stopPropagation();navigate('project-detail',${p.id})">${isStart?p.name.split('—')[0].trim():'·'}</div>`;}).join('');
+    const colIdx=(cell.date.getDay()+6)%7;
+    const isWeekStart=colIdx===0,isWeekEnd=colIdx===6;
+    const events=store.projects.filter(p=>{
+      if(!p.startDate||!p.endDate)return false;
+      const s=new Date(p.startDate+'T00:00:00'),e=new Date(p.endDate+'T23:59:59');
+      return cell.date>=s&&cell.date<=e;
+    });
+    const evHtml=events.slice(0,3).map(p=>{
+      const clr=p.color||'#2563EB';
+      const isStart=cell.date.toDateString()===new Date(p.startDate+'T12:00:00').toDateString();
+      const isEnd=cell.date.toDateString()===new Date(p.endDate+'T12:00:00').toDateString();
+      const leftEdge=isStart||isWeekStart,rightEdge=isEnd||isWeekEnd;
+      let margin,radius;
+      if(leftEdge&&rightEdge){margin='1px 0';radius='3px';}
+      else if(leftEdge){margin='1px -6px 1px 0';radius='3px 0 0 3px';}
+      else if(rightEdge){margin='1px 0 1px -6px';radius='0 3px 3px 0';}
+      else{margin='1px -6px';radius='0';}
+      return`<div class="cal-event" style="background:${clr}CC;color:#fff;margin:${margin};border-radius:${radius};padding:2px ${leftEdge?'5px':'1px'}" onclick="event.stopPropagation();navigate('project-detail',${p.id})">${leftEdge?p.name.split('—')[0].trim():''}</div>`;
+    }).join('');
     return`<div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}"><div class="cal-day-num">${cell.date.getDate()}</div>${evHtml}</div>`;
   }
   const sorted=[...store.projects].filter(p=>p.startDate||p.endDate).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
