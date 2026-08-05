@@ -770,17 +770,17 @@ function renderSnapshot() {
   }
 
   // Year totals across ALL projects
-  const allRev   = store.projects.reduce((s,p)=>s+(p.budget*1.2),0);
-  const allMark  = store.projects.reduce((s,p)=>s+(p.budget*0.2),0);
-  const allCosts = store.projects.reduce((s,p)=>s+p.spent,0);
+  const allRev   = store.projects.reduce((s,p)=>s+(getBudgetTotals(p).forecast*1.2),0);
+  const allMark  = store.projects.reduce((s,p)=>s+(getBudgetTotals(p).forecast*0.2),0);
+  const allCosts = store.projects.reduce((s,p)=>s+getBudgetTotals(p).actuals,0);
   const allProfit= allRev - allCosts;
 
   function renderQ(q) {
     const isCurrent = q.q === currentQ;
     const projects  = projectsInQuarter(q);
-    const qRev      = projects.reduce((s,p)=>s+(p.budget*1.2),0);
-    const qMark     = projects.reduce((s,p)=>s+(p.budget*0.2),0);
-    const qCosts    = projects.reduce((s,p)=>s+p.spent,0);
+    const qRev      = projects.reduce((s,p)=>s+(getBudgetTotals(p).forecast*1.2),0);
+    const qMark     = projects.reduce((s,p)=>s+(getBudgetTotals(p).forecast*0.2),0);
+    const qCosts    = projects.reduce((s,p)=>s+getBudgetTotals(p).actuals,0);
     const qProfit   = qRev - qCosts;
     const pct       = qRev>0 ? Math.min(100,Math.round(qCosts/qRev*100)) : 0;
 
@@ -897,8 +897,8 @@ function renderSnapshot() {
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function renderDashboard() {
   const active=store.projects.filter(p=>p.status==='active').length;
-  const totalBudget=store.projects.reduce((s,p)=>s+p.budget,0);
-  const totalSpent=store.projects.reduce((s,p)=>s+p.spent,0);
+  const totalBudget=store.projects.reduce((s,p)=>s+getBudgetTotals(p).forecast,0);
+  const totalSpent=store.projects.reduce((s,p)=>s+getBudgetTotals(p).actuals,0);
   const hotLeads=store.leads.filter(l=>['in-conversation','proposal-sent'].includes(l.status)).length;
   return `
     <div class="topbar"><div><div class="page-title">How you feeling, Adam?</div><div class="page-sub">Here's what's happening at FELT.</div></div><div class="storage-badge">● Saved</div></div>
@@ -926,11 +926,22 @@ function signoffProgress(p) {
   return SIGNOFF_STEPS.filter(s=>p.signoff[s.id]?.completed).length;
 }
 
+function getBudgetTotals(p) {
+  if (p.budgetLines && p.budgetLines.length > 0) {
+    return {
+      forecast: p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0),
+      actuals:  p.budgetLines.reduce((s,l)=>s+(l.actuals||0),0)
+    };
+  }
+  return { forecast: p.budget||0, actuals: p.spent||0 };
+}
+
 function getProjectHealth(p) {
   if(p.status==='completed'||p.status==='pitched') return null;
   const today=new Date();today.setHours(0,0,0,0);
   let score=0;
-  const budgetPct=p.budget>0?p.spent/p.budget:0;
+  const {forecast,actuals}=getBudgetTotals(p);
+  const budgetPct=forecast>0?actuals/forecast:0;
   if(budgetPct>=1) score=Math.max(score,2);
   else if(budgetPct>=0.85) score=Math.max(score,1);
   if(p.endDate&&p.status==='active'){
@@ -948,7 +959,8 @@ function getProjectHealth(p) {
 }
 
 function renderProjectCard(p) {
-  const pct=p.budget>0?Math.round(p.spent/p.budget*100):0;
+  const {forecast,actuals}=getBudgetTotals(p);
+  const pct=forecast>0?Math.round(actuals/forecast*100):0;
   const teamInitials=p.teamIds.slice(0,3).map(id=>{const m=store.team.find(t=>t.id===id);return m?`<div class="team-avatar-sm">${initials(m.name)}</div>`:''}).join('');
   const soProgress=signoffProgress(p);
   const soTotal=SIGNOFF_STEPS.length;
@@ -957,7 +969,7 @@ function renderProjectCard(p) {
     <div class="project-card status-${p.status}" style="--project-color:${p.color||'#2563EB'}" onclick="navigate('project-detail',${p.id})">
       <div class="project-header"><div style="min-width:0"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${health?`<div title="${health.label}" style="width:9px;height:9px;border-radius:50%;background:${health.color};flex-shrink:0;box-shadow:0 0 0 2px ${health.color}30"></div>`:''}<div class="status-badge badge-${p.status}">${p.status}</div></div></div>
       <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Budget</span><span>$${p.spent.toLocaleString()} / $${p.budget.toLocaleString()}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Budget</span><span>$${actuals.toLocaleString()} / $${forecast.toLocaleString()}</span></div>
         <div class="budget-bar"><div class="budget-bar-fill ${pct>100?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
       </div>
       <div style="margin-top:10px">
