@@ -364,21 +364,24 @@
 
 <aside class="sidebar">
   <div class="sidebar-logo">FELT<span>.</span></div>
-  <div class="nav-section">
+  <div class="nav-section" style="padding-bottom:4px">
+    <div class="nav-item" onclick="openSearch()" style="margin-bottom:8px;background:rgba(255,255,255,0.06)"><span class="icon">⌕</span> Search <span style="margin-left:auto;font-size:10px;opacity:0.5;font-weight:400">⌘K</span></div>
     <div class="nav-label">Studio</div>
-    <div class="nav-item" onclick="openSearch()" style="margin-bottom:6px;background:rgba(255,255,255,0.06)"><span class="icon">⌕</span> Search <span style="margin-left:auto;font-size:10px;opacity:0.5;font-weight:400">⌘K</span></div>
     <div class="nav-item" onclick="navigate('snapshot')"><span class="icon">◑</span> Snapshot</div>
     <div class="nav-item active" onclick="navigate('dashboard')"><span class="icon">◈</span> Dashboard</div>
     <div class="nav-item" onclick="navigate('projects')"><span class="icon">▦</span> Projects</div>
-    <div class="nav-item" onclick="navigate('leads')"><span class="icon">◉</span> Leads</div>
     <div class="nav-item" onclick="navigate('calendar')"><span class="icon">◫</span> Calendar</div>
-    <div class="nav-item" onclick="navigate('ideas')"><span class="icon">✦</span> Ideas Park</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">Resources</div>
     <div class="nav-item" onclick="navigate('team')"><span class="icon">◎</span> Team</div>
-    <div class="nav-item" onclick="navigate('contacts')"><span class="icon">◇</span> Contacts</div>
+    <div class="nav-item" onclick="navigate('contacts')"><span class="icon">◇</span> Clients</div>
     <div class="nav-item" onclick="navigate('global-suppliers')"><span class="icon">◧</span> Suppliers</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Future</div>
+    <div class="nav-item" onclick="navigate('leads')"><span class="icon">◉</span> Leads</div>
+    <div class="nav-item" onclick="navigate('ideas')"><span class="icon">✦</span> Ideas Park</div>
   </div>
   <div class="sidebar-footer">
     <div class="user-chip"><div class="avatar">AD</div> Adam</div>
@@ -619,7 +622,7 @@ function navigate(view, projectId, memberId) {
   if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={snapshot:1,dashboard:2,projects:3,leads:4,calendar:5,ideas:6,team:7,contacts:8,'global-suppliers':9};
+  const navMap={snapshot:1,dashboard:2,projects:3,calendar:4,team:5,contacts:6,'global-suppliers':7,leads:8,ideas:9};
   const bnMap={dashboard:0,projects:1,leads:2,calendar:3,ideas:4,team:5};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
   document.querySelectorAll('.bottom-nav-item')[bnMap[view]]?.classList.add('active');
@@ -1876,7 +1879,7 @@ function deleteGlobalSupplier(id){store.globalSuppliers=store.globalSuppliers.fi
 // ─── CONTACTS ─────────────────────────────────────────────────────────────────
 function renderContacts() {
   return `
-    <div class="topbar"><div><div class="page-title">Contacts</div><div class="page-sub">${store.contacts.length} contacts</div></div><button class="btn btn-primary" onclick="openNewContactModal()">+ Add</button></div>
+    <div class="topbar"><div><div class="page-title">Clients</div><div class="page-sub">${store.contacts.length} contacts</div></div><button class="btn btn-primary" onclick="openNewContactModal()">+ Add</button></div>
     <div class="content"><div class="card">${store.contacts.map(c=>`<div class="contact-row"><div class="contact-avatar">${initials(c.name)}</div><div><div class="contact-name">${c.name}</div><div class="contact-detail">${c.role} · ${c.company}</div><div class="contact-detail">${c.email} · ${c.phone}</div></div><div class="contact-actions"><button class="btn btn-ghost btn-sm" onclick="openEditContactModal(${c.id})">Edit</button><button class="btn btn-ghost btn-sm" onclick="deleteContact(${c.id})">✕</button></div></div>`).join('')}</div></div>`;
 }
 
