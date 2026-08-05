@@ -460,7 +460,8 @@
   <div class="qc-item" onclick="closeQC();openNewIdeaModal()"><span class="qc-icon">✦</span> New Idea</div>
   <div class="qc-item" onclick="closeQC();openQuickTaskModal()"><span class="qc-icon">◆</span> Add Task</div>
   <div class="qc-item" onclick="closeQC();openNewLeadModal()"><span class="qc-icon">◉</span> New Lead</div>
-  <div class="qc-item" onclick="closeQC();openQuickExpenseModal()"><span class="qc-icon">$</span> Log Expense</div>
+  <div class="qc-item" onclick="closeQC();openQuickInvoiceModal()"><span class="qc-icon">🧾</span> Add Invoice</div>
+  <div class="qc-item" onclick="closeQC();openAddGlobalSupplierModal()"><span class="qc-icon">🏭</span> Add Supplier</div>
 </div>
 <button id="qc-btn" onclick="toggleQC()" title="Quick capture">+</button>
 
@@ -2416,6 +2417,43 @@ function quickLogExpense(){
   p.expenses.push({id:store.nextId.expenses++,description:d,category:document.getElementById('qe-cat').value,amount:a,date:document.getElementById('qe-date').value});
   p.spent=p.expenses.reduce((s,e)=>s+e.amount,0);
   closeModal();save();toast('Expense logged');render();
+}
+function openQuickInvoiceModal(){
+  const projectOpts=store.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const catOptions=BUDGET_CATS.map(c=>`<option>${c}</option>`).join('');
+  const allSuppliers=[...new Set([...(store.globalSuppliers||[]).map(s=>s.company)])];
+  const supplierDatalist=allSuppliers.length?`<datalist id="qi-sup-list">${allSuppliers.map(n=>`<option>${n}</option>`).join('')}</datalist>`:'';
+  openModal(`
+    <div class="modal-title">🧾 Add Invoice</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Project</label><select id="qi-project"><option value="">— Select project —</option>${projectOpts}</select></div>
+      <div class="form-group full"><label>Supplier / Contractor</label><input id="qi-supplier" list="qi-sup-list" placeholder="e.g. Forma Build">${supplierDatalist}</div>
+      <div class="form-group full"><label>Description</label><input id="qi-desc" placeholder="e.g. Stage 1 build, Final delivery, Deposit..."></div>
+      <div class="form-group"><label>Budget Category</label><select id="qi-cat">${catOptions}</select></div>
+      <div class="form-group"><label>Amount ($)</label><input id="qi-amount" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Date</label><input id="qi-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="form-group"><label>Status</label><select id="qi-status"><option value="pending">Pending</option><option value="paid">Paid</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="quickAddInvoice()">Add Invoice</button></div>`);
+}
+function quickAddInvoice(){
+  const projId=parseInt(document.getElementById('qi-project').value);
+  if(!projId){toast('Select a project');return;}
+  const supplier=document.getElementById('qi-supplier').value.trim();
+  if(!supplier){toast('Supplier required');return;}
+  const p=store.projects.find(x=>x.id===projId);
+  if(!p.invoices)p.invoices=[];
+  p.invoices.push({
+    id:store.nextId.invoices++,
+    supplier,
+    description:document.getElementById('qi-desc').value.trim(),
+    category:document.getElementById('qi-cat').value,
+    amount:parseFloat(document.getElementById('qi-amount').value)||0,
+    date:document.getElementById('qi-date').value,
+    status:document.getElementById('qi-status').value,
+    notes:''
+  });
+  closeModal();save();toast('Invoice added 🧾');render();
 }
 
 // ─── CLIENT SUMMARY ───────────────────────────────────────────────────────────
