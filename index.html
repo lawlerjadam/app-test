@@ -233,6 +233,26 @@
   .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1.5px solid var(--border); }
   .cal-header-cell { padding: 8px 0; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
   .cal-body { display: grid; grid-template-columns: repeat(7, 1fr); }
+  /* ── Mobile calendar ── */
+  .cal-mobile-view { display: none; }
+  .cal-desktop-view { display: block; }
+  .cal-week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-week-label { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .cal-week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 20px; background: var(--card); border-radius: 14px; padding: 10px 6px; border: 1.5px solid var(--border); }
+  .cal-wd { display: flex; flex-direction: column; align-items: center; padding: 6px 2px; border-radius: 10px; }
+  .cal-wd.today { background: var(--accent); }
+  .cal-wd-name { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .cal-wd.today .cal-wd-name { color: var(--navy); }
+  .cal-wd-num { font-size: 17px; font-weight: 800; color: var(--navy); margin-bottom: 5px; line-height: 1; }
+  .cal-wd.today .cal-wd-num { color: var(--navy); }
+  .cal-wd-dots { display: flex; gap: 2px; min-height: 5px; justify-content: center; }
+  .cal-wd-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .cal-agenda-item { display: flex; gap: 10px; align-items: stretch; padding: 12px 14px; background: var(--card); border-radius: 12px; margin-bottom: 8px; cursor: pointer; border: 1.5px solid var(--border); transition: border-color 0.15s; }
+  .cal-agenda-item:active { border-color: var(--accent); }
+  .cal-agenda-accent { width: 4px; border-radius: 2px; flex-shrink: 0; }
+  .cal-agenda-name { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+  .cal-agenda-meta { font-size: 12px; color: var(--muted); }
+
   .cal-day { min-height: 90px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 6px; overflow: hidden; }
   .cal-day:nth-child(7n) { border-right: none; }
   .cal-day.other-month { background: var(--bg); }
@@ -347,6 +367,8 @@
     .stat-value { font-size: 22px; }
     .projects-grid { grid-template-columns: 1fr; }
     .team-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .cal-mobile-view { display: block; }
+    .cal-desktop-view { display: none; }
     .ideas-grid { grid-template-columns: 1fr; }
     .budget-summary { grid-template-columns: 1fr; gap: 10px; }
     .pipeline { grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -678,6 +700,7 @@ store.team.forEach(m => {
 let currentView='dashboard', currentProject=null, currentTab='brief';
 let currentMember=null, currentMemberTab='overview';
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+let calMobileWeekOffset=0;
 
 function navigate(view, projectId, memberId) {
   currentView=view;
@@ -1325,7 +1348,76 @@ function renderContactsTab(p) {
 // ─── CALENDAR ─────────────────────────────────────────────────────────────────
 function renderCalendar() {
   const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const monthNamesShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dayInitials=['M','T','W','T','F','S','S'];
+
+  // ── Mobile: week strip + agenda ──────────────────────────────────────────
+  const todayMob=new Date(); todayMob.setHours(0,0,0,0);
+  const dowMob=(todayMob.getDay()+6)%7;
+  const weekMon=new Date(todayMob); weekMon.setDate(todayMob.getDate()-dowMob+calMobileWeekOffset*7);
+  const weekDays=Array.from({length:7},(_,i)=>{const d=new Date(weekMon);d.setDate(weekMon.getDate()+i);return d;});
+  const weekSun=weekDays[6];
+
+  const weekStripHtml=weekDays.map((d,i)=>{
+    const isToday=d.toDateString()===todayMob.toDateString();
+    const dots=store.projects.filter(p=>{
+      if(!p.startDate||!p.endDate)return false;
+      const s=new Date(p.startDate+'T00:00:00'),e=new Date(p.endDate+'T23:59:59');
+      return d>=s&&d<=e;
+    }).slice(0,3).map(p=>`<span class="cal-wd-dot" style="background:${p.color||'#2563EB'}"></span>`).join('');
+    return`<div class="cal-wd${isToday?' today':''}">
+      <div class="cal-wd-name">${dayInitials[i]}</div>
+      <div class="cal-wd-num">${d.getDate()}</div>
+      <div class="cal-wd-dots">${dots}</div>
+    </div>`;
+  }).join('');
+
+  const weekLabel=weekMon.getMonth()===weekSun.getMonth()
+    ?`${monthNamesShort[weekMon.getMonth()]} ${weekMon.getFullYear()}`
+    :`${monthNamesShort[weekMon.getMonth()]} – ${monthNamesShort[weekSun.getMonth()]} ${weekSun.getFullYear()}`;
+
+  const weekProjects=store.projects.filter(p=>{
+    if(!p.startDate&&!p.endDate)return false;
+    const s=p.startDate?new Date(p.startDate+'T00:00:00'):null;
+    const e=p.endDate?new Date(p.endDate+'T23:59:59'):null;
+    return(!s||s<=weekSun)&&(!e||e>=weekMon);
+  }).sort((a,b)=>new Date(a.startDate||'9999')-new Date(b.startDate||'9999'));
+
+  const agendaHtml=weekProjects.length===0
+    ?`<div class="empty-state" style="padding:16px 0"><p>No projects scheduled this week.</p></div>`
+    :weekProjects.map(p=>{
+      const health=getProjectHealth(p);
+      return`<div class="cal-agenda-item" onclick="navigate('project-detail',${p.id})">
+        <div class="cal-agenda-accent" style="background:${p.color||'#2563EB'}"></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            ${health?`<div style="width:7px;height:7px;border-radius:50%;background:${health.color};flex-shrink:0"></div>`:''}
+            <div class="cal-agenda-name">${p.name}</div>
+          </div>
+          ${p.client?`<div class="cal-agenda-meta">${p.client}</div>`:''}
+          <div class="cal-agenda-meta">${formatDate(p.startDate)} → ${formatDate(p.endDate)}</div>
+        </div>
+        <div class="status-badge badge-${p.status}" style="align-self:flex-start;margin-top:2px">${p.status}</div>
+      </div>`;
+    }).join('');
+
+  const mobileView=`
+    <div class="cal-mobile-view">
+      <div class="section-header" style="margin-bottom:8px"><div class="section-title">On the docket</div><div style="font-size:12px;color:var(--muted)">Next 5 days</div></div>
+      <div class="cal-list" style="margin-bottom:24px">DOCKET_PLACEHOLDER</div>
+      <div class="cal-week-nav">
+        <button class="btn btn-ghost btn-sm" onclick="calMobileWeekOffset--;render()">← Prev</button>
+        <div class="cal-week-label">${weekLabel}</div>
+        <button class="btn btn-ghost btn-sm" onclick="calMobileWeekOffset++;render()">Next →</button>
+      </div>
+      <div class="cal-week-strip">${weekStripHtml}</div>
+      <div class="section-header" style="margin-bottom:8px"><div class="section-title">This week</div></div>
+      ${agendaHtml}
+      <div class="section-header" style="margin-top:24px;margin-bottom:8px"><div class="section-title">All Projects</div></div>
+      <div class="cal-list">ALL_PROJECTS_PLACEHOLDER</div>
+    </div>`;
+
   const firstDay=new Date(calYear,calMonth,1),lastDay=new Date(calYear,calMonth+1,0);
   const startDow=(firstDay.getDay()+6)%7,totalDays=lastDay.getDate();
   const today=new Date();
@@ -1383,15 +1475,22 @@ function renderCalendar() {
         </div>
       </div>`).join('');
 
+  const allProjectsHtml=sorted.map(p=>`<div class="cal-list-item" onclick="navigate('project-detail',${p.id})"><div class="cal-dot" style="background:${p.color||'var(--blue)'}"></div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">${p.name}</div><div style="font-size:12px;color:var(--muted)">${p.client}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:12px;font-weight:600">${formatDate(p.startDate)}</div><div style="font-size:11px;color:var(--muted)">→ ${formatDate(p.endDate)}</div></div><div class="status-badge badge-${p.status}">${p.status}</div></div>`).join('');
+
+  const finalMobileView=mobileView.replace('DOCKET_PLACEHOLDER',docketHtml).replace('ALL_PROJECTS_PLACEHOLDER',allProjectsHtml);
+
   return `
     <div class="topbar"><div><div class="page-title">Calendar</div><div class="page-sub">Project timeline overview</div></div></div>
     <div class="content">
-      <div class="section-header"><div class="section-title">On the docket</div><div style="font-size:12px;color:var(--muted)">Next 5 days</div></div>
-      <div class="cal-list" style="margin-bottom:24px">${docketHtml}</div>
-      <div class="cal-nav"><button class="btn btn-ghost btn-sm" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}render()">← Prev</button><div class="cal-month">${monthNames[calMonth]} ${calYear}</div><button class="btn btn-ghost btn-sm" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}render()">Next →</button></div>
-      <div class="cal-grid"><div class="cal-header">${days.map(d=>`<div class="cal-header-cell">${d}</div>`).join('')}</div><div class="cal-body">${cells.map(c=>renderCell(c)).join('')}</div></div>
-      <div class="section-header"><div class="section-title">All Projects</div></div>
-      <div class="cal-list">${sorted.map(p=>`<div class="cal-list-item" onclick="navigate('project-detail',${p.id})"><div class="cal-dot" style="background:${p.color||'var(--blue)'}"></div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">${p.name}</div><div style="font-size:12px;color:var(--muted)">${p.client}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:12px;font-weight:600">${formatDate(p.startDate)}</div><div style="font-size:11px;color:var(--muted)">→ ${formatDate(p.endDate)}</div></div><div class="status-badge badge-${p.status}">${p.status}</div></div>`).join('')}</div>
+      ${finalMobileView}
+      <div class="cal-desktop-view">
+        <div class="section-header"><div class="section-title">On the docket</div><div style="font-size:12px;color:var(--muted)">Next 5 days</div></div>
+        <div class="cal-list" style="margin-bottom:24px">${docketHtml}</div>
+        <div class="cal-nav"><button class="btn btn-ghost btn-sm" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}render()">← Prev</button><div class="cal-month">${monthNames[calMonth]} ${calYear}</div><button class="btn btn-ghost btn-sm" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}render()">Next →</button></div>
+        <div class="cal-grid"><div class="cal-header">${days.map(d=>`<div class="cal-header-cell">${d}</div>`).join('')}</div><div class="cal-body">${cells.map(c=>renderCell(c)).join('')}</div></div>
+        <div class="section-header"><div class="section-title">All Projects</div></div>
+        <div class="cal-list">${allProjectsHtml}</div>
+      </div>
     </div>`;
 }
 
