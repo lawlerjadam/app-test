@@ -927,13 +927,11 @@ function signoffProgress(p) {
 }
 
 function getBudgetTotals(p) {
-  if (p.budgetLines && p.budgetLines.length > 0) {
-    return {
-      forecast: p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0),
-      actuals:  p.budgetLines.reduce((s,l)=>s+(l.actuals||0),0)
-    };
-  }
-  return { forecast: p.budget||0, actuals: p.spent||0 };
+  if (!p.budgetLines) p.budgetLines = ['Fabrication','Furniture & Décor','AV + Content Tech','Team','Uniforms & Materials','Print Collateral','Production Misc.','Other'].map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
+  return {
+    forecast: p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0),
+    actuals:  p.budgetLines.reduce((s,l)=>s+(l.actuals||0),0)
+  };
 }
 
 function getProjectHealth(p) {
