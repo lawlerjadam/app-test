@@ -2196,6 +2196,13 @@ function closeClientSummary(){
 }
 
 render();
+
+// Copy logo src from sidebar to mobile header so they're guaranteed identical
+(function(){
+  const sidebarLogo = document.querySelector('.sidebar-logo img');
+  const mobileHeaderLogo = document.querySelector('.mobile-header img');
+  if(sidebarLogo && mobileHeaderLogo) mobileHeaderLogo.src = sidebarLogo.src;
+})();
 </script>
 
 <!-- Feeling of the Day overlay -->
