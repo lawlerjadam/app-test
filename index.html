@@ -1489,7 +1489,10 @@ function renderInvoicesTab(p) {
 }
 
 function openAddInvoiceModal() {
-  const supplierNames=[...new Set((currentProject.production?.suppliers||[]).map(s=>s.company))];
+  const supplierNames=[...new Set([
+    ...(currentProject.production?.suppliers||[]).map(s=>s.company),
+    ...(store.globalSuppliers||[]).map(s=>s.company)
+  ])];
   const catOptions = BUDGET_CATS.map(c=>`<option>${c}</option>`).join('');
   const supplierDatalist = supplierNames.length ? `<datalist id="inv-sup-list">${supplierNames.map(n=>`<option>${n}</option>`).join('')}</datalist>` : '';
   openModal(`<div class="modal-title">Add Invoice</div><div class="form-grid">
