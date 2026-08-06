@@ -1186,6 +1186,92 @@ function renderSnapshot() {
         </div>
       </div>
 
+      <!-- Monthly Revenue Chart -->
+      ${(()=>{
+        const now2=new Date();
+        const months=[];
+        for(let i=5;i>=0;i--){
+          const d=new Date(now2.getFullYear(),now2.getMonth()-i,1);
+          months.push({label:d.toLocaleString('en-CA',{month:'short'}),year:d.getFullYear(),month:d.getMonth(),paid:0,pending:0});
+        }
+        store.companies.forEach(co=>{
+          (co.payments||[]).forEach(pay=>{
+            if(!pay.date)return;
+            const d=new Date(pay.date+'T12:00:00');
+            const m=months.find(m=>m.year===d.getFullYear()&&m.month===d.getMonth());
+            if(!m)return;
+            if(pay.status==='paid')m.paid+=(pay.amount||0);
+            else m.pending+=(pay.amount||0);
+          });
+        });
+        const maxBar=Math.max(...months.map(m=>m.paid+m.pending),1);
+        const totalPaid=months.reduce((s,m)=>s+m.paid,0);
+        const totalPending=months.reduce((s,m)=>s+m.pending,0);
+        const barW=36,barGap=16,chartH=100,labelH=28,legendH=32;
+        const svgW=(barW*2+barGap)*6+(barGap*5)+20;
+        const bars=months.map((m,i)=>{
+          const x=i*((barW*2+barGap)+barGap)+10;
+          const paidH=Math.round((m.paid/maxBar)*chartH);
+          const pendH=Math.round((m.pending/maxBar)*chartH);
+          return`<g>
+            <rect x="${x}" y="${chartH-paidH}" width="${barW}" height="${paidH||2}" rx="3" fill="var(--green)" opacity="0.85"/>
+            <rect x="${x+barW+4}" y="${chartH-pendH}" width="${barW}" height="${pendH||2}" rx="3" fill="var(--accent)" opacity="0.7"/>
+            <text x="${x+barW+2}" y="${chartH+16}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="inherit">${m.label}</text>
+          </g>`;
+        }).join('');
+        return`<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:800;color:var(--navy)">Revenue — Last 6 Months</div>
+            <div style="display:flex;gap:16px;font-size:11px;color:var(--muted)">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block;opacity:0.85"></span>Paid $${Math.round(totalPaid/1000)}k</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block;opacity:0.7"></span>Pending $${Math.round(totalPending/1000)}k</span>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <svg viewBox="0 0 ${svgW} ${chartH+labelH}" width="100%" height="${chartH+labelH}" xmlns="http://www.w3.org/2000/svg" style="display:block">${bars}</svg>
+          </div>
+        </div>`;
+      })()}
+
+      <!-- Team Capacity -->
+      ${(()=>{
+        const activeP=store.projects.filter(p=>p.status==='active'||p.status==='planning');
+        if(store.team.length===0)return'';
+        const AVAIL_COLOR={'available':'var(--green)','busy':'var(--orange)','away':'var(--muted)'};
+        const AVAIL_LABEL2={'available':'Available','busy':'Busy','away':'Away'};
+        const rows=store.team.map(m=>{
+          const totalDays=activeP.reduce((s,p)=>s+((p.teamAllocation&&p.teamAllocation[m.id])||0),0);
+          const projCount=activeP.filter(p=>p.teamIds.includes(m.id)).length;
+          const avail=getMemberAvailability(m);
+          const capMax=60;
+          const pct=Math.min(100,Math.round((totalDays/capMax)*100));
+          const barColor=pct>=80?'var(--red)':pct>=50?'var(--orange)':'var(--green)';
+          return`<div style="padding:10px 0;border-bottom:1px solid var(--border)" onclick="navigate('team-profile',undefined,${m.id})" style="cursor:pointer">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer" onclick="navigate('team-profile',undefined,${m.id})">
+              <div class="team-avatar-sm">${initials(m.name)}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
+                <div style="font-size:11px;color:var(--muted)">${m.role}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:13px;font-weight:700;color:var(--navy)">${totalDays} days</div>
+                <div style="font-size:11px;color:${AVAIL_COLOR[avail]||'var(--muted)'};font-weight:600">${AVAIL_LABEL2[avail]||avail} · ${projCount} project${projCount!==1?'s':''}</div>
+              </div>
+            </div>
+            <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.4s"></div>
+            </div>
+          </div>`;
+        }).join('');
+        return`<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <div style="font-size:13px;font-weight:800;color:var(--navy)">Team Capacity</div>
+            <div style="font-size:11px;color:var(--muted)">Active + planning projects · bar = % of 60-day baseline</div>
+          </div>
+          ${rows}
+        </div>`;
+      })()}
+
       <!-- Quarters -->
       ${sorted.map(q=>renderQ(q)).join('')}
 
