@@ -885,6 +885,7 @@ store.projects.forEach((p,i) => {
 store.team.forEach(m => {
   if (!m.availability) m.availability = 'available';
   if (m.availableFrom === undefined) m.availableFrom = '';
+  if (!m.availabilityPeriods) m.availabilityPeriods = [];
   if (!m.contractStatus) m.contractStatus = 'not-sent';
   if (!m.ir35) m.ir35 = 'not-assessed';
   if (!m.paymentTerms) m.paymentTerms = '30';
@@ -2011,7 +2012,7 @@ const IR35_LABEL = {'outside':'Self-Employed','inside':'T4 Employee','not-assess
 
 function renderTeam() {
   const avail = {available:0,busy:0,away:0};
-  store.team.forEach(m=>{ if(avail[m.availability]!==undefined) avail[m.availability]++; });
+  store.team.forEach(m=>{ const a=getMemberAvailability(m); if(avail[a]!==undefined) avail[a]++; });
   const pendingTotal = store.team.reduce((s,m)=>s+m.payments.filter(p=>p.status==='pending').reduce((a,p)=>a+p.amount,0),0);
   const overdueTotal = store.team.reduce((s,m)=>s+m.payments.filter(p=>p.status==='overdue').reduce((a,p)=>a+p.amount,0),0);
   return `
@@ -2036,7 +2037,7 @@ function renderTeam() {
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
-            <span class="status-badge badge-${m.availability}">${AVAIL_LABEL[m.availability]||m.availability}</span>
+            <span class="status-badge badge-${getMemberAvailability(m)}">${AVAIL_LABEL[getMemberAvailability(m)]||getMemberAvailability(m)}</span>
             <span class="status-badge badge-${m.contractStatus}">${CONTRACT_LABEL[m.contractStatus]||m.contractStatus}</span>
             <span class="status-badge badge-${m.ir35}">${IR35_LABEL[m.ir35]||m.ir35}</span>
           </div>
@@ -2065,7 +2066,7 @@ function renderTeamProfile() {
           <div class="member-profile-name">${m.name}</div>
           <div class="member-profile-role">${m.role} · ${m.email}</div>
           <div class="member-profile-badges">
-            <span class="status-badge badge-${m.availability}">${AVAIL_LABEL[m.availability]||m.availability}</span>
+            <span class="status-badge badge-${getMemberAvailability(m)}">${AVAIL_LABEL[getMemberAvailability(m)]||getMemberAvailability(m)}</span>
             <span class="status-badge badge-${m.contractStatus}">${CONTRACT_LABEL[m.contractStatus]||m.contractStatus}</span>
             <span class="status-badge badge-${m.ir35}">${IR35_LABEL[m.ir35]||m.ir35}</span>
           </div>
@@ -2084,12 +2085,35 @@ function renderTeamProfile() {
 
 function renderMemberOverview(m) {
   const projects=store.projects.filter(p=>p.teamIds.includes(m.id));
+  const today = new Date(); today.setHours(0,0,0,0);
+  const currentAvail = getMemberAvailability(m);
+  const periods = (m.availabilityPeriods||[]);
+  const periodRows = periods.map(p => {
+    const from = new Date(p.from+'T00:00:00'); const to = new Date(p.to+'T00:00:00');
+    const isCurrent = today >= from && today <= to;
+    const isPast = today > to;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);opacity:${isPast?'0.5':'1'}">
+      <span class="status-badge badge-${p.type}" style="flex-shrink:0">${AVAIL_LABEL[p.type]||p.type}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--navy)">${formatDate(p.from)} → ${formatDate(p.to)}</div>
+        ${p.note?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${p.note}</div>`:''}
+      </div>
+      ${isCurrent?`<span style="font-size:10px;font-weight:700;background:var(--accent);color:var(--navy);padding:2px 7px;border-radius:20px;flex-shrink:0">Now</span>`:''}
+      <button class="btn btn-ghost btn-sm" onclick="deleteAvailabilityPeriod(${m.id},${p.id})" style="flex-shrink:0">✕</button>
+    </div>`;
+  }).join('');
   return `
     <div class="crm-grid">
       <div class="crm-stat"><div class="crm-stat-label">Day Rate</div><div class="crm-stat-value">$${m.rate}</div></div>
       <div class="crm-stat"><div class="crm-stat-label">Payment Terms</div><div class="crm-stat-value">${m.paymentTerms} days</div></div>
-      <div class="crm-stat"><div class="crm-stat-label">Availability</div><div class="crm-stat-value"><span class="status-badge badge-${m.availability}">${AVAIL_LABEL[m.availability]}</span>${m.availableFrom&&m.availability!=='available'?`<div style="font-size:11px;color:var(--muted);margin-top:4px">From ${formatDate(m.availableFrom)}</div>`:''}</div></div>
-      <div class="crm-stat"><div class="crm-stat-label">IR35 Status</div><div class="crm-stat-value"><span class="status-badge badge-${m.ir35}">${IR35_LABEL[m.ir35]}</span></div></div>
+      <div class="crm-stat"><div class="crm-stat-label">Current Status</div><div class="crm-stat-value"><span class="status-badge badge-${currentAvail}">${AVAIL_LABEL[currentAvail]||currentAvail}</span></div></div>
+      <div class="crm-stat"><div class="crm-stat-label">Worker Status</div><div class="crm-stat-value"><span class="status-badge badge-${m.ir35}">${IR35_LABEL[m.ir35]}</span></div></div>
+    </div>
+    <div class="section-header"><div class="section-title">Availability Schedule</div><button class="btn btn-primary btn-sm" onclick="openAddAvailabilityPeriodModal(${m.id})">+ Add Period</button></div>
+    <div class="card" style="margin-bottom:18px;padding:0 16px">
+      ${periods.length===0
+        ? `<div style="padding:20px 0;color:var(--muted);font-size:13px;text-align:center">No periods scheduled. Add one to plan ahead.</div>`
+        : periodRows}
     </div>
     <div class="section-header"><div class="section-title">Skills</div></div>
     <div class="card" style="margin-bottom:18px"><div class="skill-tags" style="justify-content:flex-start">${m.skills.length?m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join(''):'<span style="color:var(--muted);font-size:13px">No skills listed.</span>'}</div></div>
@@ -2285,6 +2309,58 @@ function cyclePaymentStatus(id) {
   const p=currentMember.payments.find(x=>x.id===id);
   p.status=cycle[(cycle.indexOf(p.status)+1)%cycle.length];
   save();toast('Status: '+p.status);render();
+}
+
+function getMemberAvailability(m) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const active = (m.availabilityPeriods||[]).find(p => {
+    const from = new Date(p.from+'T00:00:00'); const to = new Date(p.to+'T00:00:00');
+    return today >= from && today <= to;
+  });
+  return active ? active.type : m.availability;
+}
+
+function openAddAvailabilityPeriodModal(memberId) {
+  const today = new Date().toISOString().split('T')[0];
+  openModal(`
+    <div class="modal-title">Add Availability Period</div>
+    <div class="form-grid">
+      <div class="form-group"><label>From</label><input id="ap-from" type="date" value="${today}"></div>
+      <div class="form-group"><label>To</label><input id="ap-to" type="date" value="${today}"></div>
+      <div class="form-group"><label>Status</label><select id="ap-type">
+        <option value="available">Available</option>
+        <option value="busy">Busy</option>
+        <option value="away">Away</option>
+      </select></div>
+      <div class="form-group"><label>Note (optional)</label><input id="ap-note" placeholder="e.g. On another project, Holiday..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAvailabilityPeriod(${memberId})">Add Period</button>
+    </div>`);
+}
+
+function saveAvailabilityPeriod(memberId) {
+  const m = store.team.find(t => t.id === memberId);
+  const from = document.getElementById('ap-from').value;
+  const to = document.getElementById('ap-to').value;
+  if (!from || !to) { toast('Please set both dates'); return; }
+  if (to < from) { toast('End date must be after start date'); return; }
+  if (!m.availabilityPeriods) m.availabilityPeriods = [];
+  m.availabilityPeriods.push({
+    id: Date.now(),
+    from, to,
+    type: document.getElementById('ap-type').value,
+    note: document.getElementById('ap-note').value.trim()
+  });
+  m.availabilityPeriods.sort((a,b) => a.from.localeCompare(b.from));
+  closeModal(); save(); toast('Period added'); render();
+}
+
+function deleteAvailabilityPeriod(memberId, periodId) {
+  const m = store.team.find(t => t.id === memberId);
+  m.availabilityPeriods = m.availabilityPeriods.filter(p => p.id !== periodId);
+  save(); toast('Period removed'); render();
 }
 
 function openEditMemberCRMModal(id) {
