@@ -2735,7 +2735,7 @@ function openConvertLeadModal(id) {
     <div class="form-grid">
       <div class="form-group full"><label>Project Name</label><input id="cl-name" value="${esc(defaultName)}"></div>
       <div class="form-group"><label>Type</label><select id="cl-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Start Date</label><input id="cl-start" type="date"></div>
+      <div class="form-group"><label>Start Date</label><input id="cl-start" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
       <div class="form-group full"><label>Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="cl-color" value="${PROJECT_COLORS[0]}"></div>
     </div>
     <div style="border-top:1px solid var(--border);margin:16px 0 12px"></div>
