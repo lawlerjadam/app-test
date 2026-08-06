@@ -895,7 +895,7 @@ store.team.forEach(m => {
 });
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
-let currentView='dashboard', currentProject=null, currentTab='brief';
+let currentView='dashboard', currentProject=null, currentTab='brief', currentProjectsFilter='active';
 let currentMember=null, currentMemberTab='overview';
 let currentContact=null, currentContactTab='overview';
 let convertingLeadId=null;
@@ -1155,10 +1155,27 @@ function renderDashboard() {
 }
 
 // ─── PROJECTS ─────────────────────────────────────────────────────────────────
+function setProjectsFilter(f) { currentProjectsFilter = f; render(); }
 function renderProjects() {
+  const all = store.projects;
+  const filtered = currentProjectsFilter === 'active'
+    ? all.filter(p => p.status !== 'completed')
+    : currentProjectsFilter === 'completed'
+      ? all.filter(p => p.status === 'completed')
+      : all;
+  const tabs = [
+    { key: 'active',    label: 'Active' },
+    { key: 'all',       label: 'All' },
+    { key: 'completed', label: 'Completed' },
+  ];
   return `
-    <div class="topbar"><div><div class="page-title">Projects</div><div class="page-sub">${store.projects.length} projects total</div></div><button class="btn btn-primary" onclick="openNewProjectModal()">+ New</button></div>
-    <div class="content"><div class="projects-grid">${store.projects.map(p=>renderProjectCard(p)).join('')}</div></div>`;
+    <div class="topbar"><div><div class="page-title">Projects</div><div class="page-sub">${filtered.length} of ${all.length} projects</div></div><button class="btn btn-primary" onclick="openNewProjectModal()">+ New</button></div>
+    <div class="content">
+      <div style="display:flex;gap:6px;margin-bottom:20px">
+        ${tabs.map(t=>`<button class="btn ${currentProjectsFilter===t.key?'btn-primary':'btn-ghost'} btn-sm" onclick="setProjectsFilter('${t.key}')">${t.label}</button>`).join('')}
+      </div>
+      <div class="projects-grid">${filtered.map(p=>renderProjectCard(p)).join('')}${filtered.length===0?`<div style="color:var(--muted);font-size:14px;padding:20px 0">No ${currentProjectsFilter} projects.</div>`:''}</div>
+    </div>`;
 }
 
 function signoffProgress(p) {
