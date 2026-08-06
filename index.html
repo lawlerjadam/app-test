@@ -929,7 +929,7 @@ store.team.forEach(m => {
 });
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
-let currentView='dashboard', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active';
+let currentView='dashboard', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active', currentFinanceFilter='all';
 let currentMember=null, currentMemberTab='overview';
 let currentContact=null, currentContactTab='overview';
 let currentCompany=null;
@@ -1298,6 +1298,7 @@ function renderSnapshot() {
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function setDashFilter(f){currentDashFilter=f;render();}
+function setFinanceFilter(f){currentFinanceFilter=f;render();}
 function renderDashboard() {
   const active=store.projects.filter(p=>p.status==='active').length;
   const totalBudget=store.projects.reduce((s,p)=>s+getBudgetTotals(p).forecast,0);
@@ -2740,11 +2741,11 @@ function renderFinance() {
     return `<span style="background:var(--orange-light);color:#7A4010;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Pending</span>`;
   };
 
-  // Merge all items by month
+  // Merge + filter
   const allItems = [
     ...inItems.map(i=>({...i, flow:'in'})),
     ...outItems.map(i=>({...i, flow:'out'}))
-  ];
+  ].filter(i => currentFinanceFilter==='income' ? i.flow==='in' : currentFinanceFilter==='outgoings' ? i.flow==='out' : true);
   const byMonth = {};
   allItems.forEach(i => {
     const key = i.date?i.date.slice(0,7):'undated';
@@ -2789,7 +2790,14 @@ function renderFinance() {
   }).join('');
 
   return `
-    <div class="topbar"><div><div class="page-title">Finance</div><div class="page-sub">Cashflow overview · all projects</div></div></div>
+    <div class="topbar">
+      <div><div class="page-title">Finance</div><div class="page-sub">Cashflow overview · all projects</div></div>
+      <div style="display:flex;gap:4px">
+        <button class="btn ${currentFinanceFilter==='all'?'btn-primary':'btn-ghost'} btn-sm" onclick="setFinanceFilter('all')">All</button>
+        <button class="btn ${currentFinanceFilter==='income'?'btn-primary':'btn-ghost'} btn-sm" onclick="setFinanceFilter('income')">Income</button>
+        <button class="btn ${currentFinanceFilter==='outgoings'?'btn-primary':'btn-ghost'} btn-sm" onclick="setFinanceFilter('outgoings')">Outgoings</button>
+      </div>
+    </div>
     <div class="content">
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;">
         <div class="card"><div class="budget-label">Income Received</div><div class="budget-value" style="color:var(--green)">$${totalIn.toLocaleString()}</div></div>
