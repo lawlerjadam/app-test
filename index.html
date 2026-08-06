@@ -349,8 +349,9 @@
   .qc-item:hover { background:var(--bg); }
   .qc-item .qc-icon { font-size:16px; width:20px; text-align:center; }
   @media (max-width:768px) {
-    #qc-btn { bottom:calc(var(--bottom-nav-h) + 16px); }
-    #qc-menu { bottom:calc(var(--bottom-nav-h) + 76px); }
+    #qc-btn { display:none; }
+    #qc-menu { bottom:calc(var(--bottom-nav-h) + 12px); right:auto; left:50%; transform:translateX(-50%); }
+    #qc-menu.open-mobile { display:flex; }
   }
 
   /* ── CLIENT SUMMARY ───────────────────────────────────────── */
@@ -444,6 +445,9 @@
 <nav class="bottom-nav">
   <div class="bottom-nav-item active" onclick="closeMobileTray();navigate('dashboard')"><div class="bn-icon">◈</div>Home</div>
   <div class="bottom-nav-item" onclick="toggleMobileTray('studio')"><div class="bn-icon">▦</div>Studio</div>
+  <div style="display:flex;align-items:center;justify-content:center;padding:0 4px;">
+    <button onclick="closeMobileTray();toggleQC()" style="width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--navy);font-size:26px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:transform 0.2s;" id="qc-btn-mobile">+</button>
+  </div>
   <div class="bottom-nav-item" onclick="toggleMobileTray('resources')"><div class="bn-icon">◎</div>Resources</div>
   <div class="bottom-nav-item" onclick="toggleMobileTray('future')"><div class="bn-icon">◉</div>Future</div>
 </nav>
@@ -2638,12 +2642,16 @@ let qcOpen=false;
 function toggleQC(){
   qcOpen=!qcOpen;
   document.getElementById('qc-menu').style.display=qcOpen?'flex':'none';
-  document.getElementById('qc-btn').style.transform=qcOpen?'rotate(45deg)':'rotate(0)';
+  document.getElementById('qc-btn')?.style.setProperty('transform',qcOpen?'rotate(45deg)':'rotate(0)');
+  const mb=document.getElementById('qc-btn-mobile');
+  if(mb) mb.style.transform=qcOpen?'rotate(45deg)':'rotate(0)';
 }
 function closeQC(){
   qcOpen=false;
   document.getElementById('qc-menu').style.display='none';
-  document.getElementById('qc-btn').style.transform='rotate(0)';
+  document.getElementById('qc-btn')?.style.setProperty('transform','rotate(0)');
+  const mb=document.getElementById('qc-btn-mobile');
+  if(mb) mb.style.transform='rotate(0)';
 }
 function openQuickTaskModal(){
   const projectOpts=store.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
