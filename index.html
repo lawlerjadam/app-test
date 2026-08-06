@@ -1190,9 +1190,10 @@ function renderSnapshot() {
       ${(()=>{
         const now2=new Date();
         const months=[];
-        for(let i=5;i>=0;i--){
+        for(let i=3;i>=-2;i--){
           const d=new Date(now2.getFullYear(),now2.getMonth()-i,1);
-          months.push({label:d.toLocaleString('en-CA',{month:'short'}),year:d.getFullYear(),month:d.getMonth(),paid:0,pending:0});
+          const isCurr=i===0;
+          months.push({label:d.toLocaleString('en-CA',{month:'short'}),year:d.getFullYear(),month:d.getMonth(),paid:0,pending:0,isCurrent:isCurr,isFuture:i<0});
         }
         store.companies.forEach(co=>{
           (co.payments||[]).forEach(pay=>{
@@ -1213,15 +1214,19 @@ function renderSnapshot() {
           const x=i*((barW*2+barGap)+barGap)+10;
           const paidH=Math.round((m.paid/maxBar)*chartH);
           const pendH=Math.round((m.pending/maxBar)*chartH);
+          const labelColor=m.isCurrent?'var(--navy)':'var(--muted)';
+          const labelWeight=m.isCurrent?'bold':'normal';
+          const paidOpacity=m.isFuture?'0.35':'0.85';
+          const pendOpacity=m.isFuture?'0.35':'0.7';
           return`<g>
-            <rect x="${x}" y="${chartH-paidH}" width="${barW}" height="${paidH||2}" rx="3" fill="var(--green)" opacity="0.85"/>
-            <rect x="${x+barW+4}" y="${chartH-pendH}" width="${barW}" height="${pendH||2}" rx="3" fill="var(--accent)" opacity="0.7"/>
-            <text x="${x+barW+2}" y="${chartH+16}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="inherit">${m.label}</text>
+            <rect x="${x}" y="${chartH-paidH}" width="${barW}" height="${paidH||2}" rx="3" fill="var(--green)" opacity="${paidOpacity}"/>
+            <rect x="${x+barW+4}" y="${chartH-pendH}" width="${barW}" height="${pendH||2}" rx="3" fill="var(--accent)" opacity="${pendOpacity}"/>
+            <text x="${x+barW+2}" y="${chartH+16}" text-anchor="middle" font-size="10" fill="${labelColor}" font-weight="${labelWeight}" font-family="inherit">${m.label}${m.isCurrent?' ▾':''}</text>
           </g>`;
         }).join('');
         return`<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
-            <div style="font-size:13px;font-weight:800;color:var(--navy)">Revenue — Last 6 Months</div>
+            <div style="font-size:13px;font-weight:800;color:var(--navy)">Revenue — 3 Months Either Side</div>
             <div style="display:flex;gap:16px;font-size:11px;color:var(--muted)">
               <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block;opacity:0.85"></span>Paid $${Math.round(totalPaid/1000)}k</span>
               <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block;opacity:0.7"></span>Pending $${Math.round(totalPending/1000)}k</span>
