@@ -37,6 +37,14 @@
   .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 6px; cursor: pointer; color: rgba(255,255,255,0.45); font-size: 10px; transition: all 0.15s; min-width: 44px; }
   .bottom-nav-item .bn-icon { font-size: 18px; line-height: 1; }
   .bottom-nav-item.active { color: var(--accent); }
+  #mobile-tray-backdrop { display:none; position:fixed; inset:0; bottom:var(--bottom-nav-h); z-index:48; }
+  #mobile-tray-backdrop.open { display:block; }
+  #mobile-tray { display:none; position:fixed; bottom:var(--bottom-nav-h); left:0; right:0; background:var(--navy); z-index:49; padding:10px 8px 6px; border-top:1px solid rgba(255,255,255,0.12); border-radius:16px 16px 0 0; flex-wrap:wrap; gap:4px; }
+  #mobile-tray.open { display:flex; }
+  .tray-item { display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 8px; border-radius:10px; cursor:pointer; color:rgba(255,255,255,0.6); font-size:11px; flex:1; min-width:60px; transition:all 0.15s; }
+  .tray-item:active { background:rgba(255,255,255,0.08); }
+  .tray-item.active { color:var(--accent); }
+  .tray-item .ti { font-size:20px; line-height:1; }
 
   .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
   .topbar { background: var(--bg); padding: 22px 28px 0; display: flex; align-items: flex-start; justify-content: space-between; position: sticky; top: 0; z-index: 10; gap: 12px; }
@@ -431,13 +439,13 @@
   <button onclick="openSearch()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--muted);font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px">⌕ Search</button>
 </header>
 
+<div id="mobile-tray-backdrop" onclick="closeMobileTray()"></div>
+<div id="mobile-tray"></div>
 <nav class="bottom-nav">
-  <div class="bottom-nav-item active" onclick="navigate('dashboard')"><div class="bn-icon">◈</div>Home</div>
-  <div class="bottom-nav-item" onclick="navigate('projects')"><div class="bn-icon">▦</div>Projects</div>
-  <div class="bottom-nav-item" onclick="navigate('calendar')"><div class="bn-icon">◫</div>Cal</div>
-  <div class="bottom-nav-item" onclick="navigate('team')"><div class="bn-icon">◎</div>Team</div>
-  <div class="bottom-nav-item" onclick="navigate('leads')"><div class="bn-icon">◉</div>Leads</div>
-  <div class="bottom-nav-item" onclick="navigate('ideas')"><div class="bn-icon">✦</div>Ideas</div>
+  <div class="bottom-nav-item active" onclick="closeMobileTray();navigate('dashboard')"><div class="bn-icon">◈</div>Home</div>
+  <div class="bottom-nav-item" onclick="toggleMobileTray('studio')"><div class="bn-icon">▦</div>Studio</div>
+  <div class="bottom-nav-item" onclick="toggleMobileTray('resources')"><div class="bn-icon">◎</div>Resources</div>
+  <div class="bottom-nav-item" onclick="toggleMobileTray('future')"><div class="bn-icon">◉</div>Future</div>
 </nav>
 
 <main class="main" id="main"></main>
@@ -714,6 +722,40 @@ let currentContact=null, currentContactTab='overview';
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let calMobileWeekOffset=0;
 
+let mobileNavTray=null;
+const MOBILE_TRAY_SECTIONS={
+  studio:[
+    {icon:'▦',label:'Projects',view:'projects'},
+    {icon:'◫',label:'Calendar',view:'calendar'},
+    {icon:'◱',label:'Finance',view:'finance'},
+    {icon:'◧',label:'Snapshot',view:'snapshot'}
+  ],
+  resources:[
+    {icon:'◎',label:'Team',view:'team'},
+    {icon:'◇',label:'Clients',view:'contacts'},
+    {icon:'◧',label:'Suppliers',view:'global-suppliers'}
+  ],
+  future:[
+    {icon:'◉',label:'Leads',view:'leads'},
+    {icon:'✦',label:'Ideas',view:'ideas'}
+  ]
+};
+function toggleMobileTray(section) {
+  if(mobileNavTray===section){closeMobileTray();return;}
+  mobileNavTray=section;
+  const tray=document.getElementById('mobile-tray');
+  const backdrop=document.getElementById('mobile-tray-backdrop');
+  const items=MOBILE_TRAY_SECTIONS[section];
+  tray.innerHTML=items.map(i=>`<div class="tray-item ${currentView===i.view?'active':''}" onclick="closeMobileTray();navigate('${i.view}')"><div class="ti">${i.icon}</div>${i.label}</div>`).join('');
+  tray.classList.add('open');
+  backdrop.classList.add('open');
+}
+function closeMobileTray() {
+  mobileNavTray=null;
+  document.getElementById('mobile-tray')?.classList.remove('open');
+  document.getElementById('mobile-tray-backdrop')?.classList.remove('open');
+}
+
 function navigate(view, projectId, memberId) {
   currentView=view;
   if(projectId!==undefined){currentProject=store.projects.find(p=>p.id===projectId);currentTab='brief';}
@@ -721,9 +763,15 @@ function navigate(view, projectId, memberId) {
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
   const navMap={snapshot:1,dashboard:2,projects:3,calendar:4,finance:5,team:6,contacts:7,'global-suppliers':8,leads:9,ideas:10};
-  const bnMap={dashboard:0,projects:1,calendar:2,team:3,leads:4,ideas:5};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
-  document.querySelectorAll('.bottom-nav-item')[bnMap[view]]?.classList.add('active');
+  const studioViews=['projects','project-detail','calendar','finance','snapshot'];
+  const resourceViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
+  const futureViews=['leads','ideas'];
+  const bnItems=document.querySelectorAll('.bottom-nav-item');
+  if(studioViews.includes(view)) bnItems[1]?.classList.add('active');
+  else if(resourceViews.includes(view)) bnItems[2]?.classList.add('active');
+  else if(futureViews.includes(view)) bnItems[3]?.classList.add('active');
+  else bnItems[0]?.classList.add('active');
   document.getElementById('main').scrollTo(0,0);
   render();
 }
