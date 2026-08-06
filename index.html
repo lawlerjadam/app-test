@@ -403,6 +403,7 @@
     <div class="nav-item active" onclick="navigate('dashboard')"><span class="icon">◈</span> Dashboard</div>
     <div class="nav-item" onclick="navigate('projects')"><span class="icon">▦</span> Projects</div>
     <div class="nav-item" onclick="navigate('calendar')"><span class="icon">◫</span> Calendar</div>
+    <div class="nav-item" onclick="navigate('finance')"><span class="icon">◱</span> Finance</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">Resources</div>
@@ -716,7 +717,7 @@ function navigate(view, projectId, memberId) {
   if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={snapshot:1,dashboard:2,projects:3,calendar:4,team:5,contacts:6,'global-suppliers':7,leads:8,ideas:9};
+  const navMap={snapshot:1,dashboard:2,projects:3,calendar:4,finance:5,team:6,contacts:7,'global-suppliers':8,leads:9,ideas:10};
   const bnMap={dashboard:0,projects:1,calendar:2,team:3,leads:4,ideas:5};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
   document.querySelectorAll('.bottom-nav-item')[bnMap[view]]?.classList.add('active');
@@ -737,6 +738,7 @@ function render() {
   else if(currentView==='team-profile') m.innerHTML=renderTeamProfile();
   else if(currentView==='contacts') m.innerHTML=renderContacts();
   else if(currentView==='global-suppliers') m.innerHTML=renderGlobalSuppliers();
+  else if(currentView==='finance') m.innerHTML=renderFinance();
   // Bind callsheet autosave after render
   if(currentTab==='production') {
     const ta=document.getElementById('callsheet-notes');
@@ -2190,6 +2192,103 @@ function deleteAsset(id){currentProject.assets.files=currentProject.assets.files
 
 // ─── GLOBAL SUPPLIERS ─────────────────────────────────────────────────────────
 const SUPPLIER_CATS=['Fabrication','AV / Tech','Catering','Staffing','Photography / Video','Transport','Print','Venue','Other'];
+
+function renderFinance() {
+  // Gather all outgoing items: invoices + team payments
+  const items = [];
+  store.projects.forEach(p => {
+    (p.invoices||[]).forEach(inv => {
+      items.push({
+        date: inv.date||'',
+        description: inv.supplier + (inv.description ? ' — ' + inv.description : ''),
+        project: p.name,
+        category: inv.category,
+        amount: inv.amount||0,
+        status: inv.status,
+        type: 'invoice'
+      });
+    });
+  });
+  store.team.forEach(m => {
+    (m.payments||[]).forEach(pay => {
+      const proj = pay.projectId ? store.projects.find(p=>p.id===pay.projectId) : null;
+      items.push({
+        date: pay.date||'',
+        description: m.name + ' — ' + pay.description,
+        project: proj ? proj.name : '—',
+        category: 'Team',
+        amount: pay.amount||0,
+        status: pay.status,
+        type: 'payment'
+      });
+    });
+  });
+
+  // Summary totals
+  const totalPaid    = items.filter(i=>i.status==='paid').reduce((s,i)=>s+i.amount,0);
+  const totalPending = items.filter(i=>i.status==='pending').reduce((s,i)=>s+i.amount,0);
+  const totalOverdue = items.filter(i=>i.status==='overdue').reduce((s,i)=>s+i.amount,0);
+  const totalAll     = items.reduce((s,i)=>s+i.amount,0);
+
+  // Group by month
+  const byMonth = {};
+  items.forEach(i => {
+    const key = i.date ? i.date.slice(0,7) : 'undated';
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(i);
+  });
+  const monthKeys = Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
+
+  const statusBadge = s => {
+    if (s==='paid')    return `<span style="background:var(--green-light);color:#1A5030;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Paid</span>`;
+    if (s==='overdue') return `<span style="background:var(--red-light);color:#7A1010;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Overdue</span>`;
+    return `<span style="background:var(--orange-light);color:#7A4010;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Pending</span>`;
+  };
+
+  const monthHtml = monthKeys.map(key => {
+    const rows = byMonth[key];
+    const label = key === 'undated' ? 'Undated' : new Date(key+'-01').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    const mPaid    = rows.filter(i=>i.status==='paid').reduce((s,i)=>s+i.amount,0);
+    const mPending = rows.filter(i=>i.status==='pending'||i.status==='overdue').reduce((s,i)=>s+i.amount,0);
+    const sorted   = [...rows].sort((a,b)=>b.date.localeCompare(a.date));
+    return `
+      <div style="margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);">${label}</div>
+          <div style="flex:1;height:0.5px;background:var(--border);"></div>
+          ${mPaid>0?`<div style="font-size:11px;color:var(--green);font-weight:600;">Paid $${mPaid.toLocaleString()}</div>`:''}
+          ${mPending>0?`<div style="font-size:11px;color:var(--orange);font-weight:600;">Pending $${mPending.toLocaleString()}</div>`:''}
+        </div>
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th>Description</th><th>Project</th><th>Category</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead>
+            <tbody>${sorted.map(i=>`<tr>
+              <td style="font-weight:600">${i.description}</td>
+              <td style="color:var(--muted);font-size:12px">${i.project}</td>
+              <td style="color:var(--muted);font-size:12px">${i.category}</td>
+              <td style="color:var(--muted)">${i.date?formatDate(i.date):'—'}</td>
+              <td>${statusBadge(i.status)}</td>
+              <td style="text-align:right;font-weight:700;color:var(--red)">−$${i.amount.toLocaleString()}</td>
+            </tr>`).join('')}</tbody>
+          </table></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="topbar"><div><div class="page-title">Finance</div><div class="page-sub">Cashflow overview · all projects</div></div></div>
+    <div class="content">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+        <div class="card"><div class="budget-label">Total Outgoings</div><div class="budget-value">$${totalAll.toLocaleString()}</div></div>
+        <div class="card"><div class="budget-label">Paid</div><div class="budget-value" style="color:var(--green)">$${totalPaid.toLocaleString()}</div></div>
+        <div class="card"><div class="budget-label">Pending</div><div class="budget-value" style="color:var(--orange)">$${totalPending.toLocaleString()}</div></div>
+        <div class="card"><div class="budget-label">Overdue</div><div class="budget-value" style="color:var(--red)">$${totalOverdue.toLocaleString()}</div></div>
+      </div>
+      ${items.length===0
+        ? `<div class="empty-state"><div class="empty-icon">◱</div><p>No invoices or payments logged yet.</p></div>`
+        : monthHtml}
+    </div>`;
+}
 
 function renderGlobalSuppliers() {
   return `
