@@ -89,6 +89,7 @@
   .badge-proposal-sent { background: var(--purple-light); color: var(--purple); }
   .badge-won { background: var(--green-light); color: var(--green); }
   .badge-lost { background: var(--red-light); color: var(--red); }
+  .badge-converted { background: var(--navy); color: var(--accent); }
   .badge-confirmed { background: var(--green-light); color: var(--green); }
   .badge-pending { background: var(--accent-light); color: #92700A; }
   .badge-cancelled { background: var(--red-light); color: var(--red); }
@@ -848,6 +849,8 @@ if (!store.nextId.clientPayments) store.nextId.clientPayments = 1;
 if (!store.contractTemplates) store.contractTemplates = [{id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, outside IR35'}];
 if (!store.globalSuppliers) store.globalSuppliers = [];
 store.contacts.forEach(c => { if (!c.payments) c.payments = []; });
+store.leads.forEach(l => { if (!l.contactRole) l.contactRole = ''; if (!l.contactPhone) l.contactPhone = ''; if (l.convertedProjectId === undefined) l.convertedProjectId = null; });
+store.projects.forEach(p => { if (p.budgetTarget === undefined) p.budgetTarget = null; if (p.leadId === undefined) p.leadId = null; });
 
 // Migration: ensure all projects have signoff + production + color
 store.projects.forEach((p,i) => {
@@ -876,6 +879,7 @@ store.team.forEach(m => {
 let currentView='dashboard', currentProject=null, currentTab='brief';
 let currentMember=null, currentMemberTab='overview';
 let currentContact=null, currentContactTab='overview';
+let convertingLeadId=null;
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let calMobileWeekOffset=0;
 
@@ -1204,7 +1208,7 @@ function renderProjectCard(p) {
 function renderProjectDetail() {
   const p=currentProject; if(!p) return '';
   return `
-    <div class="topbar"><div><div class="back-btn" onclick="navigate('projects')">← Projects</div><div class="page-title">${p.name}</div><div class="page-sub">${p.client} · <span class="status-badge badge-${p.status}">${p.status}</span></div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openClientSummary()">Share</button><button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button></div></div>
+    <div class="topbar"><div><div class="back-btn" onclick="navigate('projects')">← Projects</div><div class="page-title">${p.name}</div><div class="page-sub">${p.client} · <span class="status-badge badge-${p.status}">${p.status}</span>${p.leadId?` · <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="navigate('leads')" title="View originating lead">◉ from lead</span>`:''}</div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openClientSummary()">Share</button><button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button></div></div>
     <div class="content">
       <div class="tabs">
         <div class="tab ${currentTab==='brief'?'active':''}" onclick="switchTab('brief')">Brief</div>
@@ -1567,6 +1571,8 @@ function renderBudgetTab(p) {
   const aTotal=Object.values(paidByCat).reduce((s,v)=>s+v,0);
   const remaining=fTotal-aTotal, over=aTotal>fTotal;
   const pct=fTotal>0?Math.round(aTotal/fTotal*100):0;
+  const target=p.budgetTarget||0;
+  const unallocated=target-fTotal, envelopeOver=target>0&&fTotal>target;
 
   const tableRows=p.budgetLines.map((line,idx)=>{
     const lineActuals=paidByCat[line.category]||0;
@@ -1607,6 +1613,11 @@ function renderBudgetTab(p) {
   }).join('');
 
   return `
+    ${target>0?`<div style="background:var(--accent-light);border:1.5px solid var(--accent);border-radius:12px;padding:14px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;color:var(--accent-dark);margin-bottom:3px">Budget Envelope</div><div style="font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-0.5px">$${target.toLocaleString()}</div></div>
+      <div style="text-align:center"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--muted);margin-bottom:3px">Allocated</div><div style="font-size:20px;font-weight:800;color:var(--navy)">$${fTotal.toLocaleString()}</div></div>
+      <div style="text-align:right"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--muted);margin-bottom:3px">Remaining</div><div style="font-size:20px;font-weight:800;color:${envelopeOver?'var(--red)':unallocated===0?'var(--muted)':'var(--green)'}">${envelopeOver?'−':''}$${Math.abs(unallocated).toLocaleString()}</div></div>
+    </div>`:''}
     <div class="budget-summary">
       <div class="budget-stat">
         <div class="budget-label">Forecast</div>
@@ -1918,7 +1929,7 @@ function renderLeads() {
       <div class="section-header"><div class="section-title">All Leads</div></div>
       <div class="card">
         ${store.leads.length===0?`<div class="empty-state"><div class="empty-icon">◉</div><p>No leads yet.</p></div>`:''}
-        ${store.leads.map(l=>`<div class="lead-row"><div class="lead-avatar">${initials(l.company)}</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="lead-name">${l.company}</div><div class="status-badge badge-${l.status}">${LEAD_STATUSES.find(s=>s.key===l.status)?.label||l.status}</div></div><div class="lead-detail">${l.contactName}${l.contactEmail?' · '+l.contactEmail:''} · ${l.projectType}</div>${l.estimatedValue?`<div class="lead-detail" style="color:var(--blue);font-weight:700">Est. $${l.estimatedValue.toLocaleString()}</div>`:''}${l.notes?`<div class="lead-notes">${l.notes}</div>`:''}</div><div class="lead-actions"><button class="btn btn-ghost btn-sm" onclick="openEditLeadModal(${l.id})">Edit</button><button class="btn btn-ghost btn-sm" onclick="deleteLead(${l.id})">✕</button></div></div>`).join('')}
+        ${store.leads.map(l=>{const converted=l.convertedProjectId?store.projects.find(p=>p.id===l.convertedProjectId):null;return`<div class="lead-row"><div class="lead-avatar">${initials(l.company)}</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="lead-name">${l.company}</div><div class="status-badge badge-${converted?'converted':l.status}">${converted?'Converted':LEAD_STATUSES.find(s=>s.key===l.status)?.label||l.status}</div></div><div class="lead-detail">${l.contactName}${l.contactRole?' · '+l.contactRole:''}${l.contactEmail?' · '+l.contactEmail:''}${l.contactPhone?' · '+l.contactPhone:''} · ${l.projectType}</div>${l.estimatedValue?`<div class="lead-detail" style="color:var(--blue);font-weight:700">Est. $${l.estimatedValue.toLocaleString()}</div>`:''}${converted?`<div class="lead-detail" style="color:var(--green);font-weight:600;cursor:pointer" onclick="navigate('project-detail',${converted.id})">→ ${converted.name}</div>`:''}${l.notes?`<div class="lead-notes">${l.notes}</div>`:''}</div><div class="lead-actions">${!converted&&l.status==='won'?`<button class="btn btn-primary btn-sm" onclick="openConvertLeadModal(${l.id})">Convert →</button>`:''}${!converted?`<button class="btn btn-ghost btn-sm" onclick="openEditLeadModal(${l.id})">Edit</button>`:''}<button class="btn btn-ghost btn-sm" onclick="deleteLead(${l.id})">✕</button></div></div>`}).join('')}
       </div>
     </div>`;
 }
@@ -2675,11 +2686,111 @@ function openNewIdeaModal(){const mn=store.team.map(m=>`<option>${m.name}</optio
 function createIdea(){const t=document.getElementById('i-title').value.trim();if(!t){toast('Give the idea a title');return;}store.ideas.unshift({id:store.nextId.ideas++,title:t,category:document.getElementById('i-cat').value,description:document.getElementById('i-desc').value,submittedBy:document.getElementById('i-by').value||'Anonymous',date:new Date().toISOString().split('T')[0]});closeModal();toast('Idea added ✦');save();render();}
 function deleteIdea(id){store.ideas=store.ideas.filter(i=>i.id!==id);toast('Idea removed');save();render();}
 
-function openNewLeadModal(){openModal(`<div class="modal-title">Add Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" placeholder="Company name"></div><div class="form-group"><label>Contact Name</label><input id="l-contact"></div><div class="form-group"><label>Contact Email</label><input id="l-email" type="email"></div><div class="form-group"><label>Project Type</label><select id="l-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Event</option><option>Creative Project</option><option>Other</option></select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" placeholder="0"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts('not-contacted')}</select></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes"></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createLead()">Add Lead</button></div>`);}
-function createLead(){const c=document.getElementById('l-company').value.trim();if(!c){toast('Company name required');return;}store.leads.push({id:store.nextId.leads++,company:c,contactName:document.getElementById('l-contact').value,contactEmail:document.getElementById('l-email').value,projectType:document.getElementById('l-type').value,estimatedValue:parseInt(document.getElementById('l-value').value)||0,status:document.getElementById('l-status').value,notes:document.getElementById('l-notes').value});closeModal();toast('Lead added');save();render();}
-function openEditLeadModal(id){const l=store.leads.find(x=>x.id===id);openModal(`<div class="modal-title">Edit Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" value="${l.company}"></div><div class="form-group"><label>Contact Name</label><input id="l-contact" value="${l.contactName}"></div><div class="form-group"><label>Contact Email</label><input id="l-email" value="${l.contactEmail}"></div><div class="form-group"><label>Project Type</label><select id="l-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" value="${l.estimatedValue||0}"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts(l.status)}</select></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes">${l.notes||''}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveLead(${id})">Save</button></div>`);}
-function saveLead(id){const l=store.leads.find(x=>x.id===id);l.company=document.getElementById('l-company').value.trim()||l.company;l.contactName=document.getElementById('l-contact').value;l.contactEmail=document.getElementById('l-email').value;l.projectType=document.getElementById('l-type').value;l.estimatedValue=parseInt(document.getElementById('l-value').value)||0;l.status=document.getElementById('l-status').value;l.notes=document.getElementById('l-notes').value;closeModal();toast('Lead saved');save();render();}
+function openNewLeadModal(){openModal(`<div class="modal-title">Add Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" placeholder="Company name"></div><div class="form-group"><label>Contact Name</label><input id="l-contact"></div><div class="form-group"><label>Contact Role / Title</label><input id="l-role" placeholder="e.g. Brand Marketing Lead"></div><div class="form-group"><label>Contact Email</label><input id="l-email" type="email"></div><div class="form-group"><label>Contact Phone</label><input id="l-phone" placeholder="(416) 555-0000"></div><div class="form-group"><label>Project Type</label><select id="l-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Event</option><option>Creative Project</option><option>Other</option></select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" placeholder="0"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts('not-contacted')}</select></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes"></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createLead()">Add Lead</button></div>`);}
+function createLead(){const c=document.getElementById('l-company').value.trim();if(!c){toast('Company name required');return;}store.leads.push({id:store.nextId.leads++,company:c,contactName:document.getElementById('l-contact').value,contactRole:document.getElementById('l-role').value,contactEmail:document.getElementById('l-email').value,contactPhone:document.getElementById('l-phone').value,projectType:document.getElementById('l-type').value,estimatedValue:parseInt(document.getElementById('l-value').value)||0,status:document.getElementById('l-status').value,notes:document.getElementById('l-notes').value,convertedProjectId:null});closeModal();toast('Lead added');save();render();}
+function openEditLeadModal(id){const l=store.leads.find(x=>x.id===id);openModal(`<div class="modal-title">Edit Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" value="${l.company}"></div><div class="form-group"><label>Contact Name</label><input id="l-contact" value="${l.contactName||''}"></div><div class="form-group"><label>Contact Role / Title</label><input id="l-role" value="${l.contactRole||''}" placeholder="e.g. Brand Marketing Lead"></div><div class="form-group"><label>Contact Email</label><input id="l-email" value="${l.contactEmail||''}"></div><div class="form-group"><label>Contact Phone</label><input id="l-phone" value="${l.contactPhone||''}" placeholder="(416) 555-0000"></div><div class="form-group"><label>Project Type</label><select id="l-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" value="${l.estimatedValue||0}"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts(l.status)}</select></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes">${l.notes||''}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveLead(${id})">Save</button></div>`);}
+function saveLead(id){const l=store.leads.find(x=>x.id===id);l.company=document.getElementById('l-company').value.trim()||l.company;l.contactName=document.getElementById('l-contact').value;l.contactRole=document.getElementById('l-role').value;l.contactEmail=document.getElementById('l-email').value;l.contactPhone=document.getElementById('l-phone').value;l.projectType=document.getElementById('l-type').value;l.estimatedValue=parseInt(document.getElementById('l-value').value)||0;l.status=document.getElementById('l-status').value;l.notes=document.getElementById('l-notes').value;closeModal();toast('Lead saved');save();render();}
 function deleteLead(id){store.leads=store.leads.filter(l=>l.id!==id);toast('Lead removed');save();render();}
+
+function openConvertLeadModal(id) {
+  convertingLeadId = id;
+  const l = store.leads.find(x => x.id === id);
+  // Check for existing contact match by company or contact name
+  const existing = store.contacts.find(c =>
+    c.company.toLowerCase().trim() === l.company.toLowerCase().trim() ||
+    (l.contactName && c.name.toLowerCase().trim() === l.contactName.toLowerCase().trim())
+  );
+  const swatches = PROJECT_COLORS.map((c,i) => `<div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="selectConvertColor('${c}')"></div>`).join('');
+  const defaultName = `${l.company} — ${l.projectType}`;
+  let contactHtml;
+  if (existing) {
+    contactHtml = `<div class="form-group full"><div style="background:var(--accent-light);border-radius:10px;padding:12px 14px;margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:600">We found a match in your Clients:</div><label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;font-weight:700;color:var(--navy)"><input type="radio" name="cl-cm" id="cl-existing" value="existing" checked onchange="toggleConvertContactFields()"> Link to existing — ${existing.name}, ${existing.company}<input type="hidden" id="cl-existing-id" value="${existing.id}"></label><label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--muted)"><input type="radio" name="cl-cm" id="cl-new-radio" value="new" onchange="toggleConvertContactFields()"> Create a new contact instead</label></div><div id="cl-new-fields" style="display:none"><div class="form-grid"><div class="form-group"><label>Contact Name</label><input id="cl-cname" value="${esc(l.contactName||'')}"></div><div class="form-group"><label>Role / Title</label><input id="cl-crole" value="${esc(l.contactRole||'')}"></div><div class="form-group"><label>Email</label><input id="cl-cemail" type="email" value="${esc(l.contactEmail||'')}"></div><div class="form-group"><label>Phone</label><input id="cl-cphone" value="${esc(l.contactPhone||'')}"></div></div></div></div>`;
+  } else {
+    contactHtml = `<div class="form-group"><label>Contact Name</label><input id="cl-cname" value="${esc(l.contactName||'')}"></div><div class="form-group"><label>Role / Title</label><input id="cl-crole" value="${esc(l.contactRole||'')}"></div><div class="form-group"><label>Email</label><input id="cl-cemail" type="email" value="${esc(l.contactEmail||'')}"></div><div class="form-group"><label>Phone</label><input id="cl-cphone" value="${esc(l.contactPhone||'')}"></div>`;
+  }
+  openModal(`
+    <div class="modal-title" style="color:var(--green)">🎉 Won — Convert to Project</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">${esc(l.company)} · Est. $${(l.estimatedValue||0).toLocaleString()}</div>
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;color:var(--muted);margin-bottom:10px">Project</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Project Name</label><input id="cl-name" value="${esc(defaultName)}"></div>
+      <div class="form-group"><label>Type</label><select id="cl-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Start Date</label><input id="cl-start" type="date"></div>
+      <div class="form-group full"><label>Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="cl-color" value="${PROJECT_COLORS[0]}"></div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin:16px 0 12px"></div>
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;color:var(--muted);margin-bottom:10px">Client</div>
+    <div class="form-grid">${contactHtml}</div>
+    <div style="border-top:1px solid var(--border);margin:16px 0 12px"></div>
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;color:var(--muted);margin-bottom:10px">Budget Envelope</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Budget Target ($)</label><input id="cl-budget" type="number" value="${l.estimatedValue||0}"></div>
+      <div class="form-group" style="align-self:end"><div style="font-size:12px;color:var(--muted);padding:6px 0;line-height:1.6">Your ceiling. Add forecast lines once the project is open — remaining budget tracks automatically.</div></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="convertLead()">Create Project & Client →</button></div>
+  `);
+}
+
+function toggleConvertContactFields() {
+  const isNew = document.getElementById('cl-new-radio')?.checked;
+  const fields = document.getElementById('cl-new-fields');
+  if (fields) fields.style.display = isNew ? '' : 'none';
+}
+
+function selectConvertColor(c) {
+  document.getElementById('cl-color').value = c;
+  document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.color-swatch').forEach(el => { if(el.style.background===c) el.classList.add('selected'); });
+}
+
+function convertLead() {
+  const l = store.leads.find(x => x.id === convertingLeadId);
+  if (!l) { toast('Lead not found'); return; }
+  const name = document.getElementById('cl-name').value.trim();
+  if (!name) { toast('Project name required'); return; }
+  const color = document.getElementById('cl-color').value || PROJECT_COLORS[0];
+  const budgetTarget = parseFloat(document.getElementById('cl-budget').value) || 0;
+  // Determine contact
+  let contactId;
+  const existingRadio = document.getElementById('cl-existing');
+  const newRadio = document.getElementById('cl-new-radio');
+  if (existingRadio && !newRadio?.checked) {
+    contactId = parseInt(document.getElementById('cl-existing-id').value);
+  } else {
+    const newContact = {
+      id: store.nextId.contacts++,
+      name: document.getElementById('cl-cname')?.value.trim() || l.contactName || '',
+      company: l.company,
+      role: document.getElementById('cl-crole')?.value.trim() || l.contactRole || '',
+      email: document.getElementById('cl-cemail')?.value.trim() || l.contactEmail || '',
+      phone: document.getElementById('cl-cphone')?.value.trim() || l.contactPhone || '',
+      payments: []
+    };
+    store.contacts.push(newContact);
+    contactId = newContact.id;
+  }
+  // Create project
+  const newId = store.nextId.projects++;
+  store.projects.push({
+    id: newId, name, client: l.company,
+    type: document.getElementById('cl-type').value,
+    status: 'planning', color,
+    startDate: document.getElementById('cl-start').value, endDate: '',
+    budget: 0, spent: 0,
+    budgetTarget,
+    leadId: l.id,
+    brief: { overview: l.notes || '', objectives: '', deliverables: '', timeline: '' },
+    teamIds: [], contactIds: [contactId], expenses: [], teamAllocation: {},
+    signoff: emptySignoff(), production: emptyProduction(),
+    tasks: [], assets: { driveFolder: '', files: [] }, invoices: [],
+    budgetLines: BUDGET_CATS.map((cat, i) => ({ id: i+1, category: cat, forecast: 0, actuals: 0 }))
+  });
+  // Mark lead converted
+  l.convertedProjectId = newId;
+  closeModal(); save();
+  toast('Lead converted → ' + name);
+  navigate('project-detail', newId);
+}
 
 function openNewProjectModal(){const swatches=PROJECT_COLORS.map((c,i)=>`<div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="selectProjectColor('${c}')"></div>`).join('');openModal(`<div class="modal-title">New Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" placeholder="e.g. Summer Pop-Up"></div><div class="form-group"><label>Client</label><input id="f-client"></div><div class="form-group"><label>Type</label><select id="f-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Creative Project</option><option>Event</option><option>Other</option></select></div><div class="form-group"><label>Status</label><select id="f-status"><option value="planning">Planning</option><option value="active">Active</option><option value="pitched">Pitched</option><option value="completed">Completed</option></select></div><div class="form-group"><label>Budget ($)</label><input id="f-budget" type="number" placeholder="0"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date"></div><div class="form-group full"><label>Project Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="f-color" value="${PROJECT_COLORS[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create Project</button></div>`);}
 function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}store.projects.push({id:store.nextId.projects++,name:n,client:document.getElementById('f-client').value||'—',type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,color:document.getElementById('f-color').value||PROJECT_COLORS[0],budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff(),production:emptyProduction(),tasks:[],assets:{driveFolder:'',files:[]},invoices:[]});closeModal();toast('Project created');save();render();}
@@ -2752,6 +2863,7 @@ function handleImport(e) {
 function initials(name){return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);}
 function formatDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-CA',{day:'numeric',month:'short',year:'numeric'});}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 // ─── GLOBAL SEARCH ────────────────────────────────────────────────────────────
 function openSearch(){
