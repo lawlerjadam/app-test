@@ -931,7 +931,9 @@ function signoffProgress(p) {
 function getBudgetTotals(p) {
   if (!p.budgetLines) p.budgetLines = BUDGET_CATS.map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
   const forecast = p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
-  const actuals  = (p.invoices||[]).filter(i=>i.status==='paid').reduce((s,i)=>s+(i.amount||0),0);
+  const invoiceActuals = (p.invoices||[]).filter(i=>i.status==='paid').reduce((s,i)=>s+(i.amount||0),0);
+  const teamActuals = store.team.reduce((s,m)=>s+(m.payments||[]).filter(pay=>pay.status==='paid'&&pay.projectId===p.id).reduce((a,pay)=>a+(pay.amount||0),0),0);
+  const actuals = invoiceActuals + teamActuals;
   return { forecast, actuals };
 }
 
@@ -1345,6 +1347,7 @@ function renderBudgetTab(p) {
   ensureBudgetLines(p);
   const paidByCat={};
   (p.invoices||[]).filter(i=>i.status==='paid').forEach(i=>{paidByCat[i.category]=(paidByCat[i.category]||0)+(i.amount||0);});
+  store.team.forEach(m=>(m.payments||[]).filter(pay=>pay.status==='paid'&&pay.projectId===p.id).forEach(pay=>{paidByCat['Team']=(paidByCat['Team']||0)+(pay.amount||0);}));
   const fTotal=p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
   const aTotal=Object.values(paidByCat).reduce((s,v)=>s+v,0);
   const remaining=fTotal-aTotal, over=aTotal>fTotal;
@@ -1813,14 +1816,15 @@ function renderMemberPayments(m) {
     <div class="section-header"><div class="section-title">Payment History</div><button class="btn btn-primary btn-sm" onclick="openAddPaymentModal()">+ Log Payment</button></div>
     <div class="card" style="padding:0;overflow:hidden">
       ${sorted.length===0?`<div class="empty-state"><div class="empty-icon">$</div><p>No payments logged yet.</p></div>`:`<div class="table-wrap"><table class="table">
-        <thead><tr><th>Description</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th><th></th></tr></thead>
-        <tbody>${sorted.map(p=>`<tr>
+        <thead><tr><th>Description</th><th>Project</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+        <tbody>${sorted.map(p=>{const proj=p.projectId?store.projects.find(x=>x.id===p.projectId):null;return`<tr>
           <td style="font-weight:600">${p.description}</td>
+          <td style="color:var(--muted);font-size:12px">${proj?proj.name:'—'}</td>
           <td style="color:var(--muted)">${formatDate(p.date)}</td>
           <td><span class="status-badge badge-${p.status}">${p.status}</span></td>
           <td style="text-align:right;font-weight:700">$${p.amount.toLocaleString()}</td>
           <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="cyclePaymentStatus(${p.id})" title="Click to change status">↻</button> <button class="btn btn-ghost btn-sm" onclick="deletePayment(${p.id})">✕</button></td>
-        </tr>`).join('')}</tbody>
+        </tr>`}).join('')}</tbody>
       </table></div>`}
     </div>`;
 }
@@ -1960,10 +1964,12 @@ function cycleContractStatus(id) {
 function deleteContract(id){currentMember.contracts=currentMember.contracts.filter(c=>c.id!==id);save();toast('Removed');render();}
 
 function openAddPaymentModal() {
+  const projectOpts=store.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   openModal(`
     <div class="modal-title">Log Payment</div>
     <div class="form-grid">
       <div class="form-group full"><label>Description</label><input id="pay-desc" placeholder="e.g. Summer Pop-Up — 5 days"></div>
+      <div class="form-group full"><label>Project</label><select id="pay-project"><option value="">— No project —</option>${projectOpts}</select></div>
       <div class="form-group"><label>Amount ($)</label><input id="pay-amount" type="number" placeholder="0"></div>
       <div class="form-group"><label>Status</label><select id="pay-status"><option value="pending">Pending</option><option value="paid">Paid</option><option value="overdue">Overdue</option></select></div>
       <div class="form-group"><label>Date</label><input id="pay-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
@@ -1973,7 +1979,8 @@ function openAddPaymentModal() {
 function addPayment() {
   const d=document.getElementById('pay-desc').value.trim();if(!d){toast('Description required');return;}
   const m=currentMember;
-  m.payments.push({id:store.nextId.payments++,description:d,amount:parseFloat(document.getElementById('pay-amount').value)||0,date:document.getElementById('pay-date').value,status:document.getElementById('pay-status').value});
+  const projId=parseInt(document.getElementById('pay-project').value)||null;
+  m.payments.push({id:store.nextId.payments++,description:d,projectId:projId,amount:parseFloat(document.getElementById('pay-amount').value)||0,date:document.getElementById('pay-date').value,status:document.getElementById('pay-status').value});
   closeModal();save();toast('Payment logged');render();
 }
 function deletePayment(id){currentMember.payments=currentMember.payments.filter(p=>p.id!==id);save();toast('Removed');render();}
