@@ -940,6 +940,27 @@ function closeMobileTray() {
   document.getElementById('mobile-tray-backdrop')?.classList.remove('open');
 }
 
+function goToFinanceSource(type, id) {
+  if (type === 'invoice') {
+    currentProject = store.projects.find(p => p.id === id);
+    currentTab = 'invoices';
+    currentView = 'project-detail';
+    document.getElementById('main').scrollTo(0,0);
+    render();
+  } else if (type === 'team') {
+    currentMember = store.team.find(m => m.id === id);
+    currentMemberTab = 'payments';
+    currentView = 'team-profile';
+    document.getElementById('main').scrollTo(0,0);
+    render();
+  } else if (type === 'client') {
+    currentContact = store.contacts.find(c => c.id === id);
+    currentContactTab = 'payments';
+    currentView = 'contact-profile';
+    document.getElementById('main').scrollTo(0,0);
+    render();
+  }
+}
 function navigate(view, projectId, memberId) {
   currentView=view;
   if(projectId!==undefined){currentProject=store.projects.find(p=>p.id===projectId);currentTab='brief';}
@@ -2471,13 +2492,13 @@ function renderFinance() {
   const outItems = [];
   store.projects.forEach(p => {
     (p.invoices||[]).forEach(inv => {
-      outItems.push({ date:inv.date||'', description:inv.supplier+(inv.description?' — '+inv.description:''), project:p.name, category:inv.category, amount:inv.amount||0, status:inv.status });
+      outItems.push({ date:inv.date||'', description:inv.supplier+(inv.description?' — '+inv.description:''), project:p.name, category:inv.category, amount:inv.amount||0, status:inv.status, sourceType:'invoice', projectId:p.id });
     });
   });
   store.team.forEach(m => {
     (m.payments||[]).forEach(pay => {
       const proj = pay.projectId?store.projects.find(p=>p.id===pay.projectId):null;
-      outItems.push({ date:pay.date||'', description:m.name+' — '+pay.description, project:proj?proj.name:'—', category:'Team', amount:pay.amount||0, status:pay.status });
+      outItems.push({ date:pay.date||'', description:m.name+' — '+pay.description, project:proj?proj.name:'—', category:'Team', amount:pay.amount||0, status:pay.status, sourceType:'team', memberId:m.id });
     });
   });
 
@@ -2486,7 +2507,7 @@ function renderFinance() {
   store.contacts.forEach(c => {
     (c.payments||[]).forEach(pay => {
       const proj = pay.projectId?store.projects.find(p=>p.id===pay.projectId):null;
-      inItems.push({ date:pay.date||'', description:c.name+' — '+pay.description, project:proj?proj.name:'—', amount:pay.amount||0, status:pay.status });
+      inItems.push({ date:pay.date||'', description:c.name+' — '+pay.description, project:proj?proj.name:'—', amount:pay.amount||0, status:pay.status, sourceType:'client', contactId:c.id });
     });
   });
 
@@ -2535,7 +2556,9 @@ function renderFinance() {
         <div class="card" style="padding:0;overflow:hidden;">
           <div class="table-wrap"><table class="table">
             <thead><tr><th>Description</th><th>Project</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead>
-            <tbody>${sorted.map(i=>`<tr>
+            <tbody>${sorted.map(i=>{
+              const src = i.sourceType==='invoice' ? `goToFinanceSource('invoice',${i.projectId})` : i.sourceType==='team' ? `goToFinanceSource('team',${i.memberId})` : `goToFinanceSource('client',${i.contactId})`;
+              return `<tr onclick="${src}" style="cursor:pointer;transition:background 0.1s" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
               <td style="font-weight:600">${i.description}</td>
               <td style="color:var(--muted);font-size:12px">${i.project}</td>
               <td style="color:var(--muted)">${i.date?formatDate(i.date):'—'}</td>
@@ -2543,7 +2566,7 @@ function renderFinance() {
               <td style="text-align:right;font-weight:700;color:${i.flow==='in'?'var(--green)':'var(--red)'}">
                 ${i.flow==='in'?'+':'-'}$${i.amount.toLocaleString()}
               </td>
-            </tr>`).join('')}</tbody>
+            </tr>`;}).join('')}</tbody>
           </table></div>
         </div>
       </div>`;
