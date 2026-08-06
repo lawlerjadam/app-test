@@ -1150,7 +1150,7 @@ function renderDashboard() {
         <div class="stat-card"><div class="stat-label">Spent</div><div class="stat-value">$${(totalSpent/1000).toFixed(0)}k</div><div class="stat-sub">${totalBudget>0?Math.round(totalSpent/totalBudget*100):0}% of budget</div></div>
       </div>
       <div class="section-header"><div class="section-title">Active Projects</div><button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all</button></div>
-      <div class="projects-grid">${[...store.projects].sort((a,b)=>{const order={active:0,planning:1,completed:2,pitched:3};return (order[a.status]??2)-(order[b.status]??2)||b.id-a.id;}).slice(0,4).map(p=>renderProjectCard(p)).join('')}</div>
+      <div class="projects-grid">${[...store.projects].sort((a,b)=>{const order={active:0,planning:1,completed:2,pitched:3};return (order[a.status]??2)-(order[b.status]??2)||b.id-a.id;}).slice(0,8).map(p=>renderProjectCard(p)).join('')}</div>
     </div>`;
 }
 
