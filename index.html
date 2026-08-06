@@ -1168,11 +1168,12 @@ function signoffProgress(p) {
 
 function getBudgetTotals(p) {
   if (!p.budgetLines) p.budgetLines = BUDGET_CATS.map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
-  const forecast = p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
+  const rawForecast = p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
+  const forecast = rawForecast > 0 ? rawForecast : (p.budgetTarget || 0);
   const invoiceActuals = (p.invoices||[]).filter(i=>i.status==='paid').reduce((s,i)=>s+(i.amount||0),0);
   const teamActuals = store.team.reduce((s,m)=>s+(m.payments||[]).filter(pay=>pay.status==='paid'&&pay.projectId===p.id).reduce((a,pay)=>a+(pay.amount||0),0),0);
   const actuals = invoiceActuals + teamActuals;
-  return { forecast, actuals };
+  return { forecast, actuals, rawForecast };
 }
 
 function getProjectHealth(p) {
