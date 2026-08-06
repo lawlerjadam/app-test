@@ -900,6 +900,7 @@ let currentView='dashboard', currentProject=null, currentTab='brief', currentPro
 let currentMember=null, currentMemberTab='overview';
 let currentContact=null, currentContactTab='overview';
 let convertingLeadId=null;
+let highlightLeadId=null;
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let calMobileWeekOffset=0;
 
@@ -961,6 +962,17 @@ function goToFinanceSource(type, id) {
     document.getElementById('main').scrollTo(0,0);
     render();
   }
+}
+function navigateToLead(id) {
+  highlightLeadId=id;
+  navigate('leads');
+  setTimeout(()=>{const el=document.getElementById('lead-row-'+id);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});}},80);
+  setTimeout(()=>{highlightLeadId=null;},2000);
+}
+function navigateToContact(contactId) {
+  currentContact=store.contacts.find(c=>c.id===contactId);
+  currentContactTab='overview';
+  navigate('contact-profile');
 }
 function navigate(view, projectId, memberId) {
   currentView=view;
@@ -1279,7 +1291,7 @@ function renderProjectCard(p) {
 function renderProjectDetail() {
   const p=currentProject; if(!p) return '';
   return `
-    <div class="topbar"><div><div class="back-btn" onclick="navigate('projects')">← Projects</div><div class="page-title">${p.name}</div><div class="page-sub">${p.client} · <span class="status-badge badge-${p.status}">${p.status}</span>${p.leadId?` · <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="navigate('leads')" title="View originating lead">◉ from lead</span>`:''}</div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openClientSummary()">Share</button><button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button></div></div>
+    <div class="topbar"><div><div class="back-btn" onclick="navigate('projects')">← Projects</div><div class="page-title">${p.name}</div><div class="page-sub">${(()=>{const ct=store.contacts.find(c=>c.company===p.client||c.name===p.client);return ct?`<span style="cursor:pointer;color:var(--navy);font-weight:600;text-decoration:underline;text-decoration-style:dotted" onclick="navigateToContact(${ct.id})" title="View client profile">${p.client}</span>`:p.client;})()}&thinsp;·&thinsp;<span class="status-badge badge-${p.status}">${p.status}</span>${p.leadId?` · <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="navigateToLead(${p.leadId})" title="View originating lead">◉ from lead</span>`:''}</div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openClientSummary()">Share</button><button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button></div></div>
     <div class="content">
       <div class="tabs">
         <div class="tab ${currentTab==='brief'?'active':''}" onclick="switchTab('brief')">Brief</div>
@@ -1623,7 +1635,7 @@ function renderTeamTab(p) {
     <div class="section-header"><div class="section-title">Assigned Team</div><button class="btn btn-primary btn-sm" onclick="openAllocateModal()">+ Allocate</button></div>
     <div class="card">
       ${assigned.length===0?`<div class="empty-state"><div class="empty-icon">◎</div><p>No team members assigned yet.</p></div>`:''}
-      ${assigned.map(m=>{const days=(p.teamAllocation&&p.teamAllocation[m.id])||0;return`<div class="allocate-row"><div class="allocate-info"><div class="team-avatar-lg" style="width:36px;height:36px;font-size:12px;margin-bottom:0">${initials(m.name)}</div><div style="min-width:0"><div style="font-weight:700;font-size:13px">${m.name}</div><div style="font-size:12px;color:var(--muted)">${m.role} · $${m.rate}/day</div></div></div><div style="display:flex;align-items:center;gap:14px;flex-shrink:0"><div style="text-align:right"><div style="font-size:13px;font-weight:700">${days} days</div><div style="font-size:11px;color:var(--muted)">$${(days*m.rate).toLocaleString()}</div></div><button class="btn btn-ghost btn-sm" onclick="removeTeamMember(${m.id})">Remove</button></div></div>`;}).join('')}
+      ${assigned.map(m=>{const days=(p.teamAllocation&&p.teamAllocation[m.id])||0;return`<div class="allocate-row"><div class="allocate-info" style="cursor:pointer" onclick="navigate('team-profile',undefined,${m.id})"><div class="team-avatar-lg" style="width:36px;height:36px;font-size:12px;margin-bottom:0">${initials(m.name)}</div><div style="min-width:0"><div style="font-weight:700;font-size:13px;color:var(--navy);text-decoration:underline;text-decoration-style:dotted">${m.name}</div><div style="font-size:12px;color:var(--muted)">${m.role} · $${m.rate}/day</div></div></div><div style="display:flex;align-items:center;gap:14px;flex-shrink:0"><div style="text-align:right"><div style="font-size:13px;font-weight:700">${days} days</div><div style="font-size:11px;color:var(--muted)">$${(days*m.rate).toLocaleString()}</div></div><button class="btn btn-ghost btn-sm" onclick="removeTeamMember(${m.id})">Remove</button></div></div>`;}).join('')}
     </div>`;
 }
 
@@ -2000,7 +2012,7 @@ function renderLeads() {
       <div class="section-header"><div class="section-title">All Leads</div></div>
       <div class="card">
         ${store.leads.length===0?`<div class="empty-state"><div class="empty-icon">◉</div><p>No leads yet.</p></div>`:''}
-        ${store.leads.map(l=>{const converted=l.convertedProjectId?store.projects.find(p=>p.id===l.convertedProjectId):null;return`<div class="lead-row"><div class="lead-avatar">${initials(l.company)}</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="lead-name">${l.company}</div><div class="status-badge badge-${converted?'converted':l.status}">${converted?'Converted':LEAD_STATUSES.find(s=>s.key===l.status)?.label||l.status}</div></div><div class="lead-detail">${l.contactName}${l.contactRole?' · '+l.contactRole:''}${l.contactEmail?' · '+l.contactEmail:''}${l.contactPhone?' · '+l.contactPhone:''} · ${l.projectType}</div>${l.estimatedValue?`<div class="lead-detail" style="color:var(--blue);font-weight:700">Est. $${l.estimatedValue.toLocaleString()}</div>`:''}${converted?`<div class="lead-detail" style="color:var(--green);font-weight:600;cursor:pointer" onclick="navigate('project-detail',${converted.id})">→ ${converted.name}</div>`:''}${l.notes?`<div class="lead-notes">${l.notes}</div>`:''}</div><div class="lead-actions">${!converted&&l.status==='won'?`<button class="btn btn-primary btn-sm" onclick="openConvertLeadModal(${l.id})">Convert →</button>`:''}${!converted?`<button class="btn btn-ghost btn-sm" onclick="openEditLeadModal(${l.id})">Edit</button>`:''}<button class="btn btn-ghost btn-sm" onclick="deleteLead(${l.id})">✕</button></div></div>`}).join('')}
+        ${store.leads.map(l=>{const converted=l.convertedProjectId?store.projects.find(p=>p.id===l.convertedProjectId):null;const convertedContact=converted?store.contacts.find(c=>c.company===l.company||c.name===l.contactName):null;const isHighlighted=l.id===highlightLeadId;return`<div class="lead-row" id="lead-row-${l.id}" style="${isHighlighted?'background:var(--accent-light);border-radius:10px;transition:background 1.5s':''}"><div class="lead-avatar">${initials(l.company)}</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="lead-name">${l.company}</div><div class="status-badge badge-${converted?'converted':l.status}">${converted?'Converted':LEAD_STATUSES.find(s=>s.key===l.status)?.label||l.status}</div></div><div class="lead-detail">${l.contactName}${l.contactRole?' · '+l.contactRole:''}${l.contactEmail?' · '+l.contactEmail:''}${l.contactPhone?' · '+l.contactPhone:''} · ${l.projectType}</div>${l.estimatedValue?`<div class="lead-detail" style="color:var(--blue);font-weight:700">Est. $${l.estimatedValue.toLocaleString()}</div>`:''}${converted?`<div class="lead-detail" style="color:var(--green);font-weight:600;cursor:pointer" onclick="navigate('project-detail',${converted.id})">→ ${converted.name}</div>`:''}${convertedContact?`<div class="lead-detail" style="color:var(--muted);cursor:pointer" onclick="navigateToContact(${convertedContact.id})">◇ Client profile: ${convertedContact.name}</div>`:''}${l.notes?`<div class="lead-notes">${l.notes}</div>`:''}</div><div class="lead-actions">${!converted&&l.status==='won'?`<button class="btn btn-primary btn-sm" onclick="openConvertLeadModal(${l.id})">Convert →</button>`:''}${!converted?`<button class="btn btn-ghost btn-sm" onclick="openEditLeadModal(${l.id})">Edit</button>`:''}<button class="btn btn-ghost btn-sm" onclick="deleteLead(${l.id})">✕</button></div></div>`}).join('')}
       </div>
     </div>`;
 }
@@ -2747,6 +2759,14 @@ function renderContactProfile() {
           </table></div>`}
     </div>`;
 
+  const linkedProjects = store.projects.filter(p=>p.client===c.company||p.client===c.name||(p.contactIds&&p.contactIds.includes(c.id)));
+  const projectsHtml = linkedProjects.length===0
+    ? `<div class="empty-state" style="padding:16px 0"><div class="empty-icon">◻</div><p style="margin:0">No projects linked yet.</p></div>`
+    : linkedProjects.map(p=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('project-detail',${p.id})">
+        <span class="project-dot dot-${p.status||'planning'}" style="width:10px;height:10px;flex-shrink:0"></span>
+        <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px;color:var(--navy)">${p.name}</div><div style="font-size:11px;color:var(--muted)">${p.type} · <span class="status-badge badge-${p.status}">${p.status}</span></div></div>
+        <div style="font-size:12px;color:var(--muted);flex-shrink:0">→</div>
+      </div>`).join('');
   return `
     <div class="topbar">
       <div><div class="back-btn" onclick="navigate('contacts')">← Clients</div><div class="page-title">${c.name}</div><div class="page-sub">${c.role} · ${c.company}</div></div>
@@ -2754,7 +2774,10 @@ function renderContactProfile() {
     </div>
     <div class="content">
       <div style="display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;">
-        <div>${overviewHtml}</div>
+        <div>
+          ${overviewHtml}
+          <div style="margin-top:16px"><div class="section-title" style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:4px">Projects</div><div class="card" style="padding:0 16px">${projectsHtml}</div></div>
+        </div>
         <div>${paymentsHtml}</div>
       </div>
     </div>`;
