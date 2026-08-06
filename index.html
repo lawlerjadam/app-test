@@ -895,7 +895,7 @@ store.team.forEach(m => {
 });
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
-let currentView='dashboard', currentProject=null, currentTab='brief', currentProjectsFilter='active';
+let currentView='dashboard', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active';
 let currentMember=null, currentMemberTab='overview';
 let currentContact=null, currentContactTab='overview';
 let convertingLeadId=null;
@@ -1135,11 +1135,17 @@ function renderSnapshot() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function setDashFilter(f){currentDashFilter=f;render();}
 function renderDashboard() {
   const active=store.projects.filter(p=>p.status==='active').length;
   const totalBudget=store.projects.reduce((s,p)=>s+getBudgetTotals(p).forecast,0);
   const totalSpent=store.projects.reduce((s,p)=>s+getBudgetTotals(p).actuals,0);
   const hotLeads=store.leads.filter(l=>['in-conversation','proposal-sent'].includes(l.status)).length;
+  const dashProjects = [...store.projects]
+    .filter(p => currentDashFilter==='active' ? p.status!=='completed' : currentDashFilter==='completed' ? p.status==='completed' : true)
+    .sort((a,b)=>{const order={active:0,planning:1,completed:2,pitched:3};return (order[a.status]??2)-(order[b.status]??2)||b.id-a.id;})
+    .slice(0,8);
+  const dashTabs=[{key:'active',label:'Active'},{key:'all',label:'All'},{key:'completed',label:'Completed'}];
   return `
     <div class="topbar"><div><div class="page-title">How you feeling, Adam?</div><div class="page-sub">Here's what's happening at FELT.</div></div><div class="storage-badge">● Saved</div></div>
     <div class="content">
@@ -1149,8 +1155,14 @@ function renderDashboard() {
         <div class="stat-card"><div class="stat-label">Budget</div><div class="stat-value">$${(totalBudget/1000).toFixed(0)}k</div><div class="stat-sub">Total across projects</div></div>
         <div class="stat-card"><div class="stat-label">Spent</div><div class="stat-value">$${(totalSpent/1000).toFixed(0)}k</div><div class="stat-sub">${totalBudget>0?Math.round(totalSpent/totalBudget*100):0}% of budget</div></div>
       </div>
-      <div class="section-header"><div class="section-title">Active Projects</div><button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all</button></div>
-      <div class="projects-grid">${[...store.projects].sort((a,b)=>{const order={active:0,planning:1,completed:2,pitched:3};return (order[a.status]??2)-(order[b.status]??2)||b.id-a.id;}).slice(0,8).map(p=>renderProjectCard(p)).join('')}</div>
+      <div class="section-header">
+        <div class="section-title">Projects</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;gap:4px">${dashTabs.map(t=>`<button class="btn ${currentDashFilter===t.key?'btn-primary':'btn-ghost'} btn-sm" onclick="setDashFilter('${t.key}')">${t.label}</button>`).join('')}</div>
+          <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all</button>
+        </div>
+      </div>
+      <div class="projects-grid">${dashProjects.map(p=>renderProjectCard(p)).join('')}${dashProjects.length===0?`<div style="color:var(--muted);font-size:14px;padding:20px 0">No ${currentDashFilter} projects.</div>`:''}</div>
     </div>`;
 }
 
