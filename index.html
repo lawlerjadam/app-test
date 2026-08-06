@@ -424,6 +424,7 @@
     <div class="nav-label">Future</div>
     <div class="nav-item" onclick="navigate('leads')"><span class="icon">◉</span> Leads</div>
     <div class="nav-item" onclick="navigate('ideas')"><span class="icon">✦</span> Ideas Park</div>
+    <div class="nav-item" id="ff-sidebar-btn" onclick="openFutureFeels()" title="Future Feels" style="opacity:0.4;padding-left:14px" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'"><span class="icon" style="display:flex;align-items:center"></span></div>
   </div>
   <div class="sidebar-footer">
     <div class="user-chip"><div class="avatar">AD</div> Adam</div>
@@ -543,6 +544,48 @@ function openFeelingOfDay(random) {
 
 function closeFeelingOverlay() {
   document.getElementById('feeling-overlay').style.display = 'none';
+}
+
+// ─── FUTURE FEELS ─────────────────────────────────────────────────────────────
+const FUTURE_FEELS = [
+  {type:'lead',label:'Cold Lead',company:'Roots Canada',detail:'Their seasonal campaigns lean heavily on nostalgia and Canadian identity. A brand activation in-store or at a cultural event would feel completely natural.',action:'Look up their marketing director on LinkedIn'},
+  {type:'lead',label:'Cold Lead',company:'Cirque du Soleil',detail:'They commission original experience design from independent studios. FELT\'s mix of AV, spatial storytelling and original IP is exactly their language.',action:'Research their creative partnerships team'},
+  {type:'lead',label:'Cold Lead',company:'Air Canada',detail:'Their Maple Leaf Lounge rebrand is a multi-year project. Premium experiential moments and spatial identity are where FELT could add real value.',action:'Reach out to their brand team'},
+  {type:'lead',label:'Cold Lead',company:'National Ballet of Canada',detail:'Arts and brand partnership is growing fast. Think immersive pre-show experiences or bespoke donor events — produced with a creative lens.',action:'Find their development director'},
+  {type:'lead',label:'Cold Lead',company:'Ace Hotel Toronto',detail:'They program creative residencies and cultural events in their spaces. FELT could pitch a recurring event series or an in-lobby installation.',action:'Reach out to their GM or programming lead'},
+  {type:'idea',label:'Creative Project',title:'Winter Light Walk',detail:'A self-guided outdoor light installation tour across a Canadian city — FELT-curated, partnered with local artists. Ticketed or free-to-attend.',action:'Draft a one-pager and rough budget'},
+  {type:'idea',label:'Creative Project',title:'The Last Shift',detail:'A short documentary following workers in a single Canadian industry. Gritty, cinematic original IP — made for film festivals and digital release.',action:'Sketch a one-page treatment'},
+  {type:'idea',label:'Creative Project',title:'Saison',detail:'A seasonal supper series — different chef, different city, same FELT concept. We handle everything from set design to the moment the last guest leaves.',action:'Concept the first edition'},
+  {type:'idea',label:'Creative Project',title:'Open Studio',detail:'One day a year, FELT opens its process to the public — mood boards, half-built prototypes, works in progress. Build mystique by being briefly transparent.',action:'Pick a date and draft the format'},
+  {type:'outreach',label:'Reach Out',company:'Aldo Group',detail:'Their younger sub-brands are investing in experiential retail. A pop-up concept or sensory store moment would be a strong first pitch.',action:'Draft a short cold intro email'},
+  {type:'outreach',label:'Reach Out',company:'Hotel Arts Group',detail:'Independent Canadian luxury hotels are investing in cultural programming. FELT could pitch a residency or a recurring seasonal event series.',action:'Email their general manager'},
+  {type:'outreach',label:'Reach Out',company:'Cossette',detail:'One of Canada\'s biggest independent agencies — but they regularly sub out specialist production. Position FELT as their boutique execution partner.',action:'Look up their head of production'},
+];
+
+const LADYBIRD_SVG_SM = '<svg width="18" height="20" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-linecap="round" style="display:block"><line x1="21" y1="9" x2="18" y2="4" stroke-width="2.5"/><line x1="27" y1="9" x2="30" y2="4" stroke-width="2.5"/><ellipse cx="24" cy="28" rx="14" ry="16" stroke-width="2.5"/><line x1="24" y1="12" x2="24" y2="44" stroke-width="2.5"/><ellipse cx="24" cy="16" rx="8" ry="5" stroke-width="2.5"/><circle cx="17.5" cy="26" r="2.5" fill="currentColor" stroke="none"/><circle cx="30.5" cy="26" r="2.5" fill="currentColor" stroke="none"/><circle cx="17.5" cy="34" r="2.5" fill="currentColor" stroke="none"/><circle cx="30.5" cy="34" r="2.5" fill="currentColor" stroke="none"/></svg>';
+const LADYBIRD_SVG_MD = '<svg width="24" height="27" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-linecap="round" style="display:block"><line x1="21" y1="9" x2="18" y2="4" stroke-width="2"/><line x1="27" y1="9" x2="30" y2="4" stroke-width="2"/><ellipse cx="24" cy="28" rx="14" ry="16" stroke-width="2"/><line x1="24" y1="12" x2="24" y2="44" stroke-width="2"/><ellipse cx="24" cy="16" rx="8" ry="5" stroke-width="2"/><circle cx="17.5" cy="26" r="2.5" fill="currentColor" stroke="none"/><circle cx="30.5" cy="26" r="2.5" fill="currentColor" stroke="none"/><circle cx="17.5" cy="34" r="2.5" fill="currentColor" stroke="none"/><circle cx="30.5" cy="34" r="2.5" fill="currentColor" stroke="none"/></svg>';
+const LADYBIRD_SVG_LG = '<svg width="40" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-linecap="round" style="display:block"><line x1="21" y1="9" x2="18" y2="4" stroke-width="1.5"/><line x1="27" y1="9" x2="30" y2="4" stroke-width="1.5"/><ellipse cx="24" cy="28" rx="14" ry="16" stroke-width="1.5"/><line x1="24" y1="12" x2="24" y2="44" stroke-width="1.5"/><ellipse cx="24" cy="16" rx="8" ry="5" stroke-width="1.5"/><circle cx="17.5" cy="26" r="2.5" fill="currentColor" stroke="none"/><circle cx="30.5" cy="26" r="2.5" fill="currentColor" stroke="none"/><circle cx="17.5" cy="34" r="2.5" fill="currentColor" stroke="none"/><circle cx="30.5" cy="34" r="2.5" fill="currentColor" stroke="none"/></svg>';
+
+function openFutureFeels() {
+  const f = FUTURE_FEELS[Math.floor(Math.random() * FUTURE_FEELS.length)];
+  const palette = {
+    lead:    {bg:'var(--blue-light)',  color:'var(--blue)'},
+    idea:    {bg:'var(--purple-light)',color:'var(--purple)'},
+    outreach:{bg:'var(--green-light)', color:'var(--green)'}
+  };
+  const p = palette[f.type];
+  const badge = document.getElementById('ff-badge');
+  badge.textContent = f.label;
+  badge.style.background = p.bg;
+  badge.style.color = p.color;
+  document.getElementById('ff-title').textContent = f.company || f.title;
+  document.getElementById('ff-detail').textContent = f.detail;
+  document.getElementById('ff-action').textContent = f.action;
+  document.getElementById('ff-overlay').style.display = 'flex';
+}
+
+function closeFutureFeels() {
+  document.getElementById('ff-overlay').style.display = 'none';
 }
 
 // ─── SIGN-OFF STEPS ───────────────────────────────────────────────────────────
@@ -851,7 +894,8 @@ const MOBILE_TRAY_SECTIONS={
   ],
   future:[
     {icon:'◉',label:'Leads',view:'leads'},
-    {icon:'✦',label:'Ideas',view:'ideas'}
+    {icon:'✦',label:'Ideas',view:'ideas'},
+    {icon:'ladybird',label:'',special:'future-feels'}
   ]
 };
 function toggleMobileTray(section) {
@@ -860,7 +904,10 @@ function toggleMobileTray(section) {
   const tray=document.getElementById('mobile-tray');
   const backdrop=document.getElementById('mobile-tray-backdrop');
   const items=MOBILE_TRAY_SECTIONS[section];
-  tray.innerHTML=items.map(i=>`<div class="tray-item ${currentView===i.view?'active':''}" onclick="closeMobileTray();navigate('${i.view}')"><div class="ti">${i.icon}</div>${i.label}</div>`).join('');
+  tray.innerHTML=items.map(i=>{
+    if(i.special==='future-feels') return `<div class="tray-item" onclick="closeMobileTray();openFutureFeels()" style="opacity:0.6" title="Future Feels"><div class="ti" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.7)">${LADYBIRD_SVG_MD}</div></div>`;
+    return `<div class="tray-item ${currentView===i.view?'active':''}" onclick="closeMobileTray();navigate('${i.view}')"><div class="ti">${i.icon}</div>${i.label}</div>`;
+  }).join('');
   tray.classList.add('open');
   backdrop.classList.add('open');
 }
@@ -2921,6 +2968,12 @@ render();
   const mobileHeaderLogo = document.querySelector('.mobile-header img');
   if(sidebarLogo && mobileHeaderLogo) mobileHeaderLogo.src = sidebarLogo.src;
 })();
+
+// Inject ladybird SVG into sidebar button icon span
+(function(){
+  const span = document.querySelector('#ff-sidebar-btn .icon');
+  if(span) span.innerHTML = LADYBIRD_SVG_SM;
+})();
 </script>
 
 <!-- Feeling of the Day overlay -->
@@ -2936,6 +2989,33 @@ render();
     </div>
   </div>
 </div>
+
+<!-- Future Feels overlay -->
+<div id="ff-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,31,53,0.75);z-index:500;align-items:center;justify-content:center;padding:24px" onclick="if(event.target===this)closeFutureFeels()">
+  <div style="background:var(--surface);border-radius:20px;padding:36px 32px 28px;max-width:400px;width:100%;text-align:center;position:relative">
+    <div id="ff-ladybird" style="display:flex;justify-content:center;color:var(--muted);margin-bottom:18px;opacity:0.7"></div>
+    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;font-weight:700">Future Feels</div>
+    <div style="margin-bottom:14px"><span id="ff-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px"></span></div>
+    <div id="ff-title" style="font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-0.5px;line-height:1.2;margin-bottom:14px"></div>
+    <div id="ff-detail" style="font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:22px"></div>
+    <div style="background:var(--accent-light);border-radius:8px;padding:11px 16px;margin-bottom:24px;text-align:left">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:700;margin-bottom:4px">Next step</div>
+      <div id="ff-action" style="font-size:13px;font-weight:600;color:var(--navy)"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="openFutureFeels()" style="flex:1;background:transparent;border:1.5px solid var(--border);color:var(--muted);padding:9px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:all 0.15s" onmouseover="this.style.background='var(--bg)';this.style.color='var(--text)'" onmouseout="this.style.background='transparent';this.style.color='var(--muted)'">Another</button>
+      <button onclick="closeFutureFeels()" style="flex:1;background:var(--accent);border:none;color:var(--navy);padding:9px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Inject ladybird into Future Feels modal
+(function(){
+  const el = document.getElementById('ff-ladybird');
+  if(el) el.innerHTML = LADYBIRD_SVG_LG;
+})();
+</script>
 
 </body>
 </html>
