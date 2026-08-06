@@ -2385,11 +2385,10 @@ function renderContactProfile() {
       <button class="btn btn-ghost btn-sm" onclick="openEditContactModal(${c.id})">Edit</button>
     </div>
     <div class="content">
-      <div class="tabs-row">
-        <div class="tab ${currentContactTab==='overview'?'active':''}" onclick="currentContactTab='overview';render()">Overview</div>
-        <div class="tab ${currentContactTab==='payments'?'active':''}" onclick="currentContactTab='payments';render()">Payments</div>
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;">
+        <div>${overviewHtml}</div>
+        <div>${paymentsHtml}</div>
       </div>
-      ${currentContactTab==='overview' ? overviewHtml : paymentsHtml}
     </div>`;
 }
 
