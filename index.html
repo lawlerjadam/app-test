@@ -2746,25 +2746,30 @@ function renderFinance() {
     ...inItems.map(i=>({...i, flow:'in'})),
     ...outItems.map(i=>({...i, flow:'out'}))
   ].filter(i => currentFinanceFilter==='income' ? i.flow==='in' : currentFinanceFilter==='outgoings' ? i.flow==='out' : true);
+  const todayKey = new Date().toISOString().slice(0,7);
   const byMonth = {};
   allItems.forEach(i => {
     const key = i.date?i.date.slice(0,7):'undated';
     if (!byMonth[key]) byMonth[key] = [];
     byMonth[key].push(i);
   });
-  const monthKeys = Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
+  const allKeys = Object.keys(byMonth);
+  const upcomingKeys = allKeys.filter(k=>k!=='undated'&&k>=todayKey).sort((a,b)=>a.localeCompare(b));
+  const historyKeys  = allKeys.filter(k=>k!=='undated'&&k<todayKey).sort((a,b)=>b.localeCompare(a));
+  const undatedKeys  = allKeys.includes('undated')?['undated']:[];
 
-  const monthHtml = monthKeys.map(key => {
+  function renderMonthBlock(key, isUpcoming) {
     const rows = byMonth[key];
     const label = key==='undated'?'Undated':new Date(key+'-01').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    const isCurrent = key===todayKey;
     const mIn  = rows.filter(i=>i.flow==='in'&&i.status==='paid').reduce((s,i)=>s+i.amount,0);
     const mOut = rows.filter(i=>i.flow==='out'&&i.status==='paid').reduce((s,i)=>s+i.amount,0);
     const mPend= rows.filter(i=>i.status==='pending'||i.status==='overdue').reduce((s,i)=>s+i.amount,0);
-    const sorted=[...rows].sort((a,b)=>b.date.localeCompare(a.date));
+    const sorted=[...rows].sort((a,b)=>isUpcoming?a.date.localeCompare(b.date):b.date.localeCompare(a.date));
     return `
       <div style="margin-bottom:20px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <div style="font-size:13px;font-weight:700;color:var(--navy);">${label}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy);">${label}${isCurrent?` <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:var(--navy);padding:2px 7px;border-radius:20px;vertical-align:middle">Current</span>`:''}</div>
           <div style="flex:1;height:0.5px;background:var(--border);"></div>
           ${mIn>0?`<div style="font-size:11px;color:var(--green);font-weight:600;">In $${mIn.toLocaleString()}</div>`:''}
           ${mOut>0?`<div style="font-size:11px;color:var(--red);font-weight:600;">Out $${mOut.toLocaleString()}</div>`:''}
@@ -2774,7 +2779,7 @@ function renderFinance() {
           <div class="table-wrap"><table class="table">
             <thead><tr><th>Description</th><th>Project</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead>
             <tbody>${sorted.map(i=>{
-              const src = i.sourceType==='invoice' ? `goToFinanceSource('invoice',${i.projectId})` : i.sourceType==='team' ? `goToFinanceSource('team',${i.memberId})` : `goToFinanceSource('client',${i.companyId})`;
+              const src = i.sourceType==='invoice'?`goToFinanceSource('invoice',${i.projectId})`:i.sourceType==='team'?`goToFinanceSource('team',${i.memberId})`:`goToFinanceSource('client',${i.companyId})`;
               return `<tr onclick="${src}" style="cursor:pointer;transition:background 0.1s" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
               <td style="font-weight:600">${i.description}</td>
               <td style="color:var(--muted);font-size:12px">${i.project}</td>
@@ -2787,7 +2792,22 @@ function renderFinance() {
           </table></div>
         </div>
       </div>`;
-  }).join('');
+  }
+
+  const upcomingHtml = upcomingKeys.map(k=>renderMonthBlock(k,true)).join('');
+  const historyHtml  = historyKeys.map(k=>renderMonthBlock(k,false)).join('');
+  const undatedHtml  = undatedKeys.map(k=>renderMonthBlock(k,false)).join('');
+
+  const monthHtml = `
+    ${upcomingKeys.length>0?upcomingHtml:''}
+    ${historyKeys.length>0?`
+      <div style="display:flex;align-items:center;gap:10px;margin:24px 0 16px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)">History</div>
+        <div style="flex:1;height:0.5px;background:var(--border)"></div>
+      </div>
+      ${historyHtml}`:''}
+    ${undatedHtml}
+  `;
 
   return `
     <div class="topbar">
