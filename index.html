@@ -679,8 +679,10 @@ if (!store.nextId.templates) store.nextId.templates = 5;
 if (!store.nextId.tasks) store.nextId.tasks = 20;
 if (!store.nextId.assets) store.nextId.assets = 5;
 if (!store.nextId.globalSuppliers) store.nextId.globalSuppliers = 10;
+if (!store.nextId.clientPayments) store.nextId.clientPayments = 1;
 if (!store.contractTemplates) store.contractTemplates = [{id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, outside IR35'}];
 if (!store.globalSuppliers) store.globalSuppliers = [];
+store.contacts.forEach(c => { if (!c.payments) c.payments = []; });
 
 // Migration: ensure all projects have signoff + production + color
 store.projects.forEach((p,i) => {
@@ -708,6 +710,7 @@ store.team.forEach(m => {
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
 let currentView='dashboard', currentProject=null, currentTab='brief';
 let currentMember=null, currentMemberTab='overview';
+let currentContact=null, currentContactTab='overview';
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let calMobileWeekOffset=0;
 
@@ -737,6 +740,7 @@ function render() {
   else if(currentView==='team') m.innerHTML=renderTeam();
   else if(currentView==='team-profile') m.innerHTML=renderTeamProfile();
   else if(currentView==='contacts') m.innerHTML=renderContacts();
+  else if(currentView==='contact-profile') m.innerHTML=renderContactProfile();
   else if(currentView==='global-suppliers') m.innerHTML=renderGlobalSuppliers();
   else if(currentView==='finance') m.innerHTML=renderFinance();
   // Bind callsheet autosave after render
@@ -2194,50 +2198,35 @@ function deleteAsset(id){currentProject.assets.files=currentProject.assets.files
 const SUPPLIER_CATS=['Fabrication','AV / Tech','Catering','Staffing','Photography / Video','Transport','Print','Venue','Other'];
 
 function renderFinance() {
-  // Gather all outgoing items: invoices + team payments
-  const items = [];
+  // Gather outgoings
+  const outItems = [];
   store.projects.forEach(p => {
     (p.invoices||[]).forEach(inv => {
-      items.push({
-        date: inv.date||'',
-        description: inv.supplier + (inv.description ? ' — ' + inv.description : ''),
-        project: p.name,
-        category: inv.category,
-        amount: inv.amount||0,
-        status: inv.status,
-        type: 'invoice'
-      });
+      outItems.push({ date:inv.date||'', description:inv.supplier+(inv.description?' — '+inv.description:''), project:p.name, category:inv.category, amount:inv.amount||0, status:inv.status });
     });
   });
   store.team.forEach(m => {
     (m.payments||[]).forEach(pay => {
-      const proj = pay.projectId ? store.projects.find(p=>p.id===pay.projectId) : null;
-      items.push({
-        date: pay.date||'',
-        description: m.name + ' — ' + pay.description,
-        project: proj ? proj.name : '—',
-        category: 'Team',
-        amount: pay.amount||0,
-        status: pay.status,
-        type: 'payment'
-      });
+      const proj = pay.projectId?store.projects.find(p=>p.id===pay.projectId):null;
+      outItems.push({ date:pay.date||'', description:m.name+' — '+pay.description, project:proj?proj.name:'—', category:'Team', amount:pay.amount||0, status:pay.status });
     });
   });
 
-  // Summary totals
-  const totalPaid    = items.filter(i=>i.status==='paid').reduce((s,i)=>s+i.amount,0);
-  const totalPending = items.filter(i=>i.status==='pending').reduce((s,i)=>s+i.amount,0);
-  const totalOverdue = items.filter(i=>i.status==='overdue').reduce((s,i)=>s+i.amount,0);
-  const totalAll     = items.reduce((s,i)=>s+i.amount,0);
-
-  // Group by month
-  const byMonth = {};
-  items.forEach(i => {
-    const key = i.date ? i.date.slice(0,7) : 'undated';
-    if (!byMonth[key]) byMonth[key] = [];
-    byMonth[key].push(i);
+  // Gather income
+  const inItems = [];
+  store.contacts.forEach(c => {
+    (c.payments||[]).forEach(pay => {
+      const proj = pay.projectId?store.projects.find(p=>p.id===pay.projectId):null;
+      inItems.push({ date:pay.date||'', description:c.name+' — '+pay.description, project:proj?proj.name:'—', amount:pay.amount||0, status:pay.status });
+    });
   });
-  const monthKeys = Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
+
+  // Summary stats
+  const totalIn      = inItems.filter(i=>i.status==='paid').reduce((s,i)=>s+i.amount,0);
+  const totalInPend  = inItems.filter(i=>i.status==='pending').reduce((s,i)=>s+i.amount,0);
+  const totalOut     = outItems.filter(i=>i.status==='paid').reduce((s,i)=>s+i.amount,0);
+  const totalOutPend = outItems.filter(i=>i.status==='pending'||i.status==='overdue').reduce((s,i)=>s+i.amount,0);
+  const net          = totalIn - totalOut;
 
   const statusBadge = s => {
     if (s==='paid')    return `<span style="background:var(--green-light);color:#1A5030;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Paid</span>`;
@@ -2245,30 +2234,46 @@ function renderFinance() {
     return `<span style="background:var(--orange-light);color:#7A4010;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Pending</span>`;
   };
 
+  // Merge all items by month
+  const allItems = [
+    ...inItems.map(i=>({...i, flow:'in'})),
+    ...outItems.map(i=>({...i, flow:'out'}))
+  ];
+  const byMonth = {};
+  allItems.forEach(i => {
+    const key = i.date?i.date.slice(0,7):'undated';
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(i);
+  });
+  const monthKeys = Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
+
   const monthHtml = monthKeys.map(key => {
     const rows = byMonth[key];
-    const label = key === 'undated' ? 'Undated' : new Date(key+'-01').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-    const mPaid    = rows.filter(i=>i.status==='paid').reduce((s,i)=>s+i.amount,0);
-    const mPending = rows.filter(i=>i.status==='pending'||i.status==='overdue').reduce((s,i)=>s+i.amount,0);
-    const sorted   = [...rows].sort((a,b)=>b.date.localeCompare(a.date));
+    const label = key==='undated'?'Undated':new Date(key+'-01').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    const mIn  = rows.filter(i=>i.flow==='in'&&i.status==='paid').reduce((s,i)=>s+i.amount,0);
+    const mOut = rows.filter(i=>i.flow==='out'&&i.status==='paid').reduce((s,i)=>s+i.amount,0);
+    const mPend= rows.filter(i=>i.status==='pending'||i.status==='overdue').reduce((s,i)=>s+i.amount,0);
+    const sorted=[...rows].sort((a,b)=>b.date.localeCompare(a.date));
     return `
       <div style="margin-bottom:20px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
           <div style="font-size:13px;font-weight:700;color:var(--navy);">${label}</div>
           <div style="flex:1;height:0.5px;background:var(--border);"></div>
-          ${mPaid>0?`<div style="font-size:11px;color:var(--green);font-weight:600;">Paid $${mPaid.toLocaleString()}</div>`:''}
-          ${mPending>0?`<div style="font-size:11px;color:var(--orange);font-weight:600;">Pending $${mPending.toLocaleString()}</div>`:''}
+          ${mIn>0?`<div style="font-size:11px;color:var(--green);font-weight:600;">In $${mIn.toLocaleString()}</div>`:''}
+          ${mOut>0?`<div style="font-size:11px;color:var(--red);font-weight:600;">Out $${mOut.toLocaleString()}</div>`:''}
+          ${mPend>0?`<div style="font-size:11px;color:var(--orange);font-weight:600;">Pending $${mPend.toLocaleString()}</div>`:''}
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
           <div class="table-wrap"><table class="table">
-            <thead><tr><th>Description</th><th>Project</th><th>Category</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead>
+            <thead><tr><th>Description</th><th>Project</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead>
             <tbody>${sorted.map(i=>`<tr>
               <td style="font-weight:600">${i.description}</td>
               <td style="color:var(--muted);font-size:12px">${i.project}</td>
-              <td style="color:var(--muted);font-size:12px">${i.category}</td>
               <td style="color:var(--muted)">${i.date?formatDate(i.date):'—'}</td>
               <td>${statusBadge(i.status)}</td>
-              <td style="text-align:right;font-weight:700;color:var(--red)">−$${i.amount.toLocaleString()}</td>
+              <td style="text-align:right;font-weight:700;color:${i.flow==='in'?'var(--green)':'var(--red)'}">
+                ${i.flow==='in'?'+':'-'}$${i.amount.toLocaleString()}
+              </td>
             </tr>`).join('')}</tbody>
           </table></div>
         </div>
@@ -2278,14 +2283,15 @@ function renderFinance() {
   return `
     <div class="topbar"><div><div class="page-title">Finance</div><div class="page-sub">Cashflow overview · all projects</div></div></div>
     <div class="content">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
-        <div class="card"><div class="budget-label">Total Outgoings</div><div class="budget-value">$${totalAll.toLocaleString()}</div></div>
-        <div class="card"><div class="budget-label">Paid</div><div class="budget-value" style="color:var(--green)">$${totalPaid.toLocaleString()}</div></div>
-        <div class="card"><div class="budget-label">Pending</div><div class="budget-value" style="color:var(--orange)">$${totalPending.toLocaleString()}</div></div>
-        <div class="card"><div class="budget-label">Overdue</div><div class="budget-value" style="color:var(--red)">$${totalOverdue.toLocaleString()}</div></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;">
+        <div class="card"><div class="budget-label">Income Received</div><div class="budget-value" style="color:var(--green)">$${totalIn.toLocaleString()}</div></div>
+        <div class="card"><div class="budget-label">Income Pending</div><div class="budget-value" style="color:var(--orange)">$${totalInPend.toLocaleString()}</div></div>
+        <div class="card"><div class="budget-label">Outgoings Paid</div><div class="budget-value" style="color:var(--red)">$${totalOut.toLocaleString()}</div></div>
+        <div class="card"><div class="budget-label">Outgoings Pending</div><div class="budget-value" style="color:var(--orange)">$${totalOutPend.toLocaleString()}</div></div>
+        <div class="card"><div class="budget-label">Net Position</div><div class="budget-value" style="color:${net>=0?'var(--green)':'var(--red)'}">$${Math.abs(net).toLocaleString()}</div></div>
       </div>
-      ${items.length===0
-        ? `<div class="empty-state"><div class="empty-icon">◱</div><p>No invoices or payments logged yet.</p></div>`
+      ${allItems.length===0
+        ? `<div class="empty-state"><div class="empty-icon">◱</div><p>No payments logged yet. Add income via Clients or outgoings via Invoices and Team.</p></div>`
         : monthHtml}
     </div>`;
 }
@@ -2328,11 +2334,127 @@ function openEditGlobalSupplierModal(id){openAddGlobalSupplierModal(store.global
 function saveGlobalSupplier(id){const s=store.globalSuppliers.find(x=>x.id===id);s.company=document.getElementById('gs-company').value.trim()||s.company;s.category=document.getElementById('gs-cat').value;s.contactName=document.getElementById('gs-contact').value;s.contactPhone=document.getElementById('gs-phone').value;s.contactEmail=document.getElementById('gs-email').value;s.notes=document.getElementById('gs-notes').value;closeModal();save();toast('Saved');render();}
 function deleteGlobalSupplier(id){store.globalSuppliers=store.globalSuppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
 
-// ─── CONTACTS ─────────────────────────────────────────────────────────────────
+// ─── CONTACTS / CLIENTS ───────────────────────────────────────────────────────
+function renderContactProfile() {
+  const c = currentContact; if (!c) return '';
+  if (!c.payments) c.payments = [];
+  const totalPaid    = c.payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const totalPending = c.payments.filter(p=>p.status==='pending').reduce((s,p)=>s+p.amount,0);
+  const totalAll     = c.payments.reduce((s,p)=>s+p.amount,0);
+
+  const overviewHtml = `
+    <div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px;">
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Company</div><div style="font-weight:700">${c.company||'—'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Role</div><div style="font-weight:700">${c.role||'—'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Email</div><div style="font-weight:700">${c.email||'—'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Phone</div><div style="font-weight:700">${c.phone||'—'}</div></div>
+    </div>`;
+
+  const paymentsHtml = `
+    <div class="payment-total-row">
+      <div class="payment-total"><div class="payment-total-label">Total Invoiced</div><div class="payment-total-value">$${totalAll.toLocaleString()}</div></div>
+      <div class="payment-total"><div class="payment-total-label">Received</div><div class="payment-total-value" style="color:var(--green)">$${totalPaid.toLocaleString()}</div></div>
+      <div class="payment-total"><div class="payment-total-label">Pending</div><div class="payment-total-value" style="color:var(--orange)">$${totalPending.toLocaleString()}</div></div>
+    </div>
+    <div class="section-header"><div class="section-title">Income Payments</div><button class="btn btn-primary btn-sm" onclick="openAddClientPaymentModal()">+ Log Payment</button></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      ${c.payments.length===0
+        ? `<div class="empty-state"><div class="empty-icon">$</div><p>No payments logged yet.</p></div>`
+        : `<div class="table-wrap"><table class="table">
+            <thead><tr><th>Description</th><th>Project</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+            <tbody>${[...c.payments].sort((a,b)=>b.date.localeCompare(a.date)).map(p=>{
+              const proj=p.projectId?store.projects.find(x=>x.id===p.projectId):null;
+              return `<tr>
+                <td style="font-weight:600">${p.description}</td>
+                <td style="color:var(--muted);font-size:12px">${proj?proj.name:'—'}</td>
+                <td style="color:var(--muted)">${p.date?formatDate(p.date):'—'}</td>
+                <td><span class="status-badge badge-${p.status}">${p.status}</span></td>
+                <td style="text-align:right;font-weight:700;color:var(--green)">$${(p.amount||0).toLocaleString()}</td>
+                <td style="text-align:right">
+                  <button class="btn btn-ghost btn-sm" onclick="cycleClientPaymentStatus(${p.id})" title="Change status">↻</button>
+                  <button class="btn btn-ghost btn-sm" onclick="deleteClientPayment(${p.id})">✕</button>
+                </td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table></div>`}
+    </div>`;
+
+  return `
+    <div class="topbar">
+      <div><div class="back-btn" onclick="navigate('contacts')">← Clients</div><div class="page-title">${c.name}</div><div class="page-sub">${c.role} · ${c.company}</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditContactModal(${c.id})">Edit</button>
+    </div>
+    <div class="content">
+      <div class="tabs-row">
+        <div class="tab ${currentContactTab==='overview'?'active':''}" onclick="currentContactTab='overview';render()">Overview</div>
+        <div class="tab ${currentContactTab==='payments'?'active':''}" onclick="currentContactTab='payments';render()">Payments</div>
+      </div>
+      ${currentContactTab==='overview' ? overviewHtml : paymentsHtml}
+    </div>`;
+}
+
+function openAddClientPaymentModal() {
+  const c = currentContact;
+  const projectOpts = store.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  openModal(`
+    <div class="modal-title">Log Client Payment</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Description</label><input id="cp-desc" placeholder="e.g. Project fee — Summer Pop-Up"></div>
+      <div class="form-group full"><label>Project</label><select id="cp-project"><option value="">— No project —</option>${projectOpts}</select></div>
+      <div class="form-group"><label>Amount ($)</label><input id="cp-amount" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Status</label><select id="cp-status"><option value="pending">Pending</option><option value="paid">Paid</option></select></div>
+      <div class="form-group"><label>Date</label><input id="cp-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addClientPayment()">Log Payment</button></div>`);
+}
+function addClientPayment() {
+  const d = document.getElementById('cp-desc').value.trim();
+  if (!d) { toast('Description required'); return; }
+  if (!currentContact.payments) currentContact.payments = [];
+  currentContact.payments.push({
+    id: store.nextId.clientPayments++,
+    description: d,
+    projectId: parseInt(document.getElementById('cp-project').value)||null,
+    amount: parseFloat(document.getElementById('cp-amount').value)||0,
+    date: document.getElementById('cp-date').value,
+    status: document.getElementById('cp-status').value
+  });
+  closeModal(); save(); toast('Payment logged'); render();
+}
+function cycleClientPaymentStatus(id) {
+  const cycle = ['pending','paid'];
+  const p = currentContact.payments.find(x=>x.id===id);
+  p.status = cycle[(cycle.indexOf(p.status)+1)%cycle.length];
+  save(); toast('Status: '+p.status); render();
+}
+function deleteClientPayment(id) {
+  currentContact.payments = currentContact.payments.filter(p=>p.id!==id);
+  save(); toast('Removed'); render();
+}
+
 function renderContacts() {
   return `
     <div class="topbar"><div><div class="page-title">Clients</div><div class="page-sub">${store.contacts.length} contacts</div></div><button class="btn btn-primary" onclick="openNewContactModal()">+ Add</button></div>
-    <div class="content"><div class="card">${store.contacts.map(c=>`<div class="contact-row"><div class="contact-avatar">${initials(c.name)}</div><div><div class="contact-name">${c.name}</div><div class="contact-detail">${c.role} · ${c.company}</div><div class="contact-detail">${c.email} · ${c.phone}</div></div><div class="contact-actions"><button class="btn btn-ghost btn-sm" onclick="openEditContactModal(${c.id})">Edit</button><button class="btn btn-ghost btn-sm" onclick="deleteContact(${c.id})">✕</button></div></div>`).join('')}</div></div>`;
+    <div class="content"><div class="card">${store.contacts.map(c=>{
+      const totalPaid=(c.payments||[]).filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+      const pending=(c.payments||[]).filter(p=>p.status==='pending').reduce((s,p)=>s+p.amount,0);
+      return `<div class="contact-row" style="cursor:pointer" onclick="currentContact=store.contacts.find(x=>x.id===${c.id});currentContactTab='overview';navigate('contact-profile')">
+        <div class="contact-avatar">${initials(c.name)}</div>
+        <div style="flex:1">
+          <div class="contact-name">${c.name}</div>
+          <div class="contact-detail">${c.role} · ${c.company}</div>
+          <div class="contact-detail">${c.email} · ${c.phone}</div>
+        </div>
+        ${totalPaid>0||pending>0?`<div style="text-align:right;font-size:12px">
+          ${totalPaid>0?`<div style="color:var(--green);font-weight:700">$${totalPaid.toLocaleString()} received</div>`:''}
+          ${pending>0?`<div style="color:var(--orange)">$${pending.toLocaleString()} pending</div>`:''}
+        </div>`:''}
+        <div class="contact-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" onclick="openEditContactModal(${c.id})">Edit</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteContact(${c.id})">✕</button>
+        </div>
+      </div>`;
+    }).join('')}</div></div>`;
 }
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
