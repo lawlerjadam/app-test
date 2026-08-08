@@ -859,10 +859,6 @@ function renderDashboard() {
   upcoming.sort((a,b)=>a.date.localeCompare(b.date));
 
   const activeProjects = store.projects.filter(p=>p.status==='active'||p.status==='planning').slice(0,4);
-  const dashTabs=[{key:'active',label:'Active'},{key:'all',label:'All'},{key:'completed',label:'Completed'}];
-  const allProjectsFiltered = [...store.projects]
-    .filter(p => currentDashFilter==='active' ? p.status!=='completed' : currentDashFilter==='completed' ? p.status==='completed' : true)
-    .sort((a,b)=>{const order={active:0,planning:1,completed:2,pitched:3};return (order[a.status]??2)-(order[b.status]??2)||b.id-a.id;});
 
   const AVAIL_DOT = {available:'#16A34A', busy:'#D97706', away:'#9CA3AF', unavailable:'#DC2626'};
   const AVAIL_LBL = {available:'Available', busy:'Busy', away:'Away', unavailable:'Unavailable'};
@@ -949,14 +945,6 @@ function renderDashboard() {
           <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all →</button>
         </div>
         <div class="projects-grid">${activeProjects.map(p=>renderProjectCard(p)).join('')}${activeProjects.length===0?`<div style="color:var(--muted);font-size:14px;padding:20px 0">No active projects.</div>`:''}</div>
-      </div>
-
-      <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div class="section-title">All Projects</div>
-          <div style="display:flex;gap:4px">${dashTabs.map(t=>`<button class="btn ${currentDashFilter===t.key?'btn-primary':'btn-ghost'} btn-sm" onclick="setDashFilter('${t.key}')">${t.label}</button>`).join('')}</div>
-        </div>
-        <div class="projects-grid">${allProjectsFiltered.map(p=>renderProjectCard(p)).join('')}${allProjectsFiltered.length===0?`<div style="color:var(--muted);font-size:14px;padding:20px 0">No ${currentDashFilter} projects.</div>`:''}</div>
       </div>
 
     </div>`;
