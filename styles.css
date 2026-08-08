@@ -28,9 +28,10 @@
 
   .bottom-nav { display: none; position: fixed; bottom: env(safe-area-inset-bottom, 0px); left: 0; right: 0; height: var(--bottom-nav-h); background: var(--orange-light); z-index: 50; align-items: stretch; justify-content: space-around; padding: 0 4px; border-top: 1px solid var(--border); }
   .bottom-nav::after { content: ''; position: absolute; top: 100%; left: 0; right: 0; height: env(safe-area-inset-bottom, 0px); background: var(--orange-light); }
-  .bottom-nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0 6px; cursor: pointer; color: var(--muted); font-size: 10px; transition: all 0.15s; min-width: 44px; flex: 1; }
+  .bottom-nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0 6px; cursor: pointer; color: var(--muted); font-size: 10px; transition: all 0.15s; flex: 1; background: none; border: none; font-family: inherit; -webkit-appearance: none; }
   .bottom-nav-item .bn-icon { font-size: 18px; line-height: 1; }
   .bottom-nav-item.active { color: var(--orange); }
+  .qc-nav-btn { width: 48px; height: 48px; border-radius: 50% !important; background: var(--accent) !important; color: var(--navy) !important; flex: 0 0 48px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); align-self: center; }
   #mobile-tray-backdrop { display:none; position:fixed; inset:0; bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); z-index:48; }
   #mobile-tray-backdrop.open { display:block; }
   #mobile-tray { display:none; position:fixed; bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); left:0; right:0; background:var(--orange-light); z-index:49; padding:10px 8px 6px; border-top:1px solid var(--border); border-radius:16px 16px 0 0; flex-wrap:wrap; gap:4px; }

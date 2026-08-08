@@ -532,8 +532,8 @@ function navigate(view, projectId, memberId) {
   const futureViews=['leads','ideas'];
   const bnItems=document.querySelectorAll('.bottom-nav-item');
   if(studioViews.includes(view)) bnItems[1]?.classList.add('active');
-  else if(resourceViews.includes(view)) bnItems[2]?.classList.add('active');
-  else if(futureViews.includes(view)) bnItems[3]?.classList.add('active');
+  else if(resourceViews.includes(view)) bnItems[3]?.classList.add('active');
+  else if(futureViews.includes(view)) bnItems[4]?.classList.add('active');
   else bnItems[0]?.classList.add('active');
   document.getElementById('main').scrollTo(0,0);
   render();

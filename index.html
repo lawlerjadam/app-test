@@ -51,17 +51,16 @@
 
 <div id="mobile-tray-backdrop" onclick="closeMobileTray()"></div>
 <div id="mobile-tray"></div>
-<nav class="bottom-nav">
-  <div class="bottom-nav-item active" onclick="closeMobileTray();navigate('dashboard')"><div class="bn-icon">◈</div>Home</div>
-  <div class="bottom-nav-item" onclick="toggleMobileTray('studio')"><div class="bn-icon">▦</div>Studio</div>
-  <div style="display:flex;align-items:center;justify-content:center;padding:0 4px;">
-    <button onclick="closeMobileTray();toggleQC()" style="width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--navy);font-size:26px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:transform 0.2s;" id="qc-btn-mobile">+</button>
-  </div>
-  <div class="bottom-nav-item" onclick="toggleMobileTray('resources')"><div class="bn-icon">◎</div>Resources</div>
-  <div class="bottom-nav-item" onclick="toggleMobileTray('future')"><div class="bn-icon">◉</div>Future</div>
-</nav>
 
 <main class="main" id="main"></main>
+
+<nav class="bottom-nav">
+  <button class="bottom-nav-item active" onclick="closeMobileTray();navigate('dashboard')"><span class="bn-icon">◈</span><span>Home</span></button>
+  <button class="bottom-nav-item" onclick="toggleMobileTray('studio')"><span class="bn-icon">▦</span><span>Studio</span></button>
+  <button class="bottom-nav-item qc-nav-btn" onclick="closeMobileTray();toggleQC()" id="qc-btn-mobile"><span style="font-size:26px;line-height:1;font-weight:700">+</span></button>
+  <button class="bottom-nav-item" onclick="toggleMobileTray('resources')"><span class="bn-icon">◎</span><span>Resources</span></button>
+  <button class="bottom-nav-item" onclick="toggleMobileTray('future')"><span class="bn-icon">◉</span><span>Future</span></button>
+</nav>
 <div class="modal-overlay" id="modal" onclick="closeModalOutside(event)"><div class="modal" id="modal-content"></div></div>
 <div class="toast" id="toast"></div>
 
