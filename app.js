@@ -1264,6 +1264,7 @@ function openAddSupplierModal() {
       <div class="form-group"><label>Category</label><select id="sup-cat">${SUPPLIER_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="form-group"><label>Status</label><select id="sup-status"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></div>
       <div class="form-group full"><label>Notes</label><textarea id="sup-notes" placeholder="Contract status, key dates, anything important..."></textarea></div>
+      <div class="form-group full"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="sup-save-global" style="width:16px;height:16px;accent-color:var(--accent-dark);flex-shrink:0"> Also save to supplier database for future projects</label></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -1282,8 +1283,24 @@ function prefillSupplier(id) {
 function addSupplier() {
   const c=document.getElementById('sup-company').value.trim();if(!c){toast('Company name required');return;}
   const p=currentProject;if(!p.production)p.production=emptyProduction();
-  p.production.suppliers.push({id:store.nextId.suppliers++,company:c,contact:document.getElementById('sup-contact').value,category:document.getElementById('sup-cat').value,status:document.getElementById('sup-status').value,notes:document.getElementById('sup-notes').value});
-  closeModal();save();toast('Supplier added');render();
+  const cat=document.getElementById('sup-cat').value;
+  const contact=document.getElementById('sup-contact').value;
+  const notes=document.getElementById('sup-notes').value;
+  const status=document.getElementById('sup-status').value;
+  p.production.suppliers.push({id:store.nextId.suppliers++,company:c,contact,category:cat,status,notes});
+  const saveGlobal=document.getElementById('sup-save-global');
+  if(saveGlobal&&saveGlobal.checked){
+    const alreadyExists=store.globalSuppliers.find(s=>s.company.toLowerCase().trim()===c.toLowerCase().trim());
+    if(!alreadyExists){
+      store.globalSuppliers.push({id:store.nextId.globalSuppliers++,company:c,category:cat,contactName:contact,contactEmail:'',contactPhone:'',website:'',notes});
+      toast('Supplier added to project + database ✓');
+    } else {
+      toast('Supplier added (already in database)');
+    }
+  } else {
+    toast('Supplier added');
+  }
+  closeModal();save();render();
 }
 function removeSupplier(id){const p=currentProject;p.production.suppliers=p.production.suppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
 
