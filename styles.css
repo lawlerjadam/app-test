@@ -26,8 +26,8 @@
   .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: calc(var(--mobile-header-h) + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); padding-left: 16px; padding-right: 16px; padding-bottom: 0; background: #F2EAD5; border-bottom: 1.5px solid var(--border); z-index: 45; align-items: center; justify-content: space-between; }
   .mobile-header img { height: 28px; display: block; cursor: pointer; }
 
-  .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); background: var(--orange-light); z-index: 50; align-items: center; justify-content: space-around; padding: 0 4px env(safe-area-inset-bottom, 0px); border-top: 1px solid var(--border); }
-  .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 6px; cursor: pointer; color: var(--muted); font-size: 10px; transition: all 0.15s; min-width: 44px; }
+  .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); background: var(--orange-light); z-index: 50; align-items: stretch; justify-content: space-around; padding: 0 4px env(safe-area-inset-bottom, 0px); border-top: 1px solid var(--border); }
+  .bottom-nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0 6px; cursor: pointer; color: var(--muted); font-size: 10px; transition: all 0.15s; min-width: 44px; }
   .bottom-nav-item .bn-icon { font-size: 18px; line-height: 1; }
   .bottom-nav-item.active { color: var(--orange); }
   #mobile-tray-backdrop { display:none; position:fixed; inset:0; bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); z-index:48; }
