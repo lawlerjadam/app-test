@@ -1,5 +1,5 @@
 // ─── PROJECT COLOURS ─────────────────────────────────────────────────────────
-const PROJECT_COLORS = ['#C8844A','#7B9FD4','#9B7FD4','#C96060','#5EAF80','#5BA8C0','#C47AAA','#EDD060','#7FB85A','#A89FD4','#0F1F35','#9A9A8A'];
+const PROJECT_COLORS = ['#C4703A','#4A7BA8','#7A8C3E','#3A8C7A','#9A4A30','#C8A020','#8A6A9A','#3A4A6A','#C47A8A','#6A8C72','#1C1208','#9A8A6A'];
 
 // ─── FEELING OF THE DAY ───────────────────────────────────────────────────────
 const FEELINGS = [
@@ -866,20 +866,20 @@ function renderDashboard() {
   const greeting = hr<12?'morning':hr<17?'afternoon':'evening';
 
   return `
-    <div class="topbar"><div><div class="page-title">Good ${greeting}, Adam</div><div class="page-sub">${new Date().toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="storage-badge">● Saved</div></div>
+    <div class="topbar"><div><div class="page-title-greeting">Good ${greeting}, Adam</div><div class="page-sub">${new Date().toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="storage-badge">● Saved</div></div>
     <div class="content">
 
       <div style="margin-bottom:28px">
         <div class="section-title" style="margin-bottom:12px">Priorities</div>
         ${hasPriorities ? `
           ${overduePayments.map(pay=>`
-            <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(220,38,38,0.07);border:1px solid rgba(220,38,38,0.18);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('finance')">
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(180,90,50,0.07);border:1px solid rgba(180,90,50,0.2);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('finance')">
               <span style="font-size:15px">💰</span>
               <div style="flex:1;min-width:0">
                 <div style="font-size:13px;font-weight:600;color:var(--text)">${pay.companyName} — ${pay.description}</div>
-                <div style="font-size:11px;color:#DC2626;margin-top:2px">${pay.projectName} · Overdue since ${formatDate(pay.date)}</div>
+                <div style="font-size:11px;color:#9A5030;margin-top:2px">${pay.projectName} · Overdue since ${formatDate(pay.date)}</div>
               </div>
-              <div style="font-size:13px;font-weight:700;color:#DC2626;flex-shrink:0">$${(pay.amount||0).toLocaleString()}</div>
+              <div style="font-size:13px;font-weight:700;color:#9A5030;flex-shrink:0">$${(pay.amount||0).toLocaleString()}</div>
             </div>`).join('')}
           ${todayProdDays.map(sd=>`
             <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.18);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('project-detail',${sd.projectId})">
@@ -1008,7 +1008,7 @@ function getProjectHealth(p) {
     const soPct=signoffProgress(p)/SIGNOFF_STEPS.length;
     if(soPct<0.3&&budgetPct>0.5) score=Math.max(score,1);
   }
-  return [{color:'#16A34A',label:'On track'},{color:'#D97706',label:'Needs attention'},{color:'#DC2626',label:'At risk'}][score];
+  return [{color:'#4A8A65',label:'On track'},{color:'#C8A020',label:'Needs attention'},{color:'#B5503A',label:'At risk'}][score];
 }
 
 function renderProjectCard(p) {
@@ -2358,7 +2358,7 @@ function renderFinance() {
 
   const statusBadge = s => {
     if (s==='paid')    return `<span style="background:var(--green-light);color:#1A5030;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Paid</span>`;
-    if (s==='overdue') return `<span style="background:var(--red-light);color:#7A1010;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Overdue</span>`;
+    if (s==='overdue') return `<span style="background:var(--orange-light);color:#7A3510;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Overdue</span>`;
     return `<span style="background:var(--orange-light);color:#7A4010;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">Pending</span>`;
   };
 

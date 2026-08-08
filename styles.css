@@ -1,16 +1,16 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   :root {
-    --bg: #FAFAF7; --surface: #FFFFFF; --border: #E8E8DC; --text: #0F1F35; --muted: #7A7570;
-    --accent: #EDD060; --accent-dark: #C8A830; --accent-light: #FBF5D8;
-    --navy: #0F1F35; --blue: #7B9FD4; --blue-light: #DDEAF8;
-    --green: #5EAF80; --green-light: #D0EEE0; --red: #C96060; --red-light: #F5DADA;
-    --purple: #9B7FD4; --purple-light: #EDE5F8;
-    --orange: #C8844A; --orange-light: #F5E0CC;
+    --bg: #FBF6EC; --surface: #FFFFFF; --border: #E3D6B8; --text: #1C1208; --muted: #8A7A58;
+    --accent: #EDD060; --accent-dark: #C8A830; --accent-light: #FBF0C8;
+    --navy: #1C1208; --blue: #5B7FA6; --blue-light: #D8E8F4;
+    --green: #4A8A65; --green-light: #D4EEE2; --red: #B5503A; --red-light: #F2E0D8;
+    --purple: #8A6A9A; --purple-light: #EAE0F2;
+    --orange: #C4703A; --orange-light: #F5E4D4;
     --radius: 10px; --sidebar-w: 230px; --bottom-nav-h: 64px; --mobile-header-h: 52px;
   }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
+  body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
 
-  .sidebar { width: var(--sidebar-w); background: #F2F2E8; border-right: 1.5px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; padding: 0 0 24px; z-index: 20; }
+  .sidebar { width: var(--sidebar-w); background: #F2EAD5; border-right: 1.5px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; padding: 0 0 24px; z-index: 20; }
   .sidebar-logo { padding: 20px 22px 16px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
   .sidebar-logo img { width: 80px; display: block; }
   .nav-section { padding: 0 10px; margin-bottom: 2px; }
@@ -23,7 +23,7 @@
   .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--muted); font-size: 13px; }
   .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--navy); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 
-  .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: calc(var(--mobile-header-h) + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); padding-left: 16px; padding-right: 16px; padding-bottom: 0; background: #F2F2E8; border-bottom: 1.5px solid var(--border); z-index: 45; align-items: center; justify-content: space-between; }
+  .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: calc(var(--mobile-header-h) + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); padding-left: 16px; padding-right: 16px; padding-bottom: 0; background: #F2EAD5; border-bottom: 1.5px solid var(--border); z-index: 45; align-items: center; justify-content: space-between; }
   .mobile-header img { height: 28px; display: block; cursor: pointer; }
 
   .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); background: var(--navy); z-index: 50; align-items: center; justify-content: space-around; padding: 0 4px env(safe-area-inset-bottom, 0px); border-top: 1px solid rgba(255,255,255,0.08); }
@@ -42,6 +42,7 @@
   .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
   .topbar { background: var(--bg); padding: 22px 28px 0; display: flex; align-items: flex-start; justify-content: space-between; position: sticky; top: 0; z-index: 10; gap: 12px; }
   .page-title { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
+  .page-title-greeting { font-family: 'Fraunces', serif; font-style: italic; font-weight: 700; font-size: 22px; letter-spacing: -0.3px; color: var(--navy); }
   .page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
   .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
