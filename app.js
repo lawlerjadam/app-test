@@ -808,32 +808,157 @@ function renderSnapshot() {
 function setDashFilter(f){currentDashFilter=f;render();}
 function setFinanceFilter(f){currentFinanceFilter=f;render();}
 function renderDashboard() {
-  const active=store.projects.filter(p=>p.status==='active').length;
-  const totalBudget=store.projects.reduce((s,p)=>s+getBudgetTotals(p).forecast,0);
-  const totalSpent=store.projects.reduce((s,p)=>s+getBudgetTotals(p).actuals,0);
-  const hotLeads=store.leads.filter(l=>['in-conversation','proposal-sent'].includes(l.status)).length;
-  const dashProjects = [...store.projects]
-    .filter(p => currentDashFilter==='active' ? p.status!=='completed' : currentDashFilter==='completed' ? p.status==='completed' : true)
-    .sort((a,b)=>{const order={active:0,planning:1,completed:2,pitched:3};return (order[a.status]??2)-(order[b.status]??2)||b.id-a.id;})
-    .slice(0,8);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().slice(0,10);
+  const in30 = new Date(today); in30.setDate(in30.getDate()+30);
+  const in30Str = in30.toISOString().slice(0,10);
+
+  // ── Priorities ──────────────────────────────────────────────────────────────
+  const overduePayments = [];
+  store.companies.forEach(co => {
+    (co.payments||[]).forEach(pay => {
+      if(pay.status==='pending' && pay.date && pay.date < todayStr) {
+        const proj = store.projects.find(p=>p.id===pay.projectId);
+        overduePayments.push({...pay, companyName:co.name, projectName:proj?.name||''});
+      }
+    });
+  });
+
+  const todayTasks = [];
+  store.projects.forEach(p => {
+    if(p.status==='completed') return;
+    (p.tasks||[]).forEach(t => {
+      if(t.dueDate===todayStr && t.status!=='done') todayTasks.push({...t, projectName:p.name, projectId:p.id});
+    });
+  });
+
+  const todayProdDays = [];
+  store.projects.forEach(p => {
+    (p.production?.shootDays||[]).forEach(sd => {
+      if(sd.date===todayStr) todayProdDays.push({...sd, projectName:p.name, projectId:p.id});
+    });
+  });
+
+  const hasPriorities = overduePayments.length || todayTasks.length || todayProdDays.length;
+
+  // ── Coming Up (next 30 days) ─────────────────────────────────────────────
+  const upcoming = [];
+  store.projects.forEach(p => {
+    if(p.status==='completed') return;
+    if(p.endDate && p.endDate > todayStr && p.endDate <= in30Str)
+      upcoming.push({date:p.endDate, label:`${p.name} deadline`, type:'deadline', projectId:p.id});
+  });
+  store.companies.forEach(co => {
+    (co.payments||[]).forEach(pay => {
+      if(pay.status==='pending' && pay.date && pay.date > todayStr && pay.date <= in30Str) {
+        const proj = store.projects.find(p=>p.id===pay.projectId);
+        upcoming.push({date:pay.date, label:`${co.name} — ${pay.description}`, type:'payment', amount:pay.amount, projectId:proj?.id});
+      }
+    });
+  });
+  upcoming.sort((a,b)=>a.date.localeCompare(b.date));
+
+  const activeProjects = store.projects.filter(p=>p.status==='active'||p.status==='planning').slice(0,4);
   const dashTabs=[{key:'active',label:'Active'},{key:'all',label:'All'},{key:'completed',label:'Completed'}];
+  const allProjectsFiltered = [...store.projects]
+    .filter(p => currentDashFilter==='active' ? p.status!=='completed' : currentDashFilter==='completed' ? p.status==='completed' : true)
+    .sort((a,b)=>{const order={active:0,planning:1,completed:2,pitched:3};return (order[a.status]??2)-(order[b.status]??2)||b.id-a.id;});
+
+  const AVAIL_DOT = {available:'#16A34A', busy:'#D97706', away:'#9CA3AF', unavailable:'#DC2626'};
+  const AVAIL_LBL = {available:'Available', busy:'Busy', away:'Away', unavailable:'Unavailable'};
+  const hr = new Date().getHours();
+  const greeting = hr<12?'morning':hr<17?'afternoon':'evening';
+
   return `
-    <div class="topbar"><div><div class="page-title">How you feeling, Adam?</div><div class="page-sub">Here's what's happening at FELT.</div></div><div class="storage-badge">● Saved</div></div>
+    <div class="topbar"><div><div class="page-title">Good ${greeting}, Adam</div><div class="page-sub">${new Date().toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="storage-badge">● Saved</div></div>
     <div class="content">
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-label">Projects</div><div class="stat-value">${store.projects.length}</div><div class="stat-sub">${active} active</div></div>
-        <div class="stat-card"><div class="stat-label">Leads</div><div class="stat-value">${store.leads.length}</div><div class="stat-sub">${hotLeads} in progress</div></div>
-        <div class="stat-card"><div class="stat-label">Budget</div><div class="stat-value">$${(totalBudget/1000).toFixed(0)}k</div><div class="stat-sub">Total across projects</div></div>
-        <div class="stat-card"><div class="stat-label">Spent</div><div class="stat-value">$${(totalSpent/1000).toFixed(0)}k</div><div class="stat-sub">${totalBudget>0?Math.round(totalSpent/totalBudget*100):0}% of budget</div></div>
+
+      <div style="margin-bottom:28px">
+        <div class="section-title" style="margin-bottom:12px">Priorities</div>
+        ${hasPriorities ? `
+          ${overduePayments.map(pay=>`
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(220,38,38,0.07);border:1px solid rgba(220,38,38,0.18);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('finance')">
+              <span style="font-size:15px">💰</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--text)">${pay.companyName} — ${pay.description}</div>
+                <div style="font-size:11px;color:#DC2626;margin-top:2px">${pay.projectName} · Overdue since ${formatDate(pay.date)}</div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#DC2626;flex-shrink:0">$${(pay.amount||0).toLocaleString()}</div>
+            </div>`).join('')}
+          ${todayProdDays.map(sd=>`
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.18);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('project-detail',${sd.projectId})">
+              <span style="font-size:15px">◉</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--text)">${sd.location||'Production Day'} — ${sd.projectName}</div>
+                ${sd.callTime?`<div style="font-size:11px;color:var(--muted);margin-top:2px">Call time ${sd.callTime}${sd.wrapTime?' · Wrap '+sd.wrapTime:''}</div>`:''}
+              </div>
+              <div style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(249,115,22,0.15);color:#EA580C;font-weight:600;flex-shrink:0">Today</div>
+            </div>`).join('')}
+          ${todayTasks.map(t=>`
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.14);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('project-detail',${t.projectId})">
+              <span style="font-size:15px">◆</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--text)">${t.name}</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px">${t.projectName}${t.assignedTo?' · '+t.assignedTo:''}</div>
+              </div>
+              <div class="status-badge badge-${t.status}" style="flex-shrink:0">${t.status.replace('-',' ')}</div>
+            </div>`).join('')}
+        ` : `
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(22,163,74,0.07);border:1px solid rgba(22,163,74,0.18);border-radius:8px">
+            <span style="font-size:16px">✓</span>
+            <div style="font-size:13px;color:var(--text)">Nothing urgent today — you're on top of it.</div>
+          </div>`}
       </div>
-      <div class="section-header">
-        <div class="section-title">Projects</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="display:flex;gap:4px">${dashTabs.map(t=>`<button class="btn ${currentDashFilter===t.key?'btn-primary':'btn-ghost'} btn-sm" onclick="setDashFilter('${t.key}')">${t.label}</button>`).join('')}</div>
-          <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all</button>
+
+      ${upcoming.length ? `
+      <div style="margin-bottom:28px">
+        <div class="section-title" style="margin-bottom:12px">Coming Up <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">next 30 days</span></div>
+        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+          ${upcoming.map((item,i)=>`
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;${i>0?'border-top:1px solid var(--border)':''}${item.projectId?';cursor:pointer':''}" ${item.projectId?`onclick="navigate('project-detail',${item.projectId})"`:''}>
+              <div style="font-size:11px;font-weight:600;color:var(--muted);min-width:58px;flex-shrink:0">${formatDate(item.date)}</div>
+              <div style="flex:1;font-size:13px;color:var(--text)">${item.label}</div>
+              ${item.amount?`<div style="font-size:12px;font-weight:700;color:#16A34A;flex-shrink:0">$${item.amount.toLocaleString()}</div>`:''}
+              <div style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:${item.type==='payment'?'rgba(22,163,74,0.1)':'rgba(37,99,235,0.1)'};color:${item.type==='payment'?'#16A34A':'var(--blue)'};flex-shrink:0;text-transform:uppercase;letter-spacing:0.4px">${item.type}</div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <div style="margin-bottom:28px">
+        <div class="section-title" style="margin-bottom:12px">Today's Team</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px">
+          ${store.team.map(m=>{
+            const avail=getMemberAvailability(m);
+            return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer" onclick="navigate('team-profile',undefined,${m.id})">
+              <div class="team-avatar-sm" style="flex-shrink:0">${initials(m.name)}</div>
+              <div style="min-width:0">
+                <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name.split(' ')[0]}</div>
+                <div style="display:flex;align-items:center;gap:4px;margin-top:2px">
+                  <span style="width:6px;height:6px;border-radius:50%;background:${AVAIL_DOT[avail]||'var(--muted)'};flex-shrink:0"></span>
+                  <span style="font-size:10px;color:var(--muted)">${AVAIL_LBL[avail]||avail}</span>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
         </div>
       </div>
-      <div class="projects-grid">${dashProjects.map(p=>renderProjectCard(p)).join('')}${dashProjects.length===0?`<div style="color:var(--muted);font-size:14px;padding:20px 0">No ${currentDashFilter} projects.</div>`:''}</div>
+
+      <div style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="section-title">Active Projects</div>
+          <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all →</button>
+        </div>
+        <div class="projects-grid">${activeProjects.map(p=>renderProjectCard(p)).join('')}${activeProjects.length===0?`<div style="color:var(--muted);font-size:14px;padding:20px 0">No active projects.</div>`:''}</div>
+      </div>
+
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="section-title">All Projects</div>
+          <div style="display:flex;gap:4px">${dashTabs.map(t=>`<button class="btn ${currentDashFilter===t.key?'btn-primary':'btn-ghost'} btn-sm" onclick="setDashFilter('${t.key}')">${t.label}</button>`).join('')}</div>
+        </div>
+        <div class="projects-grid">${allProjectsFiltered.map(p=>renderProjectCard(p)).join('')}${allProjectsFiltered.length===0?`<div style="color:var(--muted);font-size:14px;padding:20px 0">No ${currentDashFilter} projects.</div>`:''}</div>
+      </div>
+
     </div>`;
 }
 
