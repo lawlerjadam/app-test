@@ -363,6 +363,7 @@
 
   .snap-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .snap-grid-4-sm { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .finance-summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
 
   @media (max-width: 768px) {
     body { flex-direction: column; }
@@ -398,6 +399,8 @@
     .prod-days-grid { grid-template-columns: 1fr; }
     .snap-grid-4 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .snap-grid-4-sm { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .finance-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .finance-net { grid-column: 1 / -1; }
     .contact-row { flex-wrap: wrap; align-items: flex-start; }
     .contact-actions { width: 100%; justify-content: flex-end; padding-top: 4px; }
   }

@@ -866,7 +866,7 @@ function renderDashboard() {
   const greeting = hr<12?'morning':hr<17?'afternoon':'evening';
 
   return `
-    <div class="topbar"><div><div class="page-title-greeting">Good ${greeting}, Adam</div><div class="page-sub">${new Date().toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="storage-badge">● Saved</div></div>
+    <div class="topbar"><div><div class="page-title">How ya feelin'?</div><div class="page-sub">${new Date().toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="storage-badge">● Saved</div></div>
     <div class="content">
 
       <div style="margin-bottom:28px">
@@ -1780,7 +1780,7 @@ function renderTeam() {
   return `
     <div class="topbar"><div><div class="page-title">Team</div><div class="page-sub">${store.team.length} freelancers · ${avail.available} available</div></div><button class="btn btn-primary" onclick="openNewMemberModal()">+ Add</button></div>
     <div class="content">
-      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+      <div class="stats-row" style="margin-bottom:20px">
         <div class="stat-card"><div class="stat-label">Available</div><div class="stat-value" style="color:var(--green)">${avail.available}</div></div>
         <div class="stat-card"><div class="stat-label">Busy</div><div class="stat-value" style="color:var(--accent-dark)">${avail.busy}</div></div>
         <div class="stat-card"><div class="stat-label">Pending Pay</div><div class="stat-value" style="color:var(--orange)">$${pendingTotal.toLocaleString()}</div></div>
@@ -2440,12 +2440,12 @@ function renderFinance() {
       </div>
     </div>
     <div class="content">
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;">
+      <div class="finance-summary">
         <div class="card"><div class="budget-label">Income Received</div><div class="budget-value" style="color:var(--green)">$${totalIn.toLocaleString()}</div></div>
         <div class="card"><div class="budget-label">Income Pending</div><div class="budget-value" style="color:var(--orange)">$${totalInPend.toLocaleString()}</div></div>
         <div class="card"><div class="budget-label">Outgoings Paid</div><div class="budget-value" style="color:var(--red)">$${totalOut.toLocaleString()}</div></div>
         <div class="card"><div class="budget-label">Outgoings Pending</div><div class="budget-value" style="color:var(--orange)">$${totalOutPend.toLocaleString()}</div></div>
-        <div class="card"><div class="budget-label">Net Position</div><div class="budget-value" style="color:${net>=0?'var(--green)':'var(--red)'}">$${Math.abs(net).toLocaleString()}</div></div>
+        <div class="card finance-net" style="background:var(--navy);border-color:var(--navy)"><div class="budget-label" style="color:rgba(255,255,255,0.5)">Net Position</div><div class="budget-value" style="color:${net>=0?'var(--accent)':'var(--red-light)'}">$${Math.abs(net).toLocaleString()}</div></div>
       </div>
       ${allItems.length===0
         ? `<div class="empty-state"><div class="empty-icon">◱</div><p>No payments logged yet. Add income via Clients or outgoings via Invoices and Team.</p></div>`
