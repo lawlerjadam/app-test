@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FELT — Feedback Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #FBF6EC; --surface: #FFFFFF; --border: #E3D6B8; --text: #1C1208; --muted: #8A7A58;
+    --accent: #EDD060; --accent-dark: #C8A830; --accent-light: #FBF0C8;
+    --navy: #1C1208; --orange: #C4703A; --orange-light: #F5E4D4;
+    --green: #4A8A65; --green-light: #D4EEE2;
+    --red: #B5503A; --red-light: #F2E0D8;
+    --blue: #5B7FA6; --blue-light: #D8E8F4;
+    --purple: #8A6A9A; --purple-light: #EAE0F2;
+    --radius: 10px;
+  }
+  body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .header { background: var(--orange-light); border-bottom: 1.5px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 10; }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-logo { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: var(--navy); text-decoration: none; opacity: 0.5; }
+  .header-title { font-size: 16px; font-weight: 800; color: var(--navy); }
+  .header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ── FILTERS ── */
+  .toolbar { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+  .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .filter-btn.active { background: var(--navy); color: var(--accent); border-color: var(--navy); }
+  .add-btn { margin-left: auto; padding: 8px 18px; border-radius: 8px; border: none; background: var(--accent); color: var(--navy); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .add-btn:hover { background: var(--accent-dark); }
+
+  /* ── COLUMNS ── */
+  .board { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .col-header { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+  .col-count { background: var(--border); color: var(--muted); border-radius: 20px; padding: 1px 8px; font-size: 10px; }
+
+  /* ── CARDS ── */
+  .card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; position: relative; transition: box-shadow 0.15s; }
+  .card:hover { box-shadow: 0 4px 16px rgba(28,18,8,0.08); }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--navy); line-height: 1.4; flex: 1; }
+  .card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .icon-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 2px 5px; border-radius: 5px; font-family: inherit; transition: all 0.1s; }
+  .icon-btn:hover { background: var(--bg); color: var(--text); }
+  .card-notes { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+  .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; }
+  .badge-bug { background: var(--red-light); color: var(--red); }
+  .badge-feature { background: var(--blue-light); color: var(--blue); }
+  .badge-improvement { background: var(--purple-light); color: var(--purple); }
+  .badge-high { background: var(--orange-light); color: var(--orange); }
+  .badge-medium { background: var(--accent-light); color: var(--accent-dark); }
+  .badge-low { background: var(--green-light); color: var(--green); }
+  .card-date { font-size: 10px; color: var(--muted); margin-left: auto; align-self: flex-end; }
+
+  .col-done .card { opacity: 0.6; }
+  .col-done .card:hover { opacity: 1; }
+
+  .empty-col { padding: 20px; text-align: center; color: var(--muted); font-size: 12px; border: 1.5px dashed var(--border); border-radius: var(--radius); }
+
+  /* ── MODAL ── */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(28,18,8,0.4); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 16px; padding: 28px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(28,18,8,0.2); }
+  .modal-title { font-size: 17px; font-weight: 800; color: var(--navy); margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--bg); outline: none; transition: border 0.15s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent-dark); }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .btn-ghost { padding: 8px 16px; border-radius: 8px; border: 1.5px solid var(--border); background: none; color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-primary { padding: 8px 18px; border-radius: 8px; border: none; background: var(--accent); color: var(--navy); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-primary:hover { background: var(--accent-dark); }
+
+  /* ── MOVE BUTTONS ── */
+  .move-btns { display: flex; gap: 4px; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .move-btn { flex: 1; padding: 5px 8px; border-radius: 6px; border: 1.5px solid var(--border); background: none; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.1s; text-align: center; }
+  .move-btn:hover { background: var(--bg); color: var(--text); }
+  .move-btn.current { background: var(--navy); color: var(--accent); border-color: var(--navy); cursor: default; }
+
+  @media (max-width: 700px) {
+    .board { grid-template-columns: 1fr; }
+    .header { padding: 0 16px; }
+    .container { padding: 20px 16px 60px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="/" class="header-logo">FELT</a>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div>
+      <div class="header-title">Feedback Board</div>
+    </div>
+  </div>
+  <button class="add-btn" onclick="openModal()">+ Log Item</button>
+</div>
+
+<div class="container">
+  <div class="toolbar" id="toolbar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('bug',this)">🔴 Bugs</button>
+    <button class="filter-btn" onclick="setFilter('feature',this)">🔵 Features</button>
+    <button class="filter-btn" onclick="setFilter('improvement',this)">🟣 Improvements</button>
+  </div>
+  <div class="board">
+    <div>
+      <div class="col-header">Backlog <span class="col-count" id="count-backlog">0</span></div>
+      <div id="col-backlog"></div>
+    </div>
+    <div>
+      <div class="col-header">In Progress <span class="col-count" id="count-progress">0</span></div>
+      <div id="col-progress"></div>
+    </div>
+    <div class="col-done">
+      <div class="col-header">Done <span class="col-count" id="count-done">0</span></div>
+      <div id="col-done"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Log Item</div>
+    <div class="form-group">
+      <label>Title</label>
+      <input id="f-title" placeholder="Brief description of the bug or idea…">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="f-type">
+          <option value="bug">Bug</option>
+          <option value="feature">Feature</option>
+          <option value="improvement">Improvement</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="f-priority">
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="f-notes" placeholder="Any extra context, steps to reproduce, or details…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORE_KEY = 'felt-feedback-v1';
+  let items = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+  let nextId = items.reduce((m,i) => Math.max(m, i.id||0), 0) + 1;
+  let currentFilter = 'all';
+  let editingId = null;
+
+  function save() { localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+
+  function fmt(dateStr) {
+    return new Date(dateStr).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  }
+
+  function render() {
+    const filtered = currentFilter === 'all' ? items : items.filter(i => i.type === currentFilter);
+    const statuses = ['backlog', 'progress', 'done'];
+    statuses.forEach(s => {
+      const col = document.getElementById('col-' + s);
+      const group = filtered.filter(i => i.status === s)
+        .sort((a,b) => { const p = {high:0,medium:1,low:2}; return p[a.priority]-p[b.priority]; });
+      document.getElementById('count-' + s).textContent = group.length;
+      if (group.length === 0) {
+        col.innerHTML = `<div class="empty-col">Nothing here yet</div>`;
+        return;
+      }
+      col.innerHTML = group.map(item => `
+        <div class="card">
+          <div class="card-top">
+            <div class="card-title">${esc(item.title)}</div>
+            <div class="card-actions">
+              <button class="icon-btn" onclick="editItem(${item.id})" title="Edit">✎</button>
+              <button class="icon-btn" onclick="deleteItem(${item.id})" title="Delete">✕</button>
+            </div>
+          </div>
+          ${item.notes ? `<div class="card-notes">${esc(item.notes)}</div>` : ''}
+          <div class="card-meta">
+            <span class="badge badge-${item.type}">${item.type}</span>
+            <span class="badge badge-${item.priority}">${item.priority}</span>
+            <span class="card-date">${fmt(item.date)}</span>
+          </div>
+          <div class="move-btns">
+            <button class="move-btn ${item.status==='backlog'?'current':''}" onclick="moveItem(${item.id},'backlog')">Backlog</button>
+            <button class="move-btn ${item.status==='progress'?'current':''}" onclick="moveItem(${item.id},'progress')">In Progress</button>
+            <button class="move-btn ${item.status==='done'?'current':''}" onclick="moveItem(${item.id},'done')">Done</button>
+          </div>
+        </div>`).join('');
+    });
+  }
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function openModal(id) {
+    editingId = id || null;
+    const item = id ? items.find(i => i.id === id) : null;
+    document.getElementById('modal-title').textContent = item ? 'Edit Item' : 'Log Item';
+    document.getElementById('f-title').value = item ? item.title : '';
+    document.getElementById('f-type').value = item ? item.type : 'feature';
+    document.getElementById('f-priority').value = item ? item.priority : 'medium';
+    document.getElementById('f-notes').value = item ? (item.notes || '') : '';
+    document.getElementById('overlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-title').focus(), 50);
+  }
+
+  function closeModal() { document.getElementById('overlay').classList.remove('open'); editingId = null; }
+  function handleOverlayClick(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+
+  function saveItem() {
+    const title = document.getElementById('f-title').value.trim();
+    if (!title) { document.getElementById('f-title').focus(); return; }
+    if (editingId) {
+      const item = items.find(i => i.id === editingId);
+      item.title = title;
+      item.type = document.getElementById('f-type').value;
+      item.priority = document.getElementById('f-priority').value;
+      item.notes = document.getElementById('f-notes').value;
+    } else {
+      items.unshift({ id: nextId++, title, type: document.getElementById('f-type').value, priority: document.getElementById('f-priority').value, notes: document.getElementById('f-notes').value, status: 'backlog', date: new Date().toISOString().split('T')[0] });
+    }
+    save(); closeModal(); render();
+  }
+
+  function editItem(id) { openModal(id); }
+
+  function deleteItem(id) {
+    if (!confirm('Delete this item?')) return;
+    items = items.filter(i => i.id !== id);
+    save(); render();
+  }
+
+  function moveItem(id, status) {
+    const item = items.find(i => i.id === id);
+    if (item) { item.status = status; save(); render(); }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  render();
+</script>
+</body>
+</html>
