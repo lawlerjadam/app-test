@@ -627,7 +627,7 @@ function renderSnapshot() {
                 </div>`).join('')}
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:${qRev>0?'12px':'0'}">
+            <div class="snap-grid-4-sm" style="margin-bottom:${qRev>0?'12px':'0'}">
               <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:4px">Revenue</div>
                 <div style="font-size:17px;font-weight:800;color:var(--navy)">$${Math.round(qRev).toLocaleString()}</div>
@@ -670,7 +670,7 @@ function renderSnapshot() {
       <!-- Year at a glance -->
       <div style="background:var(--navy);border-radius:var(--radius);padding:22px 24px;margin-bottom:22px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.35);margin-bottom:16px;font-weight:700">${year} at a glance · All projects</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+        <div class="snap-grid-4">
           <div>
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:5px">Revenue</div>
             <div style="font-size:24px;font-weight:800;color:#fff">$${Math.round(allRev/1000)}k</div>
