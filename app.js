@@ -2248,6 +2248,24 @@ function saveMemberCRM(id) {
 const TASK_CATS = ['Creative','Production','Client','Finance','Admin','Other'];
 const TASK_STATUS = {'not-started':'Not Started','in-progress':'In Progress','done':'Done','blocked':'Blocked'};
 const TASK_COLORS = {'done':'var(--green)','in-progress':'var(--blue)','blocked':'var(--red)','not-started':'#C8C4BE'};
+const STANDARD_MILESTONES = [
+  {name:'Kickoff',          category:'Client'},
+  {name:'Concept',          category:'Creative'},
+  {name:'Client Approval',  category:'Client'},
+  {name:'Production',       category:'Production'},
+  {name:'Install',          category:'Production'},
+  {name:'Wrap',             category:'Production'},
+];
+function ensureDefaultMilestones(p) {
+  if (!p.tasks) p.tasks = [];
+  STANDARD_MILESTONES.forEach(m => {
+    const exists = p.tasks.find(t => t.name.toLowerCase().trim() === m.name.toLowerCase());
+    if (!exists) {
+      p.tasks.push({id:store.nextId.tasks++, name:m.name, category:m.category, status:'not-started', startDate:'', dueDate:'', assignedTo:'', milestone:true});
+    }
+  });
+  save();
+}
 
 function renderTimelineStrip(p) {
   if (!p.startDate || !p.endDate) return `<div class="card" style="margin-bottom:18px;text-align:center;color:var(--muted);font-size:13px;padding:14px">Set project start and end dates to see the visual timeline.</div>`;
@@ -2287,40 +2305,53 @@ function renderTimelineStrip(p) {
 }
 
 function renderTimelineTab(p) {
+  ensureDefaultMilestones(p);
   const tasks=p.tasks||[];
   const done=tasks.filter(t=>t.status==='done').length;
-  const sorted=[...tasks].sort((a,b)=>(a.dueDate||'9').localeCompare(b.dueDate||'9'));
+  const milestoneOrder=STANDARD_MILESTONES.map(m=>m.name.toLowerCase());
+  const sorted=[...tasks].sort((a,b)=>{
+    if(a.dueDate&&b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+    if(a.dueDate&&!b.dueDate) return -1;
+    if(!a.dueDate&&b.dueDate) return 1;
+    const ai=milestoneOrder.indexOf(a.name.toLowerCase()), bi=milestoneOrder.indexOf(b.name.toLowerCase());
+    if(ai>=0&&bi>=0) return ai-bi;
+    if(ai>=0) return -1;
+    if(bi>=0) return 1;
+    return 0;
+  });
   const today=new Date(); today.setHours(0,0,0,0);
 
   return `
-    <div class="section-header"><div class="section-title">Timeline</div><button class="btn btn-primary btn-sm" onclick="openAddTaskModal()">+ Add Task</button></div>
+    <div class="section-header"><div class="section-title">Timeline</div><button class="btn btn-primary btn-sm" onclick="openAddTaskModal()">+ Add Milestone</button></div>
     ${renderTimelineStrip(p)}
-    ${tasks.length>0?`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">${done} of ${tasks.length} tasks complete</div>`:''}
+    ${tasks.length>0?`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">${done} of ${tasks.length} milestones complete</div>`:''}
     <div class="card" style="padding:0;overflow:hidden">
-      ${sorted.length===0?`<div class="empty-state"><div class="empty-icon">◆</div><p>No tasks yet. Add milestones and deadlines to build the timeline.</p></div>`:`<div class="table-wrap"><table class="table">
-        <thead><tr><th>Task</th><th>Category</th><th>Due Date</th><th>Assigned</th><th>Status</th><th></th></tr></thead>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Milestone</th><th>Category</th><th>Due Date</th><th>Assigned</th><th>Status</th><th></th></tr></thead>
         <tbody>${sorted.map(t=>{
           const due=t.dueDate?new Date(t.dueDate+'T00:00:00'):null;
           const overdue=due&&due<today&&t.status!=='done';
+          const isStandard=milestoneOrder.includes(t.name.toLowerCase());
           return `<tr style="${overdue?'background:var(--red-light)':''}">
             <td style="font-weight:${t.status==='done'?'400':'700'};${t.status==='done'?'text-decoration:line-through;color:var(--muted)':''}">
-              ${t.name}
+              ${isStandard?'◆ ':''}${t.name}
               ${t.startDate?`<div style="font-size:11px;color:var(--muted);font-weight:400;text-decoration:none">From ${formatDate(t.startDate)}</div>`:''}
             </td>
             <td><span class="status-badge badge-planning">${t.category}</span></td>
             <td style="${overdue?'color:var(--red);font-weight:700':'color:var(--muted)'}">
-              ${t.dueDate?formatDate(t.dueDate):'—'}
+              ${t.dueDate?formatDate(t.dueDate):'<span style="color:var(--border)">Set date</span>'}
               ${overdue?'<div style="font-size:10px">OVERDUE</div>':''}
             </td>
             <td style="color:var(--muted);font-size:12px">${t.assignedTo||'—'}</td>
             <td><span class="status-badge badge-${t.status==='done'?'won':t.status==='in-progress'?'in-conversation':t.status==='blocked'?'lost':'not-contacted'}">${TASK_STATUS[t.status]||t.status}</span></td>
             <td style="text-align:right;white-space:nowrap">
-              <button class="btn btn-ghost btn-sm" onclick="cycleTaskStatus(${t.id})" title="Change status">↻</button>
+              <button class="btn btn-ghost btn-sm" onclick="openEditTaskModal(${t.id})" title="Edit">✎</button>
+              <button class="btn btn-ghost btn-sm" onclick="cycleTaskStatus(${t.id})" title="Cycle status">↻</button>
               <button class="btn btn-ghost btn-sm" onclick="deleteTask(${t.id})">✕</button>
             </td>
           </tr>`;
         }).join('')}</tbody>
-      </table></div>`}
+      </table></div>
     </div>`;
 }
 
@@ -2351,6 +2382,35 @@ function cycleTaskStatus(id){
   const t=currentProject.tasks.find(x=>x.id===id);
   t.status=cycle[(cycle.indexOf(t.status)+1)%cycle.length];
   save();toast('Status: '+TASK_STATUS[t.status]);render();
+}
+function openEditTaskModal(id){
+  const p=currentProject;
+  const t=p.tasks.find(x=>x.id===id); if(!t) return;
+  const memberOpts=[...store.team.filter(m=>p.teamIds.includes(m.id)).map(m=>`<option ${t.assignedTo===m.name?'selected':''}>${m.name}</option>`),'<option>Adam</option>'].join('');
+  openModal(`
+    <div class="modal-title">Edit Milestone</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Name</label><input id="et-name" value="${t.name}"></div>
+      <div class="form-group"><label>Category</label><select id="et-cat">${TASK_CATS.map(c=>`<option ${t.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Status</label><select id="et-status">
+        <option value="not-started" ${t.status==='not-started'?'selected':''}>Not Started</option>
+        <option value="in-progress" ${t.status==='in-progress'?'selected':''}>In Progress</option>
+        <option value="done" ${t.status==='done'?'selected':''}>Done</option>
+        <option value="blocked" ${t.status==='blocked'?'selected':''}>Blocked</option>
+      </select></div>
+      <div class="form-group"><label>Start Date (optional)</label><input id="et-start" type="date" value="${t.startDate||''}"></div>
+      <div class="form-group"><label>Due Date</label><input id="et-due" type="date" value="${t.dueDate||''}"></div>
+      <div class="form-group full"><label>Assigned To</label><select id="et-assign"><option value="">— Unassigned —</option>${memberOpts}</select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTask(${id})">Save</button></div>`);
+}
+function saveTask(id){
+  const t=currentProject.tasks.find(x=>x.id===id); if(!t) return;
+  const n=document.getElementById('et-name').value.trim(); if(!n){toast('Name required');return;}
+  t.name=n; t.category=document.getElementById('et-cat').value; t.status=document.getElementById('et-status').value;
+  t.startDate=document.getElementById('et-start').value; t.dueDate=document.getElementById('et-due').value;
+  t.assignedTo=document.getElementById('et-assign').value;
+  closeModal();save();toast('Milestone saved');render();
 }
 
 // ─── ASSETS TAB ───────────────────────────────────────────────────────────────
