@@ -193,7 +193,7 @@ const defaultData = {
       tasks:[
         {id:1,name:'Client brief & budget sign-off',category:'Client',startDate:'',dueDate:'2026-09-22',status:'done',assignedTo:'Adam'},
         {id:2,name:'Concept presentation to RBC',category:'Creative',startDate:'2026-09-25',dueDate:'2026-10-05',status:'done',assignedTo:'Jordan Park'},
-        {id:3,name:'Supplier contracts confirmed',category:'Production',startDate:'',dueDate:'2026-10-05',status:'done',assignedTo:'Isla MacKenzie'},
+        {id:3,name:'Vendor contracts confirmed',category:'Production',startDate:'',dueDate:'2026-10-05',status:'done',assignedTo:'Isla MacKenzie'},
         {id:4,name:'Ice structure design approval',category:'Creative',startDate:'',dueDate:'2026-10-12',status:'done',assignedTo:'Jordan Park'},
         {id:5,name:'Full tech walkthrough & sign-off',category:'Production',startDate:'2026-11-14',dueDate:'2026-11-14',status:'in-progress',assignedTo:'Isla MacKenzie'},
         {id:6,name:'Staff briefing & uniform distribution',category:'Production',startDate:'',dueDate:'2026-11-20',status:'not-started',assignedTo:'Isla MacKenzie'},
@@ -304,7 +304,7 @@ const defaultData = {
         {id:3,projectId:1,templateId:1,status:'signed',sentDate:'2026-09-28',signedDate:'2026-10-01',notes:''}
       ]
     },
-    {id:3,name:'Isla MacKenzie',role:'Production Manager',email:'isla@islapm.ca',rate:650,skills:['Production Management','Logistics','Supplier Relations','Scheduling'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Meticulous and calm under pressure. Essential for any live production.',
+    {id:3,name:'Isla MacKenzie',role:'Production Manager',email:'isla@islapm.ca',rate:650,skills:['Production Management','Logistics','Vendor Relations','Scheduling'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Meticulous and calm under pressure. Essential for any live production.',
       payments:[
         {id:5,description:'Production — RBC Winterfest Activation',projectId:1,amount:7800,date:'2026-11-20',status:'paid'},
         {id:6,description:'Production — Lululemon Studio Pop-Up',projectId:2,amount:5200,date:'2026-07-05',status:'paid'}
@@ -457,7 +457,7 @@ const MOBILE_TRAY_SECTIONS={
   resources:[
     {icon:'◎',label:'Team',view:'team'},
     {icon:'◇',label:'Clients',view:'contacts'},
-    {icon:'◧',label:'Suppliers',view:'global-suppliers'}
+    {icon:'◧',label:'Vendors',view:'global-suppliers'}
   ],
   future:[
     {icon:'◉',label:'Leads',view:'leads'},
@@ -552,7 +552,7 @@ function render() {
   else if(currentView==='team-profile') m.innerHTML=renderTeamProfile();
   else if(currentView==='contacts') m.innerHTML=renderContacts();
   else if(currentView==='contact-profile') m.innerHTML=renderContactProfile();
-  else if(currentView==='global-suppliers') m.innerHTML=renderGlobalSuppliers();
+  else if(currentView==='global-suppliers') m.innerHTML=renderGlobalVendors();
   else if(currentView==='finance') m.innerHTML=renderFinance();
   // Bind callsheet autosave after render
   if(currentTab==='production') {
@@ -1170,9 +1170,9 @@ function renderProductionTab(p) {
         </div>`;
       }).join('')}</div>`;
 
-  // Suppliers
+  // Vendors
   const suppliersHtml = prod.suppliers.length===0
-    ? `<div class="empty-state"><div class="empty-icon">🏭</div><p>No suppliers added yet.</p></div>`
+    ? `<div class="empty-state"><div class="empty-icon">🏭</div><p>No vendors added yet.</p></div>`
     : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
         <thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Status</th><th></th></tr></thead>
         <tbody>${prod.suppliers.map(s=>`<tr>
@@ -1180,7 +1180,7 @@ function renderProductionTab(p) {
           <td style="color:var(--muted)">${s.category}</td>
           <td style="color:var(--muted)">${s.contact||'—'}</td>
           <td><span class="status-badge badge-${s.status}">${s.status}</span></td>
-          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeSupplier(${s.id})">✕</button></td>
+          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeVendor(${s.id})">✕</button></td>
         </tr>`).join('')}</tbody>
       </table></div></div>`;
 
@@ -1188,7 +1188,7 @@ function renderProductionTab(p) {
   const equipHtml = prod.equipment.length===0
     ? `<div class="empty-state"><div class="empty-icon">📦</div><p>No equipment added yet.</p></div>`
     : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
-        <thead><tr><th>Item</th><th>Qty</th><th>Supplier</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Item</th><th>Qty</th><th>Vendor</th><th>Status</th><th></th></tr></thead>
         <tbody>${prod.equipment.map(e=>`<tr>
           <td style="font-weight:600">${e.item}</td>
           <td style="color:var(--muted)">${e.qty}</td>
@@ -1207,7 +1207,7 @@ function renderProductionTab(p) {
 
     <!-- SUPPLIERS -->
     <div class="prod-section">
-      <div class="section-header"><div class="section-title">Suppliers & Contractors</div><button class="btn btn-primary btn-sm" onclick="openAddSupplierModal()">+ Add</button></div>
+      <div class="section-header"><div class="section-title">Vendors</div><button class="btn btn-primary btn-sm" onclick="openAddVendorModal()">+ Add</button></div>
       ${suppliersHtml}
     </div>
 
@@ -1263,66 +1263,65 @@ function addShootDay() {
 }
 function removeShootDay(id){const p=currentProject;p.production.shootDays=p.production.shootDays.filter(d=>d.id!==id);save();toast('Removed');render();}
 
-function openAddSupplierModal() {
-  const globalOpts = store.globalSuppliers.map(s=>`<option value="${s.id}">${s.company} — ${s.category}</option>`).join('');
+function openAddVendorModal() {
+  const db = store.globalSuppliers||[];
+  if(db.length===0){
+    openModal(`
+      <div class="modal-title">Add Vendor</div>
+      <div style="padding:24px 0;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">🏭</div>
+        <div style="font-weight:600;margin-bottom:6px">No vendors in database yet</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:20px">Add vendors to your database first, then link them to projects.</div>
+        <button class="btn btn-primary" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100)">+ Add to Vendor Database</button>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>`);
+    return;
+  }
+  const globalOpts = db.map(s=>`<option value="${s.id}">${s.company} — ${s.category}</option>`).join('');
   openModal(`
-    <div class="modal-title">Add Supplier / Contractor</div>
+    <div class="modal-title">Add Vendor</div>
     <div class="form-grid">
-      ${globalOpts?`<div class="form-group full"><label>Pull from supplier database</label><select id="sup-pull" onchange="prefillSupplier(this.value)"><option value="">— Add manually below —</option>${globalOpts}</select></div>`:''}
-      <div class="form-group"><label>Company</label><input id="sup-company" placeholder="Company name"></div>
-      <div class="form-group"><label>Contact Name</label><input id="sup-contact"></div>
-      <div class="form-group"><label>Category</label><select id="sup-cat">${SUPPLIER_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Status</label><select id="sup-status"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></div>
-      <div class="form-group full"><label>Notes</label><textarea id="sup-notes" placeholder="Contract status, key dates, anything important..."></textarea></div>
-      <div class="form-group full"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="sup-save-global" style="width:16px;height:16px;accent-color:var(--accent-dark);flex-shrink:0"> Also save to supplier database for future projects</label></div>
+      <div class="form-group full"><label>Vendor</label><select id="sup-pull" onchange="prefillVendor(this.value)"><option value="">— Select from vendor database —</option>${globalOpts}</select>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">Not listed? <a href="#" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100);return false;" style="color:var(--blue)">Add to vendor database first →</a></div>
+      </div>
+      <div class="form-group" id="sup-status-wrap" style="display:none"><label>Status</label><select id="sup-status"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></div>
+      <div class="form-group full" id="sup-notes-wrap" style="display:none"><label>Notes</label><textarea id="sup-notes" placeholder="Contract status, key dates, anything important..."></textarea></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="addSupplier()">Add to Project</button>
+      <button class="btn btn-primary" onclick="addVendor()">Add to Project</button>
     </div>`);
 }
-function prefillSupplier(id) {
-  if(!id) return;
-  const s=store.globalSuppliers.find(x=>x.id===parseInt(id)); if(!s) return;
-  document.getElementById('sup-company').value=s.company||'';
-  document.getElementById('sup-contact').value=s.contactName||'';
-  const catSel=document.getElementById('sup-cat');
-  [...catSel.options].forEach(o=>{if(o.value===s.category)o.selected=true;});
-  document.getElementById('sup-notes').value=s.notes||'';
+function prefillVendor(id) {
+  const show = !!id;
+  document.getElementById('sup-status-wrap').style.display = show ? '' : 'none';
+  document.getElementById('sup-notes-wrap').style.display = show ? '' : 'none';
 }
-function addSupplier() {
-  const c=document.getElementById('sup-company').value.trim();if(!c){toast('Company name required');return;}
+function addVendor() {
+  const id=parseInt(document.getElementById('sup-pull').value);
+  if(!id){toast('Select a vendor from the database');return;}
+  const s=store.globalSuppliers.find(x=>x.id===id);
+  if(!s){toast('Vendor not found');return;}
   const p=currentProject;if(!p.production)p.production=emptyProduction();
-  const cat=document.getElementById('sup-cat').value;
-  const contact=document.getElementById('sup-contact').value;
-  const notes=document.getElementById('sup-notes').value;
   const status=document.getElementById('sup-status').value;
-  p.production.suppliers.push({id:store.nextId.suppliers++,company:c,contact,category:cat,status,notes});
-  const saveGlobal=document.getElementById('sup-save-global');
-  if(saveGlobal&&saveGlobal.checked){
-    const alreadyExists=store.globalSuppliers.find(s=>s.company.toLowerCase().trim()===c.toLowerCase().trim());
-    if(!alreadyExists){
-      store.globalSuppliers.push({id:store.nextId.globalSuppliers++,company:c,category:cat,contactName:contact,contactEmail:'',contactPhone:'',website:'',notes});
-      toast('Supplier added to project + database ✓');
-    } else {
-      toast('Supplier added (already in database)');
-    }
-  } else {
-    toast('Supplier added');
-  }
-  closeModal();save();render();
+  const notes=document.getElementById('sup-notes').value;
+  p.production.suppliers.push({id:store.nextId.suppliers++,globalSupplierId:s.id,company:s.company,contact:s.contactName||'',category:s.category,status,notes});
+  closeModal();save();toast('Vendor added');render();
 }
-function removeSupplier(id){const p=currentProject;p.production.suppliers=p.production.suppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
+function removeVendor(id){const p=currentProject;p.production.suppliers=p.production.suppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
 
 function openAddEquipmentModal() {
-  const supplierNames=[...new Set(currentProject.production?.suppliers.map(s=>s.company)||[])];
+  const db=store.globalSuppliers||[];
+  const vendorOpts=db.map(s=>`<option value="${s.company}">${s.company} — ${s.category}</option>`).join('');
   openModal(`
     <div class="modal-title">Add Equipment / Asset</div>
     <div class="form-grid">
       <div class="form-group full"><label>Item</label><input id="eq-item" placeholder="e.g. LED Wall Panels"></div>
       <div class="form-group"><label>Quantity</label><input id="eq-qty" type="number" value="1" min="1"></div>
       <div class="form-group"><label>Status</label><select id="eq-status"><option value="needed">Needed</option><option value="confirmed">Confirmed</option><option value="on-site">On Site</option><option value="returned">Returned</option></select></div>
-      <div class="form-group full"><label>Supplier</label><input id="eq-supplier" list="supplier-list" placeholder="Supplier or source"><datalist id="supplier-list">${supplierNames.map(n=>`<option>${n}</option>`).join('')}<option>Internal</option></datalist></div>
+      <div class="form-group full"><label>Vendor</label><select id="eq-supplier"><option value="">— Select vendor (optional) —</option><option value="Internal">Internal</option>${vendorOpts}</select>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">Not listed? <a href="#" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100);return false;" style="color:var(--blue)">Add to vendor database →</a></div>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addEquipment()">Add Item</button></div>`);
 }
@@ -1589,7 +1588,7 @@ function renderInvoicesTab(p) {
   const tableHtml = invoices.length===0
     ? `<div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices yet. Add one when a cost is agreed.</p></div>`
     : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
-        <thead><tr><th>Supplier</th><th>Description</th><th>Category</th><th>Date</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Vendor</th><th>Description</th><th>Category</th><th>Date</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead>
         <tbody>${invoices.map(inv=>`<tr>
           <td style="font-weight:600">${inv.supplier}</td>
           <td style="color:var(--muted)">${inv.description||'—'}</td>
@@ -1634,14 +1633,13 @@ function renderInvoicesTab(p) {
 }
 
 function openAddInvoiceModal() {
-  const supplierNames=[...new Set([
-    ...(currentProject.production?.suppliers||[]).map(s=>s.company),
-    ...(store.globalSuppliers||[]).map(s=>s.company)
-  ])];
+  const db=store.globalSuppliers||[];
+  const vendorOpts=db.map(s=>`<option value="${s.company}">${s.company} — ${s.category}</option>`).join('');
   const catOptions = BUDGET_CATS.map(c=>`<option>${c}</option>`).join('');
-  const supplierDatalist = supplierNames.length ? `<datalist id="inv-sup-list">${supplierNames.map(n=>`<option>${n}</option>`).join('')}</datalist>` : '';
   openModal(`<div class="modal-title">Add Invoice</div><div class="form-grid">
-    <div class="form-group full"><label>Supplier / Contractor</label><input id="inv-supplier" list="inv-sup-list" placeholder="e.g. Forma Build">${supplierDatalist}</div>
+    <div class="form-group full"><label>Vendor / Contractor</label><select id="inv-supplier"><option value="">— Select vendor —</option>${vendorOpts}</select>
+      <div style="margin-top:6px;font-size:12px;color:var(--muted)">Not listed? <a href="#" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100);return false;" style="color:var(--blue)">Add to vendor database first →</a></div>
+    </div>
     <div class="form-group full"><label>Description</label><input id="inv-desc" placeholder="e.g. Stage 1 build, Final delivery, Deposit..."></div>
     <div class="form-group"><label>Budget Category</label><select id="inv-cat">${catOptions}</select></div>
     <div class="form-group"><label>Amount ($)</label><input id="inv-amount" type="number" placeholder="0"></div>
@@ -1652,7 +1650,7 @@ function openAddInvoiceModal() {
 }
 function addInvoice() {
   const supplier=document.getElementById('inv-supplier').value.trim();
-  if(!supplier){toast('Supplier name required');return;}
+  if(!supplier){toast('Select a vendor');return;}
   const amount=parseFloat(document.getElementById('inv-amount').value)||0;
   if(!amount){toast('Amount required');return;}
   const p=currentProject;
@@ -2465,7 +2463,7 @@ function addAsset(){const n=document.getElementById('a-name').value.trim();if(!n
 function deleteAsset(id){currentProject.assets.files=currentProject.assets.files.filter(f=>f.id!==id);save();toast('Removed');render();}
 
 // ─── GLOBAL SUPPLIERS ─────────────────────────────────────────────────────────
-const SUPPLIER_CATS=['Fabrication','AV / Tech','Catering','Staffing','Photography / Video','Transport','Print','Venue','Other'];
+const VENDOR_CATS=['Fabrication','AV / Tech','Catering','Staffing','Photography / Video','Transport','Print','Venue','Other'];
 
 function renderFinance() {
   // Gather outgoings
@@ -2595,12 +2593,12 @@ function renderFinance() {
     </div>`;
 }
 
-function renderGlobalSuppliers() {
+function renderGlobalVendors() {
   return `
-    <div class="topbar"><div><div class="page-title">Suppliers & Contractors</div><div class="page-sub">${store.globalSuppliers.length} in database</div></div><button class="btn btn-primary" onclick="openAddGlobalSupplierModal()">+ Add</button></div>
+    <div class="topbar"><div><div class="page-title">Vendor Database</div><div class="page-sub">${store.globalSuppliers.length} vendors</div></div><button class="btn btn-primary" onclick="openAddGlobalVendorModal()">+ Add Vendor</button></div>
     <div class="content">
       <div class="card" style="padding:0;overflow:hidden">
-        ${store.globalSuppliers.length===0?`<div class="empty-state"><div class="empty-icon">🏭</div><p>No suppliers yet. Add fabricators, AV companies, caterers and more.</p></div>`:`<div class="table-wrap"><table class="table">
+        ${store.globalSuppliers.length===0?`<div class="empty-state"><div class="empty-icon">🏭</div><p>No vendors yet. Add fabricators, AV companies, caterers and more.</p></div>`:`<div class="table-wrap"><table class="table">
           <thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Phone</th><th>Email</th><th></th></tr></thead>
           <tbody>${store.globalSuppliers.map(s=>`<tr>
             <td><div style="font-weight:700">${s.company}</div>${s.notes?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${s.notes}</div>`:''}</td>
@@ -2608,30 +2606,30 @@ function renderGlobalSuppliers() {
             <td style="color:var(--muted)">${s.contactName||'—'}</td>
             <td><a href="tel:${s.contactPhone}" style="color:var(--blue);text-decoration:none">${s.contactPhone||'—'}</a></td>
             <td><a href="mailto:${s.contactEmail}" style="color:var(--blue);text-decoration:none">${s.contactEmail||'—'}</a></td>
-            <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="openEditGlobalSupplierModal(${s.id})">Edit</button> <button class="btn btn-ghost btn-sm" onclick="deleteGlobalSupplier(${s.id})">✕</button></td>
+            <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="openEditGlobalVendorModal(${s.id})">Edit</button> <button class="btn btn-ghost btn-sm" onclick="deleteGlobalVendor(${s.id})">✕</button></td>
           </tr>`).join('')}</tbody>
         </table></div>`}
       </div>
     </div>`;
 }
-function openAddGlobalSupplierModal(prefill){
+function openAddGlobalVendorModal(prefill){
   const s=prefill||{};
   openModal(`
-    <div class="modal-title">${prefill?'Edit':'Add'} Supplier</div>
+    <div class="modal-title">${prefill?'Edit':'Add'} Vendor</div>
     <div class="form-grid">
       <div class="form-group"><label>Company</label><input id="gs-company" value="${s.company||''}" placeholder="Company name"></div>
-      <div class="form-group"><label>Category</label><select id="gs-cat">${SUPPLIER_CATS.map(c=>`<option ${s.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Category</label><select id="gs-cat">${VENDOR_CATS.map(c=>`<option ${s.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
       <div class="form-group"><label>Contact Name</label><input id="gs-contact" value="${s.contactName||''}"></div>
       <div class="form-group"><label>Phone</label><input id="gs-phone" value="${s.contactPhone||''}"></div>
       <div class="form-group full"><label>Email</label><input id="gs-email" value="${s.contactEmail||''}"></div>
       <div class="form-group full"><label>Notes</label><textarea id="gs-notes">${s.notes||''}</textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="${prefill?`saveGlobalSupplier(${s.id})`:'addGlobalSupplier()'}">Save</button></div>`);
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="${prefill?`saveGlobalVendor(${s.id})`:'addGlobalVendor()'}">Save</button></div>`);
 }
-function addGlobalSupplier(){const c=document.getElementById('gs-company').value.trim();if(!c){toast('Company required');return;}store.globalSuppliers.push({id:store.nextId.globalSuppliers++,company:c,category:document.getElementById('gs-cat').value,contactName:document.getElementById('gs-contact').value,contactPhone:document.getElementById('gs-phone').value,contactEmail:document.getElementById('gs-email').value,notes:document.getElementById('gs-notes').value});closeModal();save();toast('Supplier added');render();}
-function openEditGlobalSupplierModal(id){openAddGlobalSupplierModal(store.globalSuppliers.find(s=>s.id===id));}
-function saveGlobalSupplier(id){const s=store.globalSuppliers.find(x=>x.id===id);s.company=document.getElementById('gs-company').value.trim()||s.company;s.category=document.getElementById('gs-cat').value;s.contactName=document.getElementById('gs-contact').value;s.contactPhone=document.getElementById('gs-phone').value;s.contactEmail=document.getElementById('gs-email').value;s.notes=document.getElementById('gs-notes').value;closeModal();save();toast('Saved');render();}
-function deleteGlobalSupplier(id){store.globalSuppliers=store.globalSuppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
+function addGlobalVendor(){const c=document.getElementById('gs-company').value.trim();if(!c){toast('Company required');return;}store.globalSuppliers.push({id:store.nextId.globalSuppliers++,company:c,category:document.getElementById('gs-cat').value,contactName:document.getElementById('gs-contact').value,contactPhone:document.getElementById('gs-phone').value,contactEmail:document.getElementById('gs-email').value,notes:document.getElementById('gs-notes').value});closeModal();save();toast('Vendor added');render();}
+function openEditGlobalVendorModal(id){openAddGlobalVendorModal(store.globalSuppliers.find(s=>s.id===id));}
+function saveGlobalVendor(id){const s=store.globalSuppliers.find(x=>x.id===id);s.company=document.getElementById('gs-company').value.trim()||s.company;s.category=document.getElementById('gs-cat').value;s.contactName=document.getElementById('gs-contact').value;s.contactPhone=document.getElementById('gs-phone').value;s.contactEmail=document.getElementById('gs-email').value;s.notes=document.getElementById('gs-notes').value;closeModal();save();toast('Saved');render();}
+function deleteGlobalVendor(id){store.globalSuppliers=store.globalSuppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
 
 // ─── CONTACTS / CLIENTS ───────────────────────────────────────────────────────
 function renderContactProfile() {
@@ -3039,7 +3037,7 @@ function renderSearchResults(q){
     store.companies.forEach(co=>{if(co.name.toLowerCase().includes(query))results.push({type:'Client',label:co.name,sub:(co.industry||'')+(co.industry?' · ':'')+store.contacts.filter(c=>c.companyId===co.id).length+' contacts',action:`closeSearch();navigateToCompany(${co.id})`});});
     store.contacts.forEach(c=>{if(c.name.toLowerCase().includes(query)||(c.email||'').toLowerCase().includes(query)){const co=c.companyId?store.companies.find(x=>x.id===c.companyId):null;results.push({type:'Contact',label:c.name,sub:(co?co.name+' · ':'')+c.role,action:co?`closeSearch();navigateToCompany(${co.id})`:`closeSearch();navigate('contacts')`});}});
     store.leads.forEach(l=>{if(l.company.toLowerCase().includes(query)||(l.contactName||'').toLowerCase().includes(query))results.push({type:'Lead',label:l.company,sub:(l.contactName||'')+(l.status?' · '+l.status:''),action:`closeSearch();navigate('leads')`});});
-    store.globalSuppliers.forEach(s=>{if(s.company.toLowerCase().includes(query)||(s.contactName||'').toLowerCase().includes(query))results.push({type:'Supplier',label:s.company,sub:s.category+(s.contactName?' · '+s.contactName:''),action:`closeSearch();navigate('global-suppliers')`});});
+    store.globalSuppliers.forEach(s=>{if(s.company.toLowerCase().includes(query)||(s.contactName||'').toLowerCase().includes(query))results.push({type:'Vendor',label:s.company,sub:s.category+(s.contactName?' · '+s.contactName:''),action:`closeSearch();navigate('global-suppliers')`});});
     store.ideas.forEach(i=>{if(i.title.toLowerCase().includes(query)||i.description.toLowerCase().includes(query))results.push({type:'Idea',label:i.title,sub:i.category+' · '+i.submittedBy,action:`closeSearch();navigate('ideas')`});});
   }
   const container=document.getElementById('search-results');
@@ -3125,13 +3123,15 @@ function quickLogExpense(){
 function openQuickInvoiceModal(){
   const projectOpts=store.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   const catOptions=BUDGET_CATS.map(c=>`<option>${c}</option>`).join('');
-  const allSuppliers=[...new Set([...(store.globalSuppliers||[]).map(s=>s.company)])];
-  const supplierDatalist=allSuppliers.length?`<datalist id="qi-sup-list">${allSuppliers.map(n=>`<option>${n}</option>`).join('')}</datalist>`:'';
+  const db=store.globalSuppliers||[];
+  const vendorOpts=db.map(s=>`<option value="${s.company}">${s.company} — ${s.category}</option>`).join('');
   openModal(`
     <div class="modal-title">🧾 Add Invoice</div>
     <div class="form-grid">
       <div class="form-group full"><label>Project</label><select id="qi-project"><option value="">— Select project —</option>${projectOpts}</select></div>
-      <div class="form-group full"><label>Supplier / Contractor</label><input id="qi-supplier" list="qi-sup-list" placeholder="e.g. Forma Build">${supplierDatalist}</div>
+      <div class="form-group full"><label>Vendor / Contractor</label><select id="qi-supplier"><option value="">— Select vendor —</option>${vendorOpts}</select>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">Not listed? <a href="#" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100);return false;" style="color:var(--blue)">Add to vendor database first →</a></div>
+      </div>
       <div class="form-group full"><label>Description</label><input id="qi-desc" placeholder="e.g. Stage 1 build, Final delivery, Deposit..."></div>
       <div class="form-group"><label>Budget Category</label><select id="qi-cat">${catOptions}</select></div>
       <div class="form-group"><label>Amount ($)</label><input id="qi-amount" type="number" placeholder="0"></div>
@@ -3144,7 +3144,7 @@ function quickAddInvoice(){
   const projId=parseInt(document.getElementById('qi-project').value);
   if(!projId){toast('Select a project');return;}
   const supplier=document.getElementById('qi-supplier').value.trim();
-  if(!supplier){toast('Supplier required');return;}
+  if(!supplier){toast('Select a vendor');return;}
   const p=store.projects.find(x=>x.id===projId);
   if(!p.invoices)p.invoices=[];
   p.invoices.push({
