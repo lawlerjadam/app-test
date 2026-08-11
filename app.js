@@ -1,5 +1,5 @@
 // ─── PROJECT COLOURS ─────────────────────────────────────────────────────────
-const PROJECT_COLORS = ['#C4703A','#4A7BA8','#7A8C3E','#3A8C7A','#9A4A30','#C8A020','#8A6A9A','#3A4A6A','#C47A8A','#6A8C72','#1C1208','#9A8A6A'];
+const PROJECT_COLORS = ['#E8C832','#D4A010','#C8881E','#B86030','#A04828','#8A3820','#F0D458','#D49820','#C87038','#9A5030','#7A3018','#F5E080'];
 
 // ─── FEELING OF THE DAY ───────────────────────────────────────────────────────
 const FEELINGS = [
@@ -146,7 +146,7 @@ function emptyProduction() {
 // ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
 const defaultData = {
   projects:[
-    {id:1,name:'RBC Winterfest Activation',client:'RBC Royal Bank of Canada',clientId:1,status:'active',type:'Brand Activation',color:'#7B9FD4',startDate:'2026-11-01',endDate:'2026-12-20',budget:0,spent:0,
+    {id:1,name:'RBC Winterfest Activation',client:'RBC Royal Bank of Canada',clientId:1,status:'active',type:'Brand Activation',color:'#E8C832',startDate:'2026-11-01',endDate:'2026-12-20',budget:0,spent:0,
       brief:{overview:'A multi-sensory winter brand activation for RBC at Harbourfront Centre, Toronto. Includes an interactive ice sculpture installation, branded warming stations, and a live LED content wall showcasing community stories.',objectives:'Drive brand warmth and community connection during the holiday season. Target 18,000 visitors over a 7-week run. Amplify on social with a target of 2,000 organic check-ins.',deliverables:'Custom ice sculpture, 3x branded warming huts, LED content wall, staff uniforms, printed wayfinding & signage.',timeline:'Supplier contracts: Oct. Build: Nov 1–14. Soft open: Nov 15. Public opening: Nov 22. Run through Dec 20.'},
       teamIds:[1,2,3],contactIds:[1],teamAllocation:{1:15,2:10,3:12},expenses:[],
       budgetLines:[
@@ -202,7 +202,7 @@ const defaultData = {
       ],
       assets:{driveFolder:'',files:[]}
     },
-    {id:2,name:'Lululemon Studio Pop-Up',client:'Lululemon Canada',clientId:2,status:'completed',type:'Pop-Up',color:'#5EAF80',startDate:'2026-06-01',endDate:'2026-08-30',budget:0,spent:0,
+    {id:2,name:'Lululemon Studio Pop-Up',client:'Lululemon Canada',clientId:2,status:'completed',type:'Pop-Up',color:'#B86030',startDate:'2026-06-01',endDate:'2026-08-30',budget:0,spent:0,
       brief:{overview:'A six-week immersive studio pop-up in Yorkdale Shopping Centre for Lululemon Canada. The experience centred on mindful movement, featuring a live class schedule, product showcase, and a custom botanical installation.',objectives:'Drive in-store engagement and product trial. Convert 20% of visitors to purchase. Generate strong UGC content.',deliverables:'Full build and strike, botanical installation, staff uniforms, AV & music system, print collateral.',timeline:'Build: Jun 1–7. Open: Jun 8. Run 12 weeks. Strike: Aug 28–30.'},
       teamIds:[1,3,4],contactIds:[2],teamAllocation:{1:10,3:8,4:8},expenses:[],
       budgetLines:[
@@ -233,7 +233,7 @@ const defaultData = {
       ],
       assets:{driveFolder:'',files:[]}
     },
-    {id:3,name:'NEON — Light & Sound Installation',client:'FELT Original',clientId:null,status:'planning',type:'Creative Project',color:'#9B7FD4',startDate:'2027-03-01',endDate:'2027-05-31',budget:0,spent:0,
+    {id:3,name:'NEON — Light & Sound Installation',client:'FELT Original',clientId:null,status:'planning',type:'Creative Project',color:'#D4A010',startDate:'2027-03-01',endDate:'2027-05-31',budget:0,spent:0,
       brief:{overview:'FELT\'s first wholly original IP project — a large-scale outdoor light and sound installation exploring the relationship between urban space, community, and stillness. Premiering in Toronto with a planned tour to Montréal and Vancouver.',objectives:'Establish FELT as a creative production house with an original artistic voice. Seek arts council funding and festival partnerships. Build national press profile.',deliverables:'Bespoke lighting sculpture, spatial soundscape composition, touring infrastructure, press & marketing assets.',timeline:'Development: Jan–Feb 2027. Site surveys: Mar. Build + test: Apr. Premiere: May 2027, Toronto.'},
       teamIds:[1,2,4],contactIds:[],teamAllocation:{1:20,2:20,4:15},expenses:[],
       budgetLines:[
@@ -256,7 +256,7 @@ const defaultData = {
       ],
       assets:{driveFolder:'',files:[]}
     },
-    {id:4,name:'Tremblay Distillery Launch',client:'Tremblay Distillery',clientId:3,status:'planning',type:'Event',color:'#C8844A',startDate:'2027-02-14',endDate:'2027-02-15',budget:0,spent:0,
+    {id:4,name:'Tremblay Distillery Launch',client:'Tremblay Distillery',clientId:3,status:'planning',type:'Event',color:'#9A5030',startDate:'2027-02-14',endDate:'2027-02-15',budget:0,spent:0,
       brief:{overview:'An intimate launch event for Tremblay Distillery\'s debut whisky release. A one-night experience for 120 guests in Old Montréal — blending craft cocktail tasting, live music, and artisan storytelling.',objectives:'Create buzz and media coverage for the distillery launch. Drive wholesale enquiries and direct-to-consumer signups.',deliverables:'Venue design & build, guest experience, catering coordination, branded print, full event management.',timeline:'Planning: Nov–Jan. Build: Feb 13. Event: Feb 14. Strike: Feb 15.'},
       teamIds:[2,3],contactIds:[3],teamAllocation:{2:8,3:10},expenses:[],
       budgetLines:[
