@@ -1046,7 +1046,7 @@ function renderProjectDetail() {
       <div class="tabs">
         <div class="tab ${currentTab==='brief'?'active':''}" onclick="switchTab('brief')">Brief</div>
         <div class="tab ${currentTab==='timeline'?'active':''}" onclick="switchTab('timeline')">Timeline</div>
-        <div class="tab ${currentTab==='signoff'?'active':''}" onclick="switchTab('signoff')">Sign-Off</div>
+
         <div class="tab ${currentTab==='production'?'active':''}" onclick="switchTab('production')">Production</div>
         <div class="tab ${currentTab==='assets'?'active':''}" onclick="switchTab('assets')">Assets</div>
         <div class="tab ${currentTab==='team'?'active':''}" onclick="switchTab('team')">Team</div>
@@ -1056,7 +1056,7 @@ function renderProjectDetail() {
       </div>
       ${currentTab==='brief'?renderBriefTab(p):''}
       ${currentTab==='timeline'?renderTimelineTab(p):''}
-      ${currentTab==='signoff'?renderSignoffTab(p):''}
+
       ${currentTab==='production'?renderProductionTab(p):''}
       ${currentTab==='assets'?renderAssetsTab(p):''}
       ${currentTab==='team'?renderTeamTab(p):''}
