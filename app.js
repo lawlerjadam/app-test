@@ -589,16 +589,16 @@ function renderSnapshot() {
   }
 
   // Year totals across ALL projects
-  const allRev   = store.projects.reduce((s,p)=>s+(getBudgetTotals(p).forecast*1.2),0);
-  const allMark  = store.projects.reduce((s,p)=>s+(getBudgetTotals(p).forecast*0.2),0);
-  const allCosts = store.projects.reduce((s,p)=>s+getBudgetTotals(p).actuals,0);
-  const allProfit= allRev - allCosts;
+  const allRev    = store.projects.reduce((s,p)=>s+getBudgetTotals(p).forecast,0);
+  const allMark   = store.projects.reduce((s,p)=>s+getBudgetTotals(p).margin,0);
+  const allCosts  = store.projects.reduce((s,p)=>s+getBudgetTotals(p).actuals,0);
+  const allProfit = allRev - allCosts;
 
   function renderQ(q) {
     const isCurrent = q.q === currentQ;
     const projects  = projectsInQuarter(q);
-    const qRev      = projects.reduce((s,p)=>s+(getBudgetTotals(p).forecast*1.2),0);
-    const qMark     = projects.reduce((s,p)=>s+(getBudgetTotals(p).forecast*0.2),0);
+    const qRev      = projects.reduce((s,p)=>s+getBudgetTotals(p).forecast,0);
+    const qMark     = projects.reduce((s,p)=>s+getBudgetTotals(p).margin,0);
     const qCosts    = projects.reduce((s,p)=>s+getBudgetTotals(p).actuals,0);
     const qProfit   = qRev - qCosts;
     const pct       = qRev>0 ? Math.min(100,Math.round(qCosts/qRev*100)) : 0;
@@ -623,7 +623,7 @@ function renderSnapshot() {
                   <div style="flex:1;font-weight:600;font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
                   <div style="font-size:12px;color:var(--muted);flex-shrink:0">${p.type}</div>
                   <span class="status-badge badge-${p.status}" style="flex-shrink:0">${p.status}</span>
-                  <div style="font-size:13px;font-weight:700;text-align:right;min-width:90px;flex-shrink:0">$${Math.round(getBudgetTotals(p).forecast*1.2).toLocaleString()}</div>
+                  <div style="font-size:13px;font-weight:700;text-align:right;min-width:90px;flex-shrink:0">$${getBudgetTotals(p).forecast.toLocaleString()}</div>
                 </div>`).join('')}
             </div>
 
@@ -674,7 +674,7 @@ function renderSnapshot() {
           <div>
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:5px">Revenue</div>
             <div style="font-size:24px;font-weight:800;color:#fff">$${Math.round(allRev/1000)}k</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">incl. 20% markup</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">client budget</div>
           </div>
           <div>
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:5px">Markup</div>
@@ -981,12 +981,22 @@ function signoffProgress(p) {
 
 function getBudgetTotals(p) {
   if (!p.budgetLines) p.budgetLines = BUDGET_CATS.map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
-  const rawForecast = p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
-  const forecast = rawForecast > 0 ? rawForecast : (p.budgetTarget || 0);
+  // Separate hard costs (20% margin baked in) from fees (pass-through)
+  const hardLines = p.budgetLines.filter(l=>HARD_COST_CATS.includes(l.category));
+  const feeLines  = p.budgetLines.filter(l=>FEE_CATS.includes(l.category));
+  const hardForecast = hardLines.reduce((s,l)=>s+(l.forecast||0),0);
+  const feeForecast  = feeLines.reduce((s,l)=>s+(l.forecast||0),0);
+  const rawForecast  = hardForecast + feeForecast;
+  // forecast = total client-facing budget (already includes baked-in margin for hard costs)
+  const forecast  = rawForecast > 0 ? rawForecast : (p.budgetTarget || 0);
+  const margin    = Math.round(hardForecast * 0.2);   // planned FELT margin
+  const feltCost  = Math.round(hardForecast * 0.8) + feeForecast; // FELT's target spend
+  // Actuals = what FELT actually paid
   const invoiceActuals = (p.invoices||[]).filter(i=>i.status==='paid').reduce((s,i)=>s+(i.amount||0),0);
   const teamActuals = store.team.reduce((s,m)=>s+(m.payments||[]).filter(pay=>pay.status==='paid'&&pay.projectId===p.id).reduce((a,pay)=>a+(pay.amount||0),0),0);
   const actuals = invoiceActuals + teamActuals;
-  return { forecast, actuals, rawForecast };
+  const actualMargin = forecast - actuals; // actual profit to FELT
+  return { forecast, actuals, rawForecast, hardForecast, feeForecast, margin, feltCost, actualMargin };
 }
 
 function getProjectHealth(p) {
@@ -1407,6 +1417,8 @@ function renderTeamTab(p) {
 }
 
 const BUDGET_CATS = ['Fabrication','Furniture & Décor','AV + Content Tech','Team','Uniforms & Materials','Print Collateral','Production Misc.','Other'];
+const HARD_COST_CATS = ['Fabrication','Furniture & Décor','AV + Content Tech','Uniforms & Materials','Print Collateral','Production Misc.','Other'];
+const FEE_CATS = ['Team'];
 function ensureBudgetLines(p) {
   if (!p.budgetLines) {
     p.budgetLines = BUDGET_CATS.map((cat,i)=>({id:i+1,category:cat,forecast:0,actuals:0}));
@@ -1417,89 +1429,142 @@ function renderBudgetTab(p) {
   const paidByCat={};
   (p.invoices||[]).filter(i=>i.status==='paid').forEach(i=>{paidByCat[i.category]=(paidByCat[i.category]||0)+(i.amount||0);});
   store.team.forEach(m=>(m.payments||[]).filter(pay=>pay.status==='paid'&&pay.projectId===p.id).forEach(pay=>{paidByCat['Team']=(paidByCat['Team']||0)+(pay.amount||0);}));
-  const fTotal=p.budgetLines.reduce((s,l)=>s+(l.forecast||0),0);
-  const aTotal=Object.values(paidByCat).reduce((s,v)=>s+v,0);
-  const remaining=fTotal-aTotal, over=aTotal>fTotal;
-  const pct=fTotal>0?Math.round(aTotal/fTotal*100):0;
-  const target=p.budgetTarget||0;
-  const unallocated=target-fTotal, envelopeOver=target>0&&fTotal>target;
 
-  const tableRows=p.budgetLines.map((line,idx)=>{
-    const lineActuals=paidByCat[line.category]||0;
-    const variance=(line.forecast||0)-lineActuals, varOver=variance<0;
-    return `<tr>
-      <td style="font-weight:600">${line.category}</td>
-      <td style="text-align:right"><span class="budget-forecast-val" onclick="editBudgetLineForecast(${idx})" style="cursor:pointer;font-weight:700;color:var(--navy);padding:3px 8px;border-radius:6px;display:inline-block;transition:background 0.15s" title="Click to edit">$${(line.forecast||0).toLocaleString()}</span></td>
-      <td style="text-align:right;color:var(--muted)">$${lineActuals.toLocaleString()}</td>
-      <td style="text-align:right;font-weight:700;color:${varOver?'var(--red)':variance===0?'var(--muted)':'var(--green)'}">${varOver?'−':''}$${Math.abs(variance).toLocaleString()}</td>
-      <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeBudgetLine(${idx})" style="padding:2px 7px">✕</button></td>
-    </tr>`;
-  }).join('');
+  const hardLines = p.budgetLines.filter(l=>HARD_COST_CATS.includes(l.category));
+  const feeLines  = p.budgetLines.filter(l=>FEE_CATS.includes(l.category));
+  const hardForecast = hardLines.reduce((s,l)=>s+(l.forecast||0),0);
+  const feeForecast  = feeLines.reduce((s,l)=>s+(l.forecast||0),0);
+  const plannedMargin = Math.round(hardForecast * 0.2);
+  const feltHardCost  = Math.round(hardForecast * 0.8);
+  const clientTotal   = hardForecast + feeForecast;
+  const hardActuals   = hardLines.reduce((s,l)=>s+(paidByCat[l.category]||0),0);
+  const feeActuals    = feeLines.reduce((s,l)=>s+(paidByCat[l.category]||0),0);
+  const totalActuals  = hardActuals + feeActuals;
+  const actualMargin  = clientTotal - totalActuals;
+  const marginColor   = actualMargin >= plannedMargin ? 'var(--green)' : actualMargin > 0 ? 'var(--orange)' : 'var(--red)';
 
-  const mobileCards=p.budgetLines.map((line,idx)=>{
-    const lineActuals=paidByCat[line.category]||0;
-    const variance=(line.forecast||0)-lineActuals, varOver=variance<0;
-    return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:14px;font-weight:700;color:var(--navy)">${line.category}</div>
-        <button class="btn btn-ghost btn-sm" onclick="removeBudgetLine(${idx})" style="padding:2px 6px;font-size:11px">✕</button>
+  function makeRows(lines) {
+    return lines.map((line,_)=>{
+      const idx = p.budgetLines.indexOf(line);
+      const lineActuals=paidByCat[line.category]||0;
+      const variance=(line.forecast||0)-lineActuals, varOver=variance<0;
+      return `<tr>
+        <td style="font-weight:600">${line.category}</td>
+        <td style="text-align:right"><span class="budget-forecast-val" onclick="editBudgetLineForecast(${idx})" style="cursor:pointer;font-weight:700;color:var(--navy);padding:3px 8px;border-radius:6px;display:inline-block;transition:background 0.15s" title="Click to edit">$${(line.forecast||0).toLocaleString()}</span></td>
+        <td style="text-align:right;color:var(--muted)">$${lineActuals.toLocaleString()}</td>
+        <td style="text-align:right;font-weight:700;color:${varOver?'var(--red)':variance===0?'var(--muted)':'var(--green)'}">${varOver?'−':''}$${Math.abs(variance).toLocaleString()}</td>
+        <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeBudgetLine(${idx})" style="padding:2px 7px">✕</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function makeMobileCards(lines) {
+    return lines.map((line,_)=>{
+      const idx = p.budgetLines.indexOf(line);
+      const lineActuals=paidByCat[line.category]||0;
+      const variance=(line.forecast||0)-lineActuals, varOver=variance<0;
+      return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:700;color:var(--navy)">${line.category}</div>
+          <button class="btn btn-ghost btn-sm" onclick="removeBudgetLine(${idx})" style="padding:2px 6px;font-size:11px">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
+          <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Client quote</div><div style="font-size:15px;font-weight:800;color:var(--navy);cursor:pointer" onclick="editBudgetLineForecast(${idx})">$${(line.forecast||0).toLocaleString()}</div><div style="font-size:9px;color:var(--muted);margin-top:2px">tap to edit</div></div>
+          <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Actuals</div><div style="font-size:15px;font-weight:800;color:var(--muted)">$${lineActuals.toLocaleString()}</div></div>
+          <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Variance</div><div style="font-size:15px;font-weight:800;color:${varOver?'var(--red)':variance===0?'var(--muted)':'var(--green)'}">${varOver?'−':''}$${Math.abs(variance).toLocaleString()}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Internal profit summary
+  const profitSummary = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px">
+      <div style="background:var(--navy);border-radius:10px;padding:14px 16px">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.45);font-weight:700;margin-bottom:5px">Client Budget</div>
+        <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px">$${clientTotal.toLocaleString()}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">hard costs + fees</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
-        <div>
-          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Forecast</div>
-          <div style="font-size:15px;font-weight:800;color:var(--navy);cursor:pointer" onclick="editBudgetLineForecast(${idx})">$${(line.forecast||0).toLocaleString()}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:2px">tap to edit</div>
-        </div>
-        <div>
-          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Actuals</div>
-          <div style="font-size:15px;font-weight:800;color:var(--muted)">$${lineActuals.toLocaleString()}</div>
-        </div>
-        <div>
-          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px">Variance</div>
-          <div style="font-size:15px;font-weight:800;color:${varOver?'var(--red)':variance===0?'var(--muted)':'var(--green)'}">${varOver?'−':''}$${Math.abs(variance).toLocaleString()}</div>
-        </div>
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:5px">Planned Margin</div>
+        <div style="font-size:20px;font-weight:800;color:var(--green);letter-spacing:-0.5px">$${plannedMargin.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">20% of hard costs</div>
+      </div>
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:5px">Actual Spend</div>
+        <div style="font-size:20px;font-weight:800;color:var(--navy);letter-spacing:-0.5px">$${totalActuals.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">paid invoices + team</div>
+      </div>
+      <div style="background:var(--surface);border:1.5px solid ${marginColor};border-radius:10px;padding:14px 16px">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:5px">Actual Margin</div>
+        <div style="font-size:20px;font-weight:800;color:${marginColor};letter-spacing:-0.5px">${actualMargin<0?'−':''}$${Math.abs(actualMargin).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">${totalActuals===0?'no spend yet':actualMargin>=plannedMargin?'on or above target':'below planned'}</div>
       </div>
     </div>`;
-  }).join('');
 
-  return `
-    ${target>0?`<div style="background:var(--accent-light);border:1.5px solid var(--accent);border-radius:12px;padding:14px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:12px">
-      <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;color:var(--accent-dark);margin-bottom:3px">Budget Envelope</div><div style="font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-0.5px">$${target.toLocaleString()}</div></div>
-      <div style="text-align:center"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--muted);margin-bottom:3px">Allocated</div><div style="font-size:20px;font-weight:800;color:var(--navy)">$${fTotal.toLocaleString()}</div></div>
-      <div style="text-align:right"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--muted);margin-bottom:3px">Remaining</div><div style="font-size:20px;font-weight:800;color:${envelopeOver?'var(--red)':unallocated===0?'var(--muted)':'var(--green)'}">${envelopeOver?'−':''}$${Math.abs(unallocated).toLocaleString()}</div></div>
-    </div>`:''}
-    <div class="budget-summary">
-      <div class="budget-stat">
-        <div class="budget-label">Forecast</div>
-        <div class="budget-value">$${fTotal.toLocaleString()}</div>
-      </div>
-      <div class="budget-stat">
-        <div class="budget-label">Actuals</div>
-        <div class="budget-value ${over?'over':''}">$${aTotal.toLocaleString()}</div>
-        <div class="budget-bar" style="margin-top:6px"><div class="budget-bar-fill ${over?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
-      </div>
-      <div class="budget-stat">
-        <div class="budget-label">Remaining</div>
-        <div class="budget-value ${over?'over':fTotal>0?'good':''}">${over?'−':''}$${Math.abs(remaining).toLocaleString()}${over?' over':''}</div>
-      </div>
+  // Hard costs table
+  const hardTable = `
+    <div style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)">Hard Costs <span style="font-size:9px;font-weight:400;margin-left:6px;background:var(--accent-light);color:var(--accent-dark);padding:1px 6px;border-radius:10px">20% margin baked in</span></div>
+      <button class="btn btn-primary btn-sm" onclick="addBudgetLine()">+ Add Line</button>
     </div>
-    <div class="section-header"><div class="section-title">Budget Breakdown</div><button class="btn btn-primary btn-sm" onclick="addBudgetLine()">+ Add Line</button></div>
-    <div class="card budget-desktop-table" style="padding:0;overflow:hidden">
+    <div class="card budget-desktop-table" style="padding:0;overflow:hidden;margin-bottom:6px">
       <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>Category</th><th style="text-align:right">Forecast</th><th style="text-align:right">Actuals</th><th style="text-align:right">Variance</th><th></th></tr></thead>
-          <tbody>${tableRows}</tbody>
+          <thead><tr><th>Category</th><th style="text-align:right">Client quote</th><th style="text-align:right">Actuals paid</th><th style="text-align:right">Variance</th><th></th></tr></thead>
+          <tbody>${makeRows(hardLines)}</tbody>
+          <tfoot>
+            <tr style="background:var(--bg)">
+              <td style="font-weight:800;color:var(--navy);padding-top:10px">Subtotal</td>
+              <td style="text-align:right;font-weight:800;color:var(--navy);padding-top:10px">$${hardForecast.toLocaleString()}</td>
+              <td style="text-align:right;font-weight:700;color:var(--muted);padding-top:10px">$${hardActuals.toLocaleString()}</td>
+              <td colspan="2"></td>
+            </tr>
+            <tr style="background:var(--accent-light)">
+              <td style="font-size:12px;color:var(--accent-dark);padding:8px 12px;font-weight:700">↳ Margin (20%)</td>
+              <td style="text-align:right;font-size:12px;font-weight:800;color:var(--green);padding:8px 12px">$${plannedMargin.toLocaleString()}</td>
+              <td style="text-align:right;font-size:12px;color:var(--muted);padding:8px 12px">FELT's net cost: $${feltHardCost.toLocaleString()}</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <div class="budget-mobile-cards">${makeMobileCards(hardLines)}</div>
+    <div style="background:var(--accent-light);border-radius:8px;padding:10px 14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:12px;font-weight:700;color:var(--accent-dark)">Margin (20% of hard costs)</span>
+      <span style="font-size:14px;font-weight:800;color:var(--green)">$${plannedMargin.toLocaleString()}</span>
+    </div>`;
+
+  // Fees table
+  const feesTable = feeLines.length > 0 ? `
+    <div style="margin-bottom:6px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)">Agency Fees <span style="font-size:9px;font-weight:400;margin-left:6px;background:var(--bg);color:var(--muted);padding:1px 6px;border-radius:10px;border:1px solid var(--border)">no markup</span></div>
+    </div>
+    <div class="card budget-desktop-table" style="padding:0;overflow:hidden;margin-bottom:6px">
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Category</th><th style="text-align:right">Forecast</th><th style="text-align:right">Actuals paid</th><th style="text-align:right">Variance</th><th></th></tr></thead>
+          <tbody>${makeRows(feeLines)}</tbody>
           <tfoot><tr style="background:var(--bg)">
-            <td style="font-weight:800;color:var(--navy);padding-top:12px">Total</td>
-            <td style="text-align:right;font-weight:800;color:var(--navy);padding-top:12px">$${fTotal.toLocaleString()}</td>
-            <td style="text-align:right;font-weight:800;color:var(--muted);padding-top:12px">$${aTotal.toLocaleString()}</td>
-            <td style="text-align:right;font-weight:800;padding-top:12px;color:${over?'var(--red)':fTotal>0?'var(--green)':'var(--muted)'}">${over?'−':''}$${Math.abs(remaining).toLocaleString()}</td>
-            <td></td>
+            <td style="font-weight:800;color:var(--navy);padding-top:10px">Subtotal</td>
+            <td style="text-align:right;font-weight:800;color:var(--navy);padding-top:10px">$${feeForecast.toLocaleString()}</td>
+            <td style="text-align:right;font-weight:700;color:var(--muted);padding-top:10px">$${feeActuals.toLocaleString()}</td>
+            <td colspan="2"></td>
           </tr></tfoot>
         </table>
       </div>
     </div>
-    <div class="budget-mobile-cards">${mobileCards}</div>`;
+    <div class="budget-mobile-cards">${makeMobileCards(feeLines)}</div>` : '';
+
+  // Grand total footer
+  const grandTotal = `
+    <div style="border-top:2px solid var(--border);padding-top:14px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:13px;font-weight:800;color:var(--navy)">Total client budget</div>
+      <div style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-0.5px">$${clientTotal.toLocaleString()}</div>
+    </div>`;
+
+  return profitSummary + hardTable + feesTable + grandTotal;
 }
 
 function renderContactsTab(p) {
