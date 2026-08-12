@@ -1,28 +1,25 @@
 // FELT Studio — Service Worker
-// Caches the app shell so it loads instantly and works offline
+// Only caches static assets (icons, manifest).
+// CSS, JS and HTML always come from the network so updates appear immediately.
 
-const CACHE_NAME = 'felt-studio-v1';
+const CACHE_NAME = 'felt-studio-v2';
 
-// Files that make up the app shell
-const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
+// Only cache things that never change between deployments
+const STATIC_ASSETS = [
   '/icon-192.png',
   '/icon-512.png',
   '/manifest.json',
 ];
 
-// Install: cache the app shell
+// Install: cache static assets only
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
 
-// Activate: delete old caches
+// Activate: delete old caches (clears the v1 cache that had stale CSS/JS)
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -34,18 +31,17 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch: serve from cache first (app shell), network first for Supabase API
+// Fetch strategy:
+// - Icons/manifest: cache first (they don't change)
+// - Everything else (HTML, CSS, JS, Supabase): network first, no caching
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+  const isStatic = STATIC_ASSETS.some(a => url.pathname === a);
 
-  // Always go to network for Supabase API calls — never cache auth/data
-  if (url.hostname.includes('supabase.co') || url.hostname.includes('googleapis.com')) {
-    event.respondWith(fetch(event.request));
-    return;
+  if (isStatic) {
+    event.respondWith(
+      caches.match(event.request).then(cached => cached || fetch(event.request))
+    );
   }
-
-  // App shell: cache first, fall back to network
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
-  );
+  // All other requests (HTML, CSS, JS, API) go straight to network
 });
