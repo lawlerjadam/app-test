@@ -224,11 +224,17 @@ let currentUserName = '';
 let store = {};
 
 async function loadFromSupabase() {
-  const { data, error } = await _sb.from('org_data').select('data').eq('id', 1).single();
-  if (error || !data || !data.data || Object.keys(data.data).length === 0) {
+  const { data, error } = await _sb.rpc('load_org_data');
+  if (error) {
+    console.error('Load failed:', error);
     return JSON.parse(JSON.stringify(defaultData));
   }
-  return data.data;
+  if (!data || Object.keys(data).length === 0) {
+    console.log('No data in Supabase yet, using defaults');
+    return JSON.parse(JSON.stringify(defaultData));
+  }
+  console.log('Loaded from Supabase OK');
+  return data;
 }
 
 async function save() {
@@ -3422,8 +3428,10 @@ _sb.auth.onAuthStateChange(async (event, session) => {
 async function initApp() {
   const { data: { session } } = await _sb.auth.getSession();
   if (session) {
-    _sessionInitialised = true;
-    await afterLogin(session);
+    if (!_sessionInitialised) {
+      _sessionInitialised = true;
+      await afterLogin(session);
+    }
   } else {
     showLoginScreen();
   }
