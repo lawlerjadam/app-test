@@ -208,7 +208,8 @@ const defaultData = {
     {id:1,company:'XNorthern Build Co.',category:'Fabrication',contactName:'XDan Clarke',contactEmail:'xdan@example.ca',contactPhone:'(416) 555-0401',website:'',notes:'Example vendor — edit or delete to get started.'},
     {id:2,company:'XSignal AV',category:'AV + Content Tech',contactName:'XKeiko Tanaka',contactEmail:'xkeiko@example.ca',contactPhone:'(416) 555-0402',website:'',notes:'Example vendor — edit or delete to get started.'}
   ],
-  nextId:{projects:2,team:3,companies:2,contacts:2,leads:2,expenses:1,ideas:2,shootDays:1,suppliers:3,equipment:1,payments:2,keyContacts:1,contracts:1,templates:2,tasks:7,assets:1,globalSuppliers:3,invoices:3,clientPayments:2}
+  feedback:[],
+  nextId:{projects:2,team:3,companies:2,contacts:2,leads:2,expenses:1,ideas:2,shootDays:1,suppliers:3,equipment:1,payments:2,keyContacts:1,contracts:1,templates:2,tasks:7,assets:1,globalSuppliers:3,invoices:3,clientPayments:2,feedback:1}
 };
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
@@ -250,6 +251,8 @@ if (!store.nextId.clientPayments) store.nextId.clientPayments = 1;
 if (!store.nextId.companies) store.nextId.companies = 1;
 if (!store.contractTemplates) store.contractTemplates = [{id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, outside IR35'}];
 if (!store.globalSuppliers) store.globalSuppliers = [];
+if (!store.feedback) store.feedback = [];
+if (!store.nextId.feedback) store.nextId.feedback = 1;
 
 // ─── MIGRATION: Companies model ───────────────────────────────────────────────
 if (!store.companies) {
@@ -338,6 +341,7 @@ const MOBILE_TRAY_SECTIONS={
   future:[
     {icon:'◉',label:'Leads',view:'leads'},
     {icon:'✦',label:'Ideas',view:'ideas'},
+    {icon:'◌',label:'Feedback',view:'feedback'},
     {icon:'ladybird',label:'',special:'future-feels'}
   ]
 };
@@ -401,11 +405,11 @@ function navigate(view, projectId, memberId) {
   if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={snapshot:1,dashboard:2,projects:3,calendar:4,finance:5,team:6,contacts:7,'global-suppliers':8,leads:9,ideas:10};
+  const navMap={snapshot:1,dashboard:2,projects:3,calendar:4,finance:5,team:6,contacts:7,'global-suppliers':8,leads:9,ideas:10,feedback:11};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
   const studioViews=['projects','project-detail','calendar','finance','snapshot'];
   const resourceViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
-  const futureViews=['leads','ideas'];
+  const futureViews=['leads','ideas','feedback'];
   const bnItems=document.querySelectorAll('.bottom-nav-item');
   if(studioViews.includes(view)) bnItems[1]?.classList.add('active');
   else if(resourceViews.includes(view)) bnItems[3]?.classList.add('active');
@@ -430,6 +434,7 @@ function render() {
   else if(currentView==='contact-profile') m.innerHTML=renderContactProfile();
   else if(currentView==='global-suppliers') m.innerHTML=renderGlobalVendors();
   else if(currentView==='finance') m.innerHTML=renderFinance();
+  else if(currentView==='feedback') m.innerHTML=renderFeedback();
   // Bind callsheet autosave after render
   if(currentTab==='production') {
     const ta=document.getElementById('callsheet-notes');
@@ -2670,6 +2675,149 @@ function statusOpts(sel){return LEAD_STATUSES.map(s=>`<option value="${s.key}" $
 function openNewIdeaModal(){const mn=store.team.map(m=>`<option>${m.name}</option>`).join('');openModal(`<div class="modal-title">✦ New Idea</div><div class="form-grid"><div class="form-group full"><label>Idea Title</label><input id="i-title" placeholder="Give it a name..."></div><div class="form-group"><label>Category</label><select id="i-cat"><option>Brand</option><option>Event</option><option>Space</option><option>Print</option><option>Digital</option><option>Product</option><option>Other</option></select></div><div class="form-group"><label>Submitted By</label><select id="i-by"><option value="">— Select —</option>${mn}<option value="Other">Other</option></select></div><div class="form-group full"><label>Description</label><textarea id="i-desc" placeholder="Describe the idea — no filter needed..."></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createIdea()">Add Idea</button></div>`);}
 function createIdea(){const t=document.getElementById('i-title').value.trim();if(!t){toast('Give the idea a title');return;}store.ideas.unshift({id:store.nextId.ideas++,title:t,category:document.getElementById('i-cat').value,description:document.getElementById('i-desc').value,submittedBy:document.getElementById('i-by').value||'Anonymous',date:new Date().toISOString().split('T')[0]});closeModal();toast('Idea added ✦');save();render();}
 function deleteIdea(id){store.ideas=store.ideas.filter(i=>i.id!==id);toast('Idea removed');save();render();}
+
+// ─── FEEDBACK ─────────────────────────────────────────────────────────────────
+function openFeedbackModal() {
+  openModal(`
+    <div class="modal-title">Submit Feedback</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="fb-type">
+          <option value="bug">🐛 Bug</option>
+          <option value="improvement">✨ Improvement</option>
+          <option value="feature">💡 Feature Request</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="fb-priority">
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Title <span style="color:var(--red)">*</span></label>
+        <input id="fb-title" placeholder="e.g. Budget tab crashes on mobile" onkeydown="if(event.key==='Enter')submitFeedback()">
+      </div>
+      <div class="form-group full">
+        <label>Notes <span style="font-size:10px;color:var(--muted);font-weight:400">(optional)</span></label>
+        <textarea id="fb-notes" placeholder="Any extra context, steps to reproduce, etc." style="min-height:80px;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitFeedback()">Submit</button>
+    </div>
+  `);
+  setTimeout(()=>document.getElementById('fb-title')?.focus(), 80);
+}
+
+function submitFeedback() {
+  const title = document.getElementById('fb-title').value.trim();
+  if (!title) { document.getElementById('fb-title').style.borderColor='var(--red)'; document.getElementById('fb-title').focus(); return; }
+  const type = document.getElementById('fb-type').value;
+  const priority = document.getElementById('fb-priority').value;
+  const notes = document.getElementById('fb-notes').value.trim();
+  store.feedback.push({
+    id: store.nextId.feedback++,
+    title, type, priority, notes,
+    submittedBy: currentUserName,
+    submittedAt: new Date().toISOString().split('T')[0],
+    status: 'open'
+  });
+  save();
+  closeModal();
+  toast('Feedback submitted ◌');
+}
+
+function setFeedbackStatus(id, status) {
+  const f = store.feedback.find(f => f.id === id);
+  if (f) { f.status = status; save(); render(); }
+}
+
+function deleteFeedback(id) {
+  store.feedback = store.feedback.filter(f => f.id !== id);
+  toast('Removed');
+  save();
+  render();
+}
+
+function renderFeedback() {
+  const fb = store.feedback || [];
+  const prioOrder = {high:0, medium:1, low:2};
+  const open = fb.filter(f => f.status !== 'done')
+    .sort((a,b) => (prioOrder[a.priority]??1) - (prioOrder[b.priority]??1) || a.id - b.id);
+  const done = fb.filter(f => f.status === 'done').sort((a,b) => b.id - a.id);
+
+  const typeIcon = {bug:'🐛', improvement:'✨', feature:'💡'};
+  const typeLabel = {bug:'Bug', improvement:'Improvement', feature:'Feature Request'};
+  const prioBg = {high:'rgba(200,50,50,0.08)', medium:'rgba(200,130,30,0.08)', low:'rgba(80,100,150,0.08)'};
+  const prioColor = {high:'#B03030', medium:'#A06020', low:'#5060A0'};
+
+  function cardHtml(f) {
+    const isAdmin = currentUserRole === 'admin';
+    const statusBadge = f.status === 'in-progress'
+      ? `<span style="font-size:10px;font-weight:600;background:rgba(200,130,30,0.12);color:#A06020;border-radius:4px;padding:2px 7px;white-space:nowrap">In Progress</span>`
+      : '';
+    const adminActions = isAdmin ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+      ${f.status==='open' ? `<button onclick="setFeedbackStatus(${f.id},'in-progress')" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:var(--text);transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--text)'" onmouseout="this.style.borderColor='var(--border)'">→ In Progress</button>` : ''}
+      ${f.status==='in-progress' ? `<button onclick="setFeedbackStatus(${f.id},'open')" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:var(--muted)">↩ Open</button><button onclick="setFeedbackStatus(${f.id},'done')" style="font-size:11px;padding:4px 10px;border:1.5px solid #3A7A3A;border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:#3A7A3A;font-weight:600">✓ Mark Done</button>` : ''}
+      ${f.status==='done' ? `<button onclick="setFeedbackStatus(${f.id},'open')" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:var(--muted)">↩ Reopen</button>` : ''}
+      <button onclick="deleteFeedback(${f.id})" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:var(--muted);margin-left:auto" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">Delete</button>
+    </div>` : '';
+    return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:18px;flex-shrink:0;margin-top:1px">${typeIcon[f.type]||'📝'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
+            <span style="font-size:13px;font-weight:600">${esc(f.title)}</span>
+            ${statusBadge}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted)">
+            <span>${typeLabel[f.type]||f.type}</span>
+            <span>·</span>
+            <span style="font-weight:600;color:${prioColor[f.priority]||'var(--muted)'}">▲ ${(f.priority||'medium').charAt(0).toUpperCase()+(f.priority||'medium').slice(1)}</span>
+            <span>·</span>
+            <span>${esc(f.submittedBy||'')}</span>
+            <span>·</span>
+            <span>${f.submittedAt||''}</span>
+          </div>
+          ${f.notes ? `<p style="margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.55">${esc(f.notes)}</p>` : ''}
+          ${adminActions}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const isEmpty = fb.length === 0;
+
+  return `
+    <div class="page-header">
+      <div>
+        <div class="page-title">Feedback</div>
+        <div class="page-subtitle">${open.length} open · ${done.length} done</div>
+      </div>
+      <button class="btn btn-primary" onclick="openFeedbackModal()">+ Submit</button>
+    </div>
+    <div class="page-body">
+      <div style="max-width:680px">
+        ${isEmpty ? `
+          <div style="text-align:center;padding:80px 0;color:var(--muted)">
+            <div style="font-size:36px;margin-bottom:14px;opacity:0.4">◌</div>
+            <div style="font-size:14px;margin-bottom:6px">No feedback yet</div>
+            <div style="font-size:12px">Use the + button above or the quick capture + button to submit</div>
+          </div>` : ''}
+        ${open.length > 0 ? `
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px">Open · ${open.length}</div>
+          ${open.map(cardHtml).join('')}` : ''}
+        ${done.length > 0 ? `
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin:${open.length?'28px':0} 0 10px">Done · ${done.length}</div>
+          ${done.map(cardHtml).join('')}` : ''}
+      </div>
+    </div>`;
+}
 
 function openNewLeadModal(){openModal(`<div class="modal-title">Add Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" placeholder="Company name"></div><div class="form-group"><label>Contact Name</label><input id="l-contact"></div><div class="form-group"><label>Contact Role / Title</label><input id="l-role" placeholder="e.g. Brand Marketing Lead"></div><div class="form-group"><label>Contact Email</label><input id="l-email" type="email"></div><div class="form-group"><label>Contact Phone</label><input id="l-phone" placeholder="(416) 555-0000"></div><div class="form-group"><label>Project Type</label><select id="l-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Event</option><option>Creative Project</option><option>Other</option></select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" placeholder="0"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts('not-contacted')}</select></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes"></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createLead()">Add Lead</button></div>`);}
 function createLead(){const c=document.getElementById('l-company').value.trim();if(!c){toast('Company name required');return;}store.leads.push({id:store.nextId.leads++,company:c,contactName:document.getElementById('l-contact').value,contactRole:document.getElementById('l-role').value,contactEmail:document.getElementById('l-email').value,contactPhone:document.getElementById('l-phone').value,projectType:document.getElementById('l-type').value,estimatedValue:parseInt(document.getElementById('l-value').value)||0,status:document.getElementById('l-status').value,notes:document.getElementById('l-notes').value,convertedProjectId:null});closeModal();toast('Lead added');save();render();}
