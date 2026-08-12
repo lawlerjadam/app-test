@@ -3174,11 +3174,13 @@ async function initApp() {
 
 initApp();
 
-// Copy logo src from sidebar to mobile header so they're guaranteed identical
+// Copy logo src from sidebar to mobile header and login screen
 (function(){
   const sidebarLogo = document.querySelector('.sidebar-logo img');
   const mobileHeaderLogo = document.querySelector('.mobile-header img');
+  const loginLogo = document.getElementById('login-logo');
   if(sidebarLogo && mobileHeaderLogo) mobileHeaderLogo.src = sidebarLogo.src;
+  if(sidebarLogo && loginLogo) loginLogo.src = sidebarLogo.src;
 })();
 
 // Inject ladybird SVG into sidebar button icon span
