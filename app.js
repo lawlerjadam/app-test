@@ -233,9 +233,11 @@ async function loadFromSupabase() {
 
 async function save() {
   if (!currentUser) return;
-  try {
-    await _sb.from('org_data').upsert({ id: 1, data: store, updated_at: new Date().toISOString() });
-  } catch(e) { console.error('Save failed:', e); }
+  const { error } = await _sb.from('org_data').upsert({ id: 1, data: store, updated_at: new Date().toISOString() });
+  if (error) {
+    console.error('Save failed:', error);
+    toast('⚠ Save failed — check your connection');
+  }
 }
 
 // ─── MIGRATIONS ───────────────────────────────────────────────────────────────
@@ -3398,20 +3400,29 @@ async function revokeUserAccess(userId, name) {
   openAccountPanel(); // Refresh the panel
 }
 
+// Guard against Supabase firing SIGNED_IN twice on page load
+// (once from initApp getSession, once from onAuthStateChange)
+let _sessionInitialised = false;
+
 _sb.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_IN' && session) {
+    if (_sessionInitialised) return; // already handled by initApp
+    _sessionInitialised = true;
     await afterLogin(session);
   } else if (event === 'SIGNED_OUT') {
+    _sessionInitialised = false;
     currentUser = null;
     currentUserRole = 'member';
     store = {};
     showLoginScreen();
   }
+  // Ignore TOKEN_REFRESHED, USER_UPDATED etc — don't reload store
 });
 
 async function initApp() {
   const { data: { session } } = await _sb.auth.getSession();
   if (session) {
+    _sessionInitialised = true;
     await afterLogin(session);
   } else {
     showLoginScreen();
