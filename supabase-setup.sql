@@ -59,15 +59,20 @@ create policy "Authenticated users can read org data"
   on public.org_data for select
   using (auth.role() = 'authenticated');
 
+-- Security definer function for write check (avoids RLS recursion on profiles)
+create or replace function public.can_write_org_data()
+returns boolean as $$
+  select exists(
+    select 1 from public.profiles
+    where id = auth.uid() and role in ('admin', 'member')
+  );
+$$ language sql security definer stable;
+
 -- Org data: admins and members can write; viewers cannot
 create policy "Members and admins can write org data"
   on public.org_data for all
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.role in ('admin', 'member')
-    )
-  );
+  using (public.can_write_org_data())
+  with check (public.can_write_org_data());
 
 -- 4. AUTO-CREATE PROFILE ON SIGNUP
 -- First user to sign up automatically becomes admin
