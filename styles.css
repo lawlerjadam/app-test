@@ -20,7 +20,8 @@
   .nav-item.active { background: var(--accent); color: var(--navy); font-weight: 700; }
   .nav-item .icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
   .sidebar-footer { margin-top: auto; padding: 0 10px; }
-  .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--muted); font-size: 13px; }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--muted); font-size: 13px; border-radius: 8px; transition: background 0.15s; }
+  .user-chip:hover { background: rgba(0,0,0,0.05); color: var(--text); }
   .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--navy); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 
   .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: calc(var(--mobile-header-h) + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); padding-left: 16px; padding-right: 16px; padding-bottom: 0; background: #EFEFED; border-bottom: 1.5px solid var(--border); z-index: 45; align-items: center; justify-content: space-between; }

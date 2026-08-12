@@ -3152,6 +3152,107 @@ async function logout() {
   await _sb.auth.signOut();
 }
 
+// ─── ACCOUNT PANEL ────────────────────────────────────────────────────────────
+async function openAccountPanel() {
+  // Show loading state immediately
+  openModal(`<div class="modal-title">Account & Team</div><div style="padding:20px 0;text-align:center;color:var(--muted)">Loading…</div>`);
+
+  // Fetch all profiles (RLS returns only own row for non-admins)
+  const { data: profiles } = await _sb.from('profiles').select('id, name, email, role').order('created_at');
+
+  const isAdmin = currentUserRole === 'admin';
+  const roleColors = { admin: 'var(--accent)', member: 'var(--green)', viewer: 'var(--muted)' };
+
+  // My Account section
+  const myAccountHtml = `
+    <div style="margin-bottom:24px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:12px">My Account</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div class="avatar" style="width:40px;height:40px;font-size:15px;flex-shrink:0">${currentUserName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+        <div>
+          <div style="font-weight:700;color:var(--text)">${currentUserName}</div>
+          <div style="font-size:12px;color:var(--muted)">${currentUser?.email||''}</div>
+        </div>
+        <span style="margin-left:auto;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:${roleColors[currentUserRole]||'var(--muted)'};color:${currentUserRole==='admin'?'#000':'#fff'};text-transform:capitalize">${currentUserRole}</span>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="sendPasswordReset()">Send password reset email</button>
+    </div>`;
+
+  // Team section (admin only)
+  let teamHtml = '';
+  if (isAdmin && profiles && profiles.length > 0) {
+    const rows = profiles.map(p => {
+      const isSelf = p.id === currentUser?.id;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0">${(p.name||p.email||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name||'—'}</div>
+          <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.email||''}</div>
+        </div>
+        <select onchange="updateUserRole('${p.id}', this.value)" style="font-size:12px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-family:inherit;cursor:pointer" ${isSelf?'disabled title="Cannot change your own role"':''}>
+          <option value="admin" ${p.role==='admin'?'selected':''}>Admin</option>
+          <option value="member" ${p.role==='member'?'selected':''}>Member</option>
+          <option value="viewer" ${p.role==='viewer'?'selected':''}>Viewer</option>
+        </select>
+        ${!isSelf?`<button class="btn btn-ghost btn-sm" onclick="revokeUserAccess('${p.id}','${p.name||p.email}')" style="color:var(--red);flex-shrink:0">✕</button>`:'<div style="width:32px"></div>'}
+      </div>`;
+    }).join('');
+
+    teamHtml = `
+      <div style="margin-bottom:24px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">Team</div>
+        ${rows}
+      </div>`;
+  }
+
+  // Invite section (admin only)
+  const inviteHtml = isAdmin ? `
+    <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Invite a team member</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Add new users via the Supabase dashboard. They'll be set to Member by default — change their role here after they sign up.</div>
+      <button class="btn btn-ghost btn-sm" onclick="window.open('https://supabase.com/dashboard/project/qyxbjtbipdpevzecbhkd/auth/users','_blank')">Open Supabase Auth →</button>
+    </div>` : '';
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Account & Team</div>
+    ${myAccountHtml}
+    ${teamHtml}
+    ${inviteHtml}
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <button class="btn btn-ghost" style="color:var(--red)" onclick="closeModal();logout()">Sign out</button>
+    </div>`;
+}
+
+async function sendPasswordReset() {
+  const { error } = await _sb.auth.resetPasswordForEmail(currentUser.email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  if (error) { toast('Error: ' + error.message); }
+  else { toast('Password reset email sent ✓'); }
+}
+
+async function updateUserRole(userId, role) {
+  const { error } = await _sb.from('profiles').update({ role }).eq('id', userId);
+  if (error) { toast('Error updating role'); return; }
+  toast('Role updated ✓');
+  // If they changed their own role, update local state
+  if (userId === currentUser?.id) {
+    currentUserRole = role;
+    updateUserChip();
+    if (role === 'viewer') document.body.classList.add('viewer-mode');
+    else document.body.classList.remove('viewer-mode');
+  }
+}
+
+async function revokeUserAccess(userId, name) {
+  if (!confirm(`Remove ${name}'s access? They will no longer be able to sign in. You can re-add them via Supabase Auth.`)) return;
+  const { error } = await _sb.from('profiles').delete().eq('id', userId);
+  if (error) { toast('Error removing user'); return; }
+  toast(`${name} removed ✓`);
+  openAccountPanel(); // Refresh the panel
+}
+
 _sb.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_IN' && session) {
     await afterLogin(session);
