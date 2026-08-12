@@ -233,7 +233,7 @@ async function loadFromSupabase() {
 
 async function save() {
   if (!currentUser) return;
-  const { error } = await _sb.from('org_data').upsert({ id: 1, data: store, updated_at: new Date().toISOString() });
+  const { error } = await _sb.rpc('save_org_data', { p_data: store });
   if (error) {
     console.error('Save failed:', error);
     toast('⚠ Save failed — check your connection');
