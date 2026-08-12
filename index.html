@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,600;1,9..144,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -35,10 +36,11 @@
     <div class="nav-item" id="ff-sidebar-btn" onclick="openFutureFeels()" title="Future Feels" style="opacity:0.4;padding-left:14px" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'"><span class="icon" style="display:flex;align-items:center"></span></div>
   </div>
   <div class="sidebar-footer">
-    <div class="user-chip"><div class="avatar">AD</div> Adam</div>
+    <div class="user-chip" id="sidebar-user-chip"><div class="avatar">—</div> Loading…</div>
     <div style="display:flex;gap:6px;padding:6px 12px 4px">
       <button onclick="exportData()" style="flex:1;background:rgba(0,0,0,0.05);border:none;color:var(--muted);font-size:11px;padding:6px 0;border-radius:6px;cursor:pointer;font-family:inherit;transition:all 0.15s" onmouseover="this.style.background='rgba(0,0,0,0.1)';this.style.color='var(--text)'" onmouseout="this.style.background='rgba(0,0,0,0.05)';this.style.color='var(--muted)'">↓ Export</button>
       <button onclick="triggerImport()" style="flex:1;background:rgba(0,0,0,0.05);border:none;color:var(--muted);font-size:11px;padding:6px 0;border-radius:6px;cursor:pointer;font-family:inherit;transition:all 0.15s" onmouseover="this.style.background='rgba(0,0,0,0.1)';this.style.color='var(--text)'" onmouseout="this.style.background='rgba(0,0,0,0.05)';this.style.color='var(--muted)'">↑ Import</button>
+      <button onclick="logout()" style="flex:1;background:rgba(0,0,0,0.05);border:none;color:var(--muted);font-size:11px;padding:6px 0;border-radius:6px;cursor:pointer;font-family:inherit;transition:all 0.15s" onmouseover="this.style.background='rgba(0,0,0,0.1)';this.style.color='var(--text)'" onmouseout="this.style.background='rgba(0,0,0,0.05)';this.style.color='var(--muted)'">Sign out</button>
     </div>
   </div>
 </aside>
@@ -95,6 +97,28 @@
   <div class="summary-inner" id="summary-content"></div>
 </div>
 
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:flex;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center">
+  <div style="width:100%;max-width:360px;padding:24px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:32px;font-weight:700;color:var(--text);letter-spacing:-0.5px">FELT</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:0.08em;text-transform:uppercase">Studio</div>
+    </div>
+    <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:24px">
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Email</label>
+        <input id="login-email" type="email" placeholder="you@feltcreative.ca" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none">
+      </div>
+      <div style="margin-bottom:6px">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none">
+      </div>
+      <div id="login-error" style="color:var(--red);font-size:12px;min-height:18px;margin-bottom:12px;padding-top:6px"></div>
+      <button id="login-btn" onclick="login()" style="width:100%;padding:11px;background:var(--text);color:var(--bg);border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity 0.15s">Sign in</button>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 

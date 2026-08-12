@@ -143,12 +143,12 @@ function emptyProduction() {
   return { shootDays: [], suppliers: [], equipment: [], keyContacts: [], callSheetNotes: '' };
 }
 
-// ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
+// ─── DEFAULT DATA (X-prefixed example data — safe to delete) ──────────────────
 const defaultData = {
   projects:[
-    {id:1,name:'RBC Winterfest Activation',client:'RBC Royal Bank of Canada',clientId:1,status:'active',type:'Brand Activation',color:'#E8C832',startDate:'2026-11-01',endDate:'2026-12-20',budget:0,spent:0,
-      brief:{overview:'A multi-sensory winter brand activation for RBC at Harbourfront Centre, Toronto. Includes an interactive ice sculpture installation, branded warming stations, and a live LED content wall showcasing community stories.',objectives:'Drive brand warmth and community connection during the holiday season. Target 18,000 visitors over a 7-week run. Amplify on social with a target of 2,000 organic check-ins.',deliverables:'Custom ice sculpture, 3x branded warming huts, LED content wall, staff uniforms, printed wayfinding & signage.',timeline:'Supplier contracts: Oct. Build: Nov 1–14. Soft open: Nov 15. Public opening: Nov 22. Run through Dec 20.'},
-      teamIds:[1,2,3],contactIds:[1],teamAllocation:{1:15,2:10,3:12},expenses:[],
+    {id:1,name:'XWinterfest Activation',client:'XNorthern Spirits Co.',clientId:1,status:'active',type:'Brand Activation',color:'#E8C832',startDate:'2026-11-01',endDate:'2026-12-20',budget:0,spent:0,
+      brief:{overview:'Example project — edit or delete to get started. A multi-sensory winter brand activation at Harbourfront Centre.',objectives:'Drive brand warmth and community connection. Target 18,000 visitors over a 7-week run.',deliverables:'Custom installation, branded warming stations, LED content wall, staff uniforms, printed signage.',timeline:'Build: Nov 1–14. Soft open: Nov 15. Public opening: Nov 22. Run through Dec 20.'},
+      teamIds:[1,2],contactIds:[1],teamAllocation:{1:15,2:10},expenses:[],
       budgetLines:[
         {id:1,category:'Fabrication',forecast:28000,actuals:0},
         {id:2,category:'Furniture & Décor',forecast:8500,actuals:0},
@@ -160,210 +160,85 @@ const defaultData = {
         {id:8,category:'Other',forecast:2000,actuals:0}
       ],
       invoices:[
-        {id:1,supplier:'Northern Build Co.',description:'Ice structure & scenic fabrication',category:'Fabrication',amount:26400,date:'2026-11-05',status:'paid',notes:'Includes install and strike.'},
-        {id:2,supplier:'Boreal Rentals',description:'Furniture & prop hire — all huts',category:'Furniture & Décor',amount:7200,date:'2026-11-10',status:'paid',notes:''},
-        {id:3,supplier:'Signal AV',description:'LED wall & sound system install',category:'AV + Content Tech',amount:12500,date:'2026-12-01',status:'pending',notes:'Payment due on delivery.'},
-        {id:4,supplier:'Pressed Print',description:'Wayfinding, signage & branded menus',category:'Print Collateral',amount:2600,date:'2026-10-28',status:'paid',notes:''}
+        {id:1,supplier:'XNorthern Build Co.',description:'Ice structure & scenic fabrication',category:'Fabrication',amount:26400,date:'2026-11-05',status:'paid',notes:''},
+        {id:2,supplier:'XSignal AV',description:'LED wall & sound system install',category:'AV + Content Tech',amount:12500,date:'2026-12-01',status:'pending',notes:''}
       ],
-      signoff:{brief:{completed:true,completedBy:'Adam',completedAt:'2026-09-20'},budget:{completed:true,completedBy:'Adam',completedAt:'2026-09-22'},timeline:{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-09-25'},team:{completed:true,completedBy:'Adam',completedAt:'2026-09-26'},fabricators:{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-10-01'},contracts:{completed:true,completedBy:'Adam',completedAt:'2026-10-05'},'fab-timeline':{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-10-10'},creative:{completed:true,completedBy:'Jordan Park',completedAt:'2026-10-12'},'pre-prod':{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-10-28'},'prod-ready':{completed:false,completedBy:'',completedAt:''},delivered:{completed:false,completedBy:'',completedAt:''},invoice:{completed:false,completedBy:'',completedAt:''},closed:{completed:false,completedBy:'',completedAt:''}},
+      signoff:emptySignoff(),
       production:{
-        shootDays:[
-          {id:1,date:'2026-11-01',location:'Harbourfront Centre — Natrel Rink',callTime:'06:00',wrapTime:'22:00',notes:'Build day 1. Ice sculpture delivery 6–9am. Crew of 12.'},
-          {id:2,date:'2026-11-14',location:'Harbourfront Centre — Natrel Rink',callTime:'07:00',wrapTime:'23:00',notes:'Final build day. LED wall commissioning. Full tech check.'},
-          {id:3,date:'2026-11-22',location:'Harbourfront Centre — Natrel Rink',callTime:'08:00',wrapTime:'22:00',notes:'Public opening day. All crew on site. Client attendance from 11am.'}
-        ],
+        shootDays:[],
         suppliers:[
-          {id:1,company:'Northern Build Co.',contact:'Dan Clarke',category:'Fabrication',status:'confirmed',notes:'Lead fabricator. Contract signed. 4-week lead time.'},
-          {id:2,company:'Signal AV',contact:'Keiko Tanaka',category:'AV + Content Tech',status:'confirmed',notes:'LED wall + spatial audio. On site Nov 10–14.'},
-          {id:3,company:'Northern Stitch Co.',contact:'Luis Vargas',category:'Uniforms & Materials',status:'pending',notes:'Staff uniforms x18. Awaiting final headcount.'}
+          {id:1,globalSupplierId:1,company:'XNorthern Build Co.',contact:'XDan Clarke',category:'Fabrication',status:'confirmed',notes:'Lead fabricator.'},
+          {id:2,globalSupplierId:2,company:'XSignal AV',contact:'XKeiko Tanaka',category:'AV + Content Tech',status:'confirmed',notes:'LED wall + spatial audio.'}
         ],
-        equipment:[
-          {id:1,item:'LED Wall — 6m x 3m',qty:1,supplier:'Signal AV',status:'confirmed'},
-          {id:2,item:'Branded Warming Huts',qty:3,supplier:'Northern Build Co.',status:'confirmed'},
-          {id:3,item:'Ice Sculpture — RBC Crest',qty:1,supplier:'Northern Build Co.',status:'confirmed'},
-          {id:4,item:'Spatial Audio Rig',qty:1,supplier:'Signal AV',status:'confirmed'}
-        ],
-        keyContacts:[
-          {id:1,productionRole:'Executive Producer',name:'Maya Chen',phone:'(416) 555-0101',email:'maya@mayanproductions.ca'},
-          {id:2,productionRole:'Client Lead',name:'Marcus Teller',phone:'(416) 555-0201',email:'m.teller@rbc.com'},
-          {id:3,productionRole:'Venue Manager',name:'Claire Bouchard',phone:'(416) 555-0301',email:'cbouchard@harbourfront.ca'}
-        ],
-        callSheetNotes:'Loading dock: Gate 4, Queens Quay W. Access code: 7732. Parking: Underground lot B. Nearest hospital: St. Michael\'s Hospital.'
+        equipment:[],keyContacts:[],callSheetNotes:''
       },
       tasks:[
-        {id:1,name:'Client brief & budget sign-off',category:'Client',startDate:'',dueDate:'2026-09-22',status:'done',assignedTo:'Adam'},
-        {id:2,name:'Concept presentation to RBC',category:'Creative',startDate:'2026-09-25',dueDate:'2026-10-05',status:'done',assignedTo:'Jordan Park'},
-        {id:3,name:'Vendor contracts confirmed',category:'Production',startDate:'',dueDate:'2026-10-05',status:'done',assignedTo:'Isla MacKenzie'},
-        {id:4,name:'Ice structure design approval',category:'Creative',startDate:'',dueDate:'2026-10-12',status:'done',assignedTo:'Jordan Park'},
-        {id:5,name:'Full tech walkthrough & sign-off',category:'Production',startDate:'2026-11-14',dueDate:'2026-11-14',status:'in-progress',assignedTo:'Isla MacKenzie'},
-        {id:6,name:'Staff briefing & uniform distribution',category:'Production',startDate:'',dueDate:'2026-11-20',status:'not-started',assignedTo:'Isla MacKenzie'},
-        {id:7,name:'Balance invoice issued to RBC',category:'Finance',startDate:'',dueDate:'2026-12-20',status:'not-started',assignedTo:'Adam'},
-        {id:8,name:'Post-activation report',category:'Client',startDate:'',dueDate:'2027-01-10',status:'not-started',assignedTo:'Maya Chen'}
-      ],
-      assets:{driveFolder:'',files:[]}
-    },
-    {id:2,name:'Lululemon Studio Pop-Up',client:'Lululemon Canada',clientId:2,status:'completed',type:'Pop-Up',color:'#B86030',startDate:'2026-06-01',endDate:'2026-08-30',budget:0,spent:0,
-      brief:{overview:'A six-week immersive studio pop-up in Yorkdale Shopping Centre for Lululemon Canada. The experience centred on mindful movement, featuring a live class schedule, product showcase, and a custom botanical installation.',objectives:'Drive in-store engagement and product trial. Convert 20% of visitors to purchase. Generate strong UGC content.',deliverables:'Full build and strike, botanical installation, staff uniforms, AV & music system, print collateral.',timeline:'Build: Jun 1–7. Open: Jun 8. Run 12 weeks. Strike: Aug 28–30.'},
-      teamIds:[1,3,4],contactIds:[2],teamAllocation:{1:10,3:8,4:8},expenses:[],
-      budgetLines:[
-        {id:1,category:'Fabrication',forecast:14000,actuals:0},
-        {id:2,category:'Furniture & Décor',forecast:5500,actuals:0},
-        {id:3,category:'AV + Content Tech',forecast:8000,actuals:0},
-        {id:4,category:'Team',forecast:12200,actuals:0},
-        {id:5,category:'Uniforms & Materials',forecast:2400,actuals:0},
-        {id:6,category:'Print Collateral',forecast:2900,actuals:0},
-        {id:7,category:'Production Misc.',forecast:0,actuals:0},
-        {id:8,category:'Other',forecast:0,actuals:0}
-      ],
-      invoices:[
-        {id:5,supplier:'Northern Build Co.',description:'Retail environment build & strike',category:'Fabrication',amount:14000,date:'2026-06-20',status:'paid',notes:''},
-        {id:6,supplier:'Signal AV',description:'In-store AV & curated music system',category:'AV + Content Tech',amount:8000,date:'2026-06-25',status:'paid',notes:''},
-        {id:7,supplier:'Northern Stitch Co.',description:'Staff uniforms x10',category:'Uniforms & Materials',amount:2400,date:'2026-06-15',status:'paid',notes:''},
-        {id:8,supplier:'Pressed Print',description:'Brand collateral & packaging inserts',category:'Print Collateral',amount:2900,date:'2026-06-18',status:'paid',notes:''},
-        {id:9,supplier:'Boreal Rentals',description:'Display furniture & botanical hire',category:'Furniture & Décor',amount:4800,date:'2026-06-22',status:'paid',notes:''}
-      ],
-      signoff:{brief:{completed:true,completedBy:'Adam',completedAt:'2026-05-10'},budget:{completed:true,completedBy:'Adam',completedAt:'2026-05-11'},timeline:{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-05-12'},team:{completed:true,completedBy:'Adam',completedAt:'2026-05-13'},fabricators:{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-05-15'},contracts:{completed:true,completedBy:'Adam',completedAt:'2026-05-18'},'fab-timeline':{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-05-20'},creative:{completed:true,completedBy:'Jordan Park',completedAt:'2026-05-22'},'pre-prod':{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-05-28'},'prod-ready':{completed:true,completedBy:'Isla MacKenzie',completedAt:'2026-06-01'},delivered:{completed:true,completedBy:'Maya Chen',completedAt:'2026-08-30'},invoice:{completed:true,completedBy:'Adam',completedAt:'2026-08-31'},closed:{completed:true,completedBy:'Adam',completedAt:'2026-09-05'}},
-      production:emptyProduction(),
-      tasks:[
-        {id:9,name:'Brief & budget sign-off',category:'Client',startDate:'',dueDate:'2026-05-11',status:'done',assignedTo:'Adam'},
-        {id:10,name:'Concept & mood board approval',category:'Creative',startDate:'2026-05-12',dueDate:'2026-05-22',status:'done',assignedTo:'Jordan Park'},
-        {id:11,name:'Build complete',category:'Production',startDate:'2026-06-01',dueDate:'2026-06-07',status:'done',assignedTo:'Isla MacKenzie'},
-        {id:12,name:'Final invoice issued',category:'Finance',startDate:'',dueDate:'2026-08-31',status:'done',assignedTo:'Adam'},
-        {id:13,name:'Post-activation wrap report',category:'Client',startDate:'',dueDate:'2026-09-05',status:'done',assignedTo:'Maya Chen'}
-      ],
-      assets:{driveFolder:'',files:[]}
-    },
-    {id:3,name:'NEON — Light & Sound Installation',client:'FELT Original',clientId:null,status:'planning',type:'Creative Project',color:'#D4A010',startDate:'2027-03-01',endDate:'2027-05-31',budget:0,spent:0,
-      brief:{overview:'FELT\'s first wholly original IP project — a large-scale outdoor light and sound installation exploring the relationship between urban space, community, and stillness. Premiering in Toronto with a planned tour to Montréal and Vancouver.',objectives:'Establish FELT as a creative production house with an original artistic voice. Seek arts council funding and festival partnerships. Build national press profile.',deliverables:'Bespoke lighting sculpture, spatial soundscape composition, touring infrastructure, press & marketing assets.',timeline:'Development: Jan–Feb 2027. Site surveys: Mar. Build + test: Apr. Premiere: May 2027, Toronto.'},
-      teamIds:[1,2,4],contactIds:[],teamAllocation:{1:20,2:20,4:15},expenses:[],
-      budgetLines:[
-        {id:1,category:'Fabrication',forecast:12000,actuals:0},
-        {id:2,category:'Furniture & Décor',forecast:0,actuals:0},
-        {id:3,category:'AV + Content Tech',forecast:22000,actuals:0},
-        {id:4,category:'Team',forecast:14000,actuals:0},
-        {id:5,category:'Uniforms & Materials',forecast:0,actuals:0},
-        {id:6,category:'Print Collateral',forecast:2000,actuals:0},
-        {id:7,category:'Production Misc.',forecast:6000,actuals:0},
-        {id:8,category:'Other',forecast:1000,actuals:0}
-      ],
-      invoices:[],
-      signoff:emptySignoff(),production:emptyProduction(),
-      tasks:[
-        {id:14,name:'Arts council funding application',category:'Finance',startDate:'2026-12-01',dueDate:'2027-01-15',status:'not-started',assignedTo:'Adam'},
-        {id:15,name:'Concept & visual direction sign-off',category:'Creative',startDate:'2027-01-05',dueDate:'2027-01-20',status:'not-started',assignedTo:'Jordan Park'},
-        {id:16,name:'Sound design brief',category:'Creative',startDate:'2027-01-10',dueDate:'2027-02-01',status:'not-started',assignedTo:'Théo Gagnon'},
-        {id:17,name:'Site survey — Toronto',category:'Production',startDate:'2027-02-01',dueDate:'2027-02-15',status:'not-started',assignedTo:'Isla MacKenzie'}
-      ],
-      assets:{driveFolder:'',files:[]}
-    },
-    {id:4,name:'Tremblay Distillery Launch',client:'Tremblay Distillery',clientId:3,status:'planning',type:'Event',color:'#9A5030',startDate:'2027-02-14',endDate:'2027-02-15',budget:0,spent:0,
-      brief:{overview:'An intimate launch event for Tremblay Distillery\'s debut whisky release. A one-night experience for 120 guests in Old Montréal — blending craft cocktail tasting, live music, and artisan storytelling.',objectives:'Create buzz and media coverage for the distillery launch. Drive wholesale enquiries and direct-to-consumer signups.',deliverables:'Venue design & build, guest experience, catering coordination, branded print, full event management.',timeline:'Planning: Nov–Jan. Build: Feb 13. Event: Feb 14. Strike: Feb 15.'},
-      teamIds:[2,3],contactIds:[3],teamAllocation:{2:8,3:10},expenses:[],
-      budgetLines:[
-        {id:1,category:'Fabrication',forecast:7500,actuals:0},
-        {id:2,category:'Furniture & Décor',forecast:6000,actuals:0},
-        {id:3,category:'AV + Content Tech',forecast:4000,actuals:0},
-        {id:4,category:'Team',forecast:6500,actuals:0},
-        {id:5,category:'Uniforms & Materials',forecast:0,actuals:0},
-        {id:6,category:'Print Collateral',forecast:1500,actuals:0},
-        {id:7,category:'Production Misc.',forecast:1500,actuals:0},
-        {id:8,category:'Other',forecast:1000,actuals:0}
-      ],
-      invoices:[],
-      signoff:emptySignoff(),production:emptyProduction(),
-      tasks:[
-        {id:18,name:'Venue confirmed — Old Montréal',category:'Production',startDate:'',dueDate:'2026-11-30',status:'not-started',assignedTo:'Isla MacKenzie'},
-        {id:19,name:'Catering & bar partner confirmed',category:'Production',startDate:'',dueDate:'2026-12-15',status:'not-started',assignedTo:'Isla MacKenzie'},
-        {id:20,name:'Guest list & invitations',category:'Client',startDate:'',dueDate:'2027-01-15',status:'not-started',assignedTo:'Adam'}
+        {id:1,name:'Kickoff',category:'Production',startDate:'',dueDate:'',status:'not-started',assignedTo:''},
+        {id:2,name:'Concept',category:'Creative',startDate:'',dueDate:'',status:'not-started',assignedTo:''},
+        {id:3,name:'Client Approval',category:'Client',startDate:'',dueDate:'',status:'not-started',assignedTo:''},
+        {id:4,name:'Production',category:'Production',startDate:'2026-11-01',dueDate:'2026-11-14',status:'not-started',assignedTo:''},
+        {id:5,name:'Install',category:'Production',startDate:'',dueDate:'2026-11-22',status:'not-started',assignedTo:''},
+        {id:6,name:'Wrap',category:'Production',startDate:'',dueDate:'2026-12-20',status:'not-started',assignedTo:''}
       ],
       assets:{driveFolder:'',files:[]}
     }
   ],
   leads:[
-    {id:1,company:'Canada Goose',contactName:'Sasha Reeves',contactEmail:'sreeves@canadagoose.com',projectType:'Brand Activation',estimatedValue:42000,status:'proposal-sent',notes:'Proposal sent for a flagship retail brand activation in Toronto. Follow up end of November.'},
-    {id:2,company:'Shopify',contactName:'Dev Mehta',contactEmail:'d.mehta@shopify.com',projectType:'Creative Project',estimatedValue:28000,status:'in-conversation',notes:'Exploring an art installation for their Ottawa HQ lobby. Meeting scheduled Nov 18.'},
-    {id:3,company:'TIFF',contactName:'Margot Hébert',contactEmail:'mhebert@tiff.net',projectType:'Event',estimatedValue:65000,status:'not-contacted',notes:'Strong fit for experiential event production around the festival. Reach out Q1 2027.'}
+    {id:1,company:'XCanada Goose',contactName:'XSasha Reeves',contactEmail:'xsasha@example.com',projectType:'Brand Activation',estimatedValue:42000,status:'proposal-sent',notes:'Example lead — edit or delete to get started.',contactRole:'Brand Partnerships',contactPhone:'',convertedProjectId:null}
   ],
   team:[
-    {id:1,name:'Maya Chen',role:'Executive Producer',email:'maya@mayanproductions.ca',rate:800,skills:['Executive Production','Budget Management','Client Relations','Concepting'],availability:'busy',availableFrom:'2027-01-15',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Core creative lead. Manages all key client relationships. Book 4 weeks ahead.',
-      payments:[
-        {id:1,description:'EP Fee — RBC Winterfest Activation',projectId:1,amount:12000,date:'2026-11-15',status:'paid'},
-        {id:2,description:'EP Fee — Lululemon Studio Pop-Up',projectId:2,amount:8000,date:'2026-07-01',status:'paid'}
-      ],
-      driveFolder:'',contracts:[
-        {id:1,projectId:1,templateId:1,status:'signed',sentDate:'2026-09-28',signedDate:'2026-09-30',notes:''},
-        {id:2,projectId:2,templateId:1,status:'signed',sentDate:'2026-05-15',signedDate:'2026-05-16',notes:''}
-      ]
-    },
-    {id:2,name:'Jordan Park',role:'Creative Director',email:'jordan@jordanpark.ca',rate:750,skills:['Art Direction','Spatial Design','Brand Identity','Concepting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Leads all visual and spatial concepts. Excellent eye for detail.',
-      payments:[
-        {id:3,description:'Creative Direction — RBC Winterfest',projectId:1,amount:7500,date:'2026-12-01',status:'pending'},
-        {id:4,description:'Creative Direction — Lululemon Pop-Up',projectId:2,amount:6750,date:'2026-07-15',status:'paid'}
-      ],
-      driveFolder:'',contracts:[
-        {id:3,projectId:1,templateId:1,status:'signed',sentDate:'2026-09-28',signedDate:'2026-10-01',notes:''}
-      ]
-    },
-    {id:3,name:'Isla MacKenzie',role:'Production Manager',email:'isla@islapm.ca',rate:650,skills:['Production Management','Logistics','Vendor Relations','Scheduling'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Meticulous and calm under pressure. Essential for any live production.',
-      payments:[
-        {id:5,description:'Production — RBC Winterfest Activation',projectId:1,amount:7800,date:'2026-11-20',status:'paid'},
-        {id:6,description:'Production — Lululemon Studio Pop-Up',projectId:2,amount:5200,date:'2026-07-05',status:'paid'}
-      ],
-      driveFolder:'',contracts:[
-        {id:4,projectId:1,templateId:1,status:'signed',sentDate:'2026-09-28',signedDate:'2026-09-29',notes:''},
-        {id:5,projectId:2,templateId:1,status:'signed',sentDate:'2026-05-15',signedDate:'2026-05-17',notes:''}
-      ]
-    },
-    {id:4,name:'Théo Gagnon',role:'AV & Technical Lead',email:'theo@gagreon.ca',rate:600,skills:['AV Systems','Lighting Design','Technical Production','LED & Projection'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Go-to for all technical and AV production. Especially strong on LED and spatial audio.',
-      payments:[
-        {id:7,description:'AV & Technical — Lululemon Studio Pop-Up',projectId:2,amount:4800,date:'2026-07-05',status:'paid'}
-      ],
-      driveFolder:'',contracts:[
-        {id:6,projectId:2,templateId:1,status:'signed',sentDate:'2026-05-15',signedDate:'2026-05-18',notes:''}
-      ]
-    }
+    {id:1,name:'XMaya Chen',role:'Executive Producer',email:'xmaya@example.com',rate:800,skills:['Executive Production','Budget Management','Client Relations'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Example team member — edit or delete to get started.',payments:[],driveFolder:'',contracts:[]},
+    {id:2,name:'XJordan Park',role:'Creative Director',email:'xjordan@example.com',rate:750,skills:['Art Direction','Spatial Design','Concepting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Example team member — edit or delete to get started.',payments:[],driveFolder:'',contracts:[]}
   ],
   companies:[
-    {id:1,name:'RBC Royal Bank of Canada',industry:'Financial Services',notes:'',payments:[
-      {id:1,description:'Project Fee — Deposit (50%)',projectId:1,amount:41000,date:'2026-10-01',status:'paid'},
-      {id:2,description:'Project Fee — Balance (50%)',projectId:1,amount:41000,date:'2026-12-20',status:'pending'}
-    ]},
-    {id:2,name:'Lululemon Canada',industry:'Retail',notes:'',payments:[
-      {id:3,description:'Project Fee — Full Payment',projectId:2,amount:58000,date:'2026-06-15',status:'paid'}
-    ]},
-    {id:3,name:'Tremblay Distillery',industry:'Spirits',notes:'',payments:[
-      {id:4,description:'Project Deposit — 50%',projectId:4,amount:14000,date:'2027-01-10',status:'pending'}
+    {id:1,name:'XNorthern Spirits Co.',industry:'Spirits',notes:'Example client — edit or delete to get started.',payments:[
+      {id:1,description:'XProject Deposit — 50%',projectId:1,amount:41000,date:'2026-10-01',status:'paid'}
     ]}
   ],
   contacts:[
-    {id:1,companyId:1,name:'Marcus Teller',email:'m.teller@rbc.com',phone:'(416) 555-0201',role:'Brand Marketing Lead'},
-    {id:2,companyId:2,name:'Priya Sharma',email:'p.sharma@lululemon.com',phone:'(604) 555-0102',role:'Brand Experience Manager'},
-    {id:3,companyId:3,name:'Henri Tremblay',email:'henri@tremblaywhisky.ca',phone:'(514) 555-0103',role:'Founder'}
+    {id:1,companyId:1,name:'XSarah Vance',email:'xsarah@example.com',phone:'(416) 555-0100',role:'Brand Marketing Lead'}
   ],
   ideas:[
-    {id:1,title:'The Quiet Hour',category:'Event',description:'A monthly city-wide moment of intentional sound — partnering with venues across Toronto to host an hour of live ambient music. No phones, no talking. FELT-produced and branded.',submittedBy:'Maya Chen',date:'2026-10-15'},
-    {id:2,title:'Field Notes',category:'Space',description:'A traveling exhibition of objects, photographs, and sounds collected from remote Canadian landscapes. Each city edition features local collaborators and storytellers.',submittedBy:'Jordan Park',date:'2026-11-02'},
-    {id:3,title:'Neon Harvest',category:'Event',description:'An outdoor light festival concept for rural Ontario — large-scale neon sculptures installed in agricultural fields, combining contemporary art with local farming heritage.',submittedBy:'Théo Gagnon',date:'2026-11-10'}
+    {id:1,title:'XThe Quiet Hour',category:'Event',description:'Example idea — a monthly city-wide moment of intentional sound. Edit or delete to get started.',submittedBy:'XMaya Chen',date:'2026-10-15'}
   ],
   contractTemplates:[
     {id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, independent contractor'}
   ],
   globalSuppliers:[
-    {id:1,company:'Northern Build Co.',category:'Fabrication',contactName:'Dan Clarke',contactEmail:'dan@northernbuild.ca',contactPhone:'(416) 555-0401',website:'northernbuild.ca',notes:'Trusted lead fabricator. Specialises in large-scale scenic builds. 4-week lead time recommended.'},
-    {id:2,company:'Signal AV',category:'AV + Content Tech',contactName:'Keiko Tanaka',contactEmail:'keiko@signalav.ca',contactPhone:'(416) 555-0402',website:'signalav.ca',notes:'LED walls, projection, spatial audio. On-site commissioning included in quote.'},
-    {id:3,company:'Pressed Print',category:'Print Collateral',contactName:'Sam Osei',contactEmail:'sam@pressedprint.ca',contactPhone:'(416) 555-0403',website:'',notes:'Fast turnaround on large-format and collateral. Great on sustainable stocks.'},
-    {id:4,company:'Boreal Rentals',category:'Furniture & Décor',contactName:'Claire Bouchard',contactEmail:'claire@borealrentals.ca',contactPhone:'(514) 555-0404',website:'borealrentals.ca',notes:'Extensive inventory of furniture, props and botanicals. Delivery across Ontario & Québec.'},
-    {id:5,company:'Northern Stitch Co.',category:'Uniforms & Materials',contactName:'Luis Vargas',contactEmail:'luis@northernstitch.ca',contactPhone:'(416) 555-0405',website:'',notes:'Custom staff uniforms and branded apparel. Min order 8 units. 3-week production time.'}
+    {id:1,company:'XNorthern Build Co.',category:'Fabrication',contactName:'XDan Clarke',contactEmail:'xdan@example.ca',contactPhone:'(416) 555-0401',website:'',notes:'Example vendor — edit or delete to get started.'},
+    {id:2,company:'XSignal AV',category:'AV + Content Tech',contactName:'XKeiko Tanaka',contactEmail:'xkeiko@example.ca',contactPhone:'(416) 555-0402',website:'',notes:'Example vendor — edit or delete to get started.'}
   ],
-  nextId:{projects:5,team:5,companies:4,contacts:4,leads:4,expenses:1,ideas:4,shootDays:4,suppliers:4,equipment:5,payments:8,keyContacts:4,contracts:7,templates:2,tasks:21,assets:1,globalSuppliers:6,invoices:10,clientPayments:5}
+  nextId:{projects:2,team:3,companies:2,contacts:2,leads:2,expenses:1,ideas:2,shootDays:1,suppliers:3,equipment:1,payments:2,keyContacts:1,contracts:1,templates:2,tasks:7,assets:1,globalSuppliers:3,invoices:3,clientPayments:2}
 };
 
-// ─── STORAGE ──────────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'felt-studio-v5';
-function loadStore() { try { const s=localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); } catch(e){} return JSON.parse(JSON.stringify(defaultData)); }
-function save() { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(store)); } catch(e){} }
-const store = loadStore();
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://qyxbjtbipdpevzecbhkd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_uH-o_KQ6Cv0jeut76bgXRA_bvePXaEM';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+let currentUser = null;
+let currentUserRole = 'member';
+let currentUserName = '';
+
+let store = {};
+
+async function loadFromSupabase() {
+  const { data, error } = await _sb.from('org_data').select('data').eq('id', 1).single();
+  if (error || !data || !data.data || Object.keys(data.data).length === 0) {
+    return JSON.parse(JSON.stringify(defaultData));
+  }
+  return data.data;
+}
+
+async function save() {
+  if (!currentUser) return;
+  try {
+    await _sb.from('org_data').upsert({ id: 1, data: store, updated_at: new Date().toISOString() });
+  } catch(e) { console.error('Save failed:', e); }
+}
+
+// ─── MIGRATIONS ───────────────────────────────────────────────────────────────
+function runMigrations() {
 // Ensure nextId has all keys
 if (!store.nextId.keyContacts) store.nextId.keyContacts = 10;
 if (!store.nextId.contracts) store.nextId.contracts = 10;
@@ -435,6 +310,7 @@ store.team.forEach(m => {
   if (!m.driveFolder) m.driveFolder = '';
   if (!m.contracts) m.contracts = [];
 });
+} // end runMigrations()
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
 let currentView='dashboard', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active', currentFinanceFilter='all';
@@ -2992,12 +2868,13 @@ function handleImport(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(ev) {
+  reader.onload = async function(ev) {
     try {
       const data = JSON.parse(ev.target.result);
       if (!data.projects || !data.team) { toast('Unrecognised file — not restored'); return; }
       if (!confirm('This will replace all current data with the backup. Continue?')) return;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      store = data;
+      await save();
       toast('Restored — reloading...');
       setTimeout(() => location.reload(), 1200);
     } catch(err) {
@@ -3224,7 +3101,78 @@ function closeClientSummary(){
   document.getElementById('summary-overlay').style.display='none';
 }
 
-render();
+// ─── AUTH & INIT ──────────────────────────────────────────────────────────────
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'flex';
+}
+function hideLoginScreen() {
+  document.getElementById('login-screen').style.display = 'none';
+}
+
+function updateUserChip() {
+  const chip = document.getElementById('sidebar-user-chip');
+  if (!chip) return;
+  const initials = currentUserName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() || '—';
+  const roleLabel = currentUserRole === 'admin' ? 'Admin' : currentUserRole === 'viewer' ? 'Viewer' : 'Member';
+  chip.innerHTML = `<div class="avatar">${initials}</div> <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${currentUserName}</span> <span style="font-size:10px;color:var(--muted);flex-shrink:0">${roleLabel}</span>`;
+}
+
+async function afterLogin(session) {
+  currentUser = session.user;
+  const { data: profile } = await _sb.from('profiles').select('role, name').eq('id', currentUser.id).single();
+  currentUserRole = profile?.role || 'member';
+  currentUserName = profile?.name || currentUser.email.split('@')[0];
+  store = await loadFromSupabase();
+  runMigrations();
+  updateUserChip();
+  if (currentUserRole === 'viewer') document.body.classList.add('viewer-mode');
+  else document.body.classList.remove('viewer-mode');
+  hideLoginScreen();
+  render();
+}
+
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+  const { error } = await _sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = error.message;
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+  }
+  // On success, onAuthStateChange fires afterLogin()
+}
+
+async function logout() {
+  await _sb.auth.signOut();
+}
+
+_sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    await afterLogin(session);
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    currentUserRole = 'member';
+    store = {};
+    showLoginScreen();
+  }
+});
+
+async function initApp() {
+  const { data: { session } } = await _sb.auth.getSession();
+  if (session) {
+    await afterLogin(session);
+  } else {
+    showLoginScreen();
+  }
+}
+
+initApp();
 
 // Copy logo src from sidebar to mobile header so they're guaranteed identical
 (function(){

@@ -314,6 +314,13 @@
   .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 18px; color: var(--navy); }
   .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
+  /* ── VIEWER MODE (read-only role) ────────────────────────────── */
+  body.viewer-mode .btn-primary { display: none !important; }
+  body.viewer-mode button[onclick*="Modal"], body.viewer-mode button[onclick*="delete"], body.viewer-mode button[onclick*="Delete"], body.viewer-mode button[onclick*="remove"], body.viewer-mode button[onclick*="Remove"] { display: none !important; }
+  body.viewer-mode #qc-btn, body.viewer-mode #qc-btn-mobile { display: none !important; }
+  body.viewer-mode .section-header .btn { display: none !important; }
+  body.viewer-mode::after { content: 'View only'; position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: var(--navy); color: var(--accent); font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; z-index: 500; letter-spacing: 0.06em; text-transform: uppercase; pointer-events: none; }
+
   .toast { position: fixed; bottom: 80px; right: 20px; background: var(--navy); color: var(--accent); padding: 11px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; z-index: 200; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
   .toast.show { transform: translateY(0); opacity: 1; }
   ::-webkit-scrollbar { width: 5px; height: 5px; }
