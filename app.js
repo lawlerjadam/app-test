@@ -3158,8 +3158,8 @@ async function openAccountPanel() {
   // Show loading state immediately
   openModal(`<div class="modal-title">Account & Team</div><div style="padding:20px 0;text-align:center;color:var(--muted)">Loading…</div>`);
 
-  // Fetch all profiles (RLS returns only own row for non-admins)
-  const { data: profiles } = await _sb.from('profiles').select('id, name, email, role').order('created_at');
+  // Fetch all profiles via security-definer RPC (admins get all, others get null)
+  const { data: profiles } = await _sb.rpc('get_all_profiles');
 
   const isAdmin = currentUserRole === 'admin';
   const roleColors = { admin: 'var(--accent)', member: 'var(--green)', viewer: 'var(--muted)' };
