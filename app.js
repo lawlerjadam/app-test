@@ -3119,7 +3119,8 @@ function updateUserChip() {
 
 async function afterLogin(session) {
   currentUser = session.user;
-  const { data: profile } = await _sb.from('profiles').select('role, name').eq('id', currentUser.id).single();
+  const { data: profile, error: profileError } = await _sb.rpc('get_my_profile');
+  if (profileError) console.error('Profile fetch error:', profileError);
   currentUserRole = profile?.role || 'member';
   currentUserName = profile?.name || currentUser.email.split('@')[0];
   store = await loadFromSupabase();
