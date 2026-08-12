@@ -2730,6 +2730,7 @@ function submitFeedback() {
   save();
   closeModal();
   toast('Feedback submitted ◌');
+  if (currentView === 'feedback') render();
 }
 
 function setFeedbackStatus(id, status) {
@@ -2753,7 +2754,6 @@ function renderFeedback() {
 
   const typeIcon = {bug:'🐛', improvement:'✨', feature:'💡'};
   const typeLabel = {bug:'Bug', improvement:'Improvement', feature:'Feature Request'};
-  const prioBg = {high:'rgba(200,50,50,0.08)', medium:'rgba(200,130,30,0.08)', low:'rgba(80,100,150,0.08)'};
   const prioColor = {high:'#B03030', medium:'#A06020', low:'#5060A0'};
 
   function cardHtml(f) {
@@ -2762,29 +2762,29 @@ function renderFeedback() {
       ? `<span style="font-size:10px;font-weight:600;background:rgba(200,130,30,0.12);color:#A06020;border-radius:4px;padding:2px 7px;white-space:nowrap">In Progress</span>`
       : '';
     const adminActions = isAdmin ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-      ${f.status==='open' ? `<button onclick="setFeedbackStatus(${f.id},'in-progress')" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:var(--text);transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--text)'" onmouseout="this.style.borderColor='var(--border)'">→ In Progress</button>` : ''}
-      ${f.status==='in-progress' ? `<button onclick="setFeedbackStatus(${f.id},'open')" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:var(--muted)">↩ Open</button><button onclick="setFeedbackStatus(${f.id},'done')" style="font-size:11px;padding:4px 10px;border:1.5px solid #3A7A3A;border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:#3A7A3A;font-weight:600">✓ Mark Done</button>` : ''}
-      ${f.status==='done' ? `<button onclick="setFeedbackStatus(${f.id},'open')" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:var(--muted)">↩ Reopen</button>` : ''}
-      <button onclick="deleteFeedback(${f.id})" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-family:inherit;color:var(--muted);margin-left:auto" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">Delete</button>
+      ${f.status==='open' ? `<button onclick="setFeedbackStatus(${f.id},'in-progress')" class="btn btn-ghost btn-sm">→ In Progress</button>` : ''}
+      ${f.status==='in-progress' ? `<button onclick="setFeedbackStatus(${f.id},'open')" class="btn btn-ghost btn-sm">↩ Open</button><button onclick="setFeedbackStatus(${f.id},'done')" class="btn btn-ghost btn-sm" style="color:#3A7A3A;border-color:#3A7A3A">✓ Mark Done</button>` : ''}
+      ${f.status==='done' ? `<button onclick="setFeedbackStatus(${f.id},'open')" class="btn btn-ghost btn-sm">↩ Reopen</button>` : ''}
+      <button onclick="deleteFeedback(${f.id})" class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--muted)">✕</button>
     </div>` : '';
-    return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px">
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px">
       <div style="display:flex;align-items:flex-start;gap:10px">
-        <span style="font-size:18px;flex-shrink:0;margin-top:1px">${typeIcon[f.type]||'📝'}</span>
+        <span style="font-size:17px;flex-shrink:0;margin-top:1px;opacity:0.85">${typeIcon[f.type]||'📝'}</span>
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
             <span style="font-size:13px;font-weight:600">${esc(f.title)}</span>
             ${statusBadge}
           </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted)">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--muted)">
             <span>${typeLabel[f.type]||f.type}</span>
             <span>·</span>
-            <span style="font-weight:600;color:${prioColor[f.priority]||'var(--muted)'}">▲ ${(f.priority||'medium').charAt(0).toUpperCase()+(f.priority||'medium').slice(1)}</span>
+            <span style="font-weight:600;color:${prioColor[f.priority]||'var(--muted)'}">${(f.priority||'medium').charAt(0).toUpperCase()+(f.priority||'medium').slice(1)}</span>
             <span>·</span>
             <span>${esc(f.submittedBy||'')}</span>
             <span>·</span>
             <span>${f.submittedAt||''}</span>
           </div>
-          ${f.notes ? `<p style="margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.55">${esc(f.notes)}</p>` : ''}
+          ${f.notes ? `<p style="margin:7px 0 0;font-size:12px;color:var(--muted);line-height:1.55">${esc(f.notes)}</p>` : ''}
           ${adminActions}
         </div>
       </div>
@@ -2794,26 +2794,22 @@ function renderFeedback() {
   const isEmpty = fb.length === 0;
 
   return `
-    <div class="page-header">
-      <div>
-        <div class="page-title">Feedback</div>
-        <div class="page-subtitle">${open.length} open · ${done.length} done</div>
-      </div>
+    <div class="topbar">
+      <div><div class="page-title">Feedback</div><div class="page-sub">${open.length} open · ${done.length} done</div></div>
       <button class="btn btn-primary" onclick="openFeedbackModal()">+ Submit</button>
     </div>
-    <div class="page-body">
-      <div style="max-width:680px">
+    <div class="content">
+      <div style="max-width:660px">
         ${isEmpty ? `
-          <div style="text-align:center;padding:80px 0;color:var(--muted)">
-            <div style="font-size:36px;margin-bottom:14px;opacity:0.4">◌</div>
-            <div style="font-size:14px;margin-bottom:6px">No feedback yet</div>
-            <div style="font-size:12px">Use the + button above or the quick capture + button to submit</div>
+          <div class="empty-state">
+            <div class="empty-icon">◌</div>
+            <p>No feedback yet — use the + button to submit a bug, improvement, or feature request.</p>
           </div>` : ''}
         ${open.length > 0 ? `
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px">Open · ${open.length}</div>
+          <div class="section-header"><div class="section-title">Open · ${open.length}</div></div>
           ${open.map(cardHtml).join('')}` : ''}
         ${done.length > 0 ? `
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin:${open.length?'28px':0} 0 10px">Done · ${done.length}</div>
+          <div class="section-header" style="${open.length?'margin-top:28px':''}"><div class="section-title">Done · ${done.length}</div></div>
           ${done.map(cardHtml).join('')}` : ''}
       </div>
     </div>`;
