@@ -540,28 +540,28 @@ function renderSnapshot() {
                 <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity 0.1s" onclick="navigate('project-detail',${p.id})" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
                   <div style="width:9px;height:9px;border-radius:50%;background:${p.color||'var(--blue)'};flex-shrink:0"></div>
                   <div style="flex:1;font-weight:600;font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-                  <div style="font-size:12px;color:var(--muted);flex-shrink:0">${p.type}</div>
+                  <div class="snap-proj-type" style="font-size:12px;color:var(--muted);flex-shrink:0">${p.type}</div>
                   <span class="status-badge badge-${p.status}" style="flex-shrink:0">${p.status}</span>
                   <div style="font-size:13px;font-weight:700;text-align:right;min-width:90px;flex-shrink:0">$${getBudgetTotals(p).forecast.toLocaleString()}</div>
                 </div>`).join('')}
             </div>
 
             <div class="snap-grid-4-sm" style="margin-bottom:${qRev>0?'12px':'0'}">
-              <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:4px">Revenue</div>
-                <div style="font-size:17px;font-weight:800;color:var(--navy)">$${Math.round(qRev).toLocaleString()}</div>
+              <div class="snap-stat-cell">
+                <div class="snap-stat-label">Revenue</div>
+                <div class="snap-stat-num" style="color:var(--navy)">$${Math.round(qRev).toLocaleString()}</div>
               </div>
-              <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:4px">Markup (20%)</div>
-                <div style="font-size:17px;font-weight:800;color:var(--green)">$${Math.round(qMark).toLocaleString()}</div>
+              <div class="snap-stat-cell">
+                <div class="snap-stat-label">Markup (20%)</div>
+                <div class="snap-stat-num" style="color:var(--green)">$${Math.round(qMark).toLocaleString()}</div>
               </div>
-              <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:4px">Costs</div>
-                <div style="font-size:17px;font-weight:800;color:${qCosts>qRev?'var(--red)':'var(--text)'}">$${qCosts.toLocaleString()}</div>
+              <div class="snap-stat-cell">
+                <div class="snap-stat-label">Costs</div>
+                <div class="snap-stat-num" style="color:${qCosts>qRev?'var(--red)':'var(--text)'}">$${qCosts.toLocaleString()}</div>
               </div>
-              <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:4px">Profit</div>
-                <div style="font-size:17px;font-weight:800;color:${qProfit>=0?'var(--green)':'var(--red)'}">${qProfit<0?'-':''}$${Math.abs(Math.round(qProfit)).toLocaleString()}</div>
+              <div class="snap-stat-cell">
+                <div class="snap-stat-label">Profit</div>
+                <div class="snap-stat-num" style="color:${qProfit>=0?'var(--green)':'var(--red)'}">${qProfit<0?'-':''}$${Math.abs(Math.round(qProfit)).toLocaleString()}</div>
               </div>
             </div>
 

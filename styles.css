@@ -401,6 +401,9 @@
 
   .snap-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .snap-grid-4-sm { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .snap-stat-cell { background: var(--bg); border-radius: 8px; padding: 12px 14px; min-width: 0; overflow: hidden; }
+  .snap-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+  .snap-stat-num { font-size: 17px; font-weight: 800; }
   .finance-summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
 
   @media (max-width: 768px) {
@@ -438,6 +441,9 @@
     .prod-days-grid { grid-template-columns: 1fr; }
     .snap-grid-4 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .snap-grid-4-sm { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .snap-stat-cell { padding: 10px 12px; }
+    .snap-stat-num { font-size: 14px; }
+    .snap-proj-type { display: none; }
     .finance-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
     .finance-net { grid-column: 1 / -1; }
     .budget-summary { grid-template-columns: 1fr; gap: 8px; }
