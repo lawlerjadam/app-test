@@ -1687,8 +1687,9 @@ function renderCalendar() {
       return`<div class="cal-event" style="background:${clr}CC;color:#fff;margin:${margin};border-radius:${radius};padding:2px ${leftEdge?'5px':'1px'}" onclick="event.stopPropagation();navigate('project-detail',${p.id})">${leftEdge?p.name.split('—')[0].trim():''}</div>`;
     }).join('');
     const cellDateStr=cell.date.toDateString();
-    const leadDots=store.leads.filter(l=>l.nextAction&&l.nextActionDate&&new Date(l.nextActionDate+'T12:00:00').toDateString()===cellDateStr).map(l=>`<div style="font-size:9px;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;cursor:pointer" onclick="event.stopPropagation();navigate('leads')" title="${l.nextAction} · ${l.company}">◉ ${l.nextAction}</div>`).join('');
-    return`<div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}"><div class="cal-day-num">${cell.date.getDate()}</div>${evHtml}${leadDots}</div>`;
+    const leadDots=(store.leads||[]).filter(l=>l.nextAction&&l.nextActionDate&&new Date(l.nextActionDate+'T12:00:00').toDateString()===cellDateStr).map(l=>`<div style="font-size:9px;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;cursor:pointer" onclick="event.stopPropagation();navigate('leads')" title="${l.nextAction} · ${l.company}">◉ ${l.nextAction}</div>`).join('');
+    const taskDots=(store.tasks||[]).filter(t=>t.dueDate&&t.status!=='done'&&new Date(t.dueDate+'T12:00:00').toDateString()===cellDateStr).map(t=>`<div style="font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;cursor:pointer" onclick="event.stopPropagation();navigate('tasks')" title="${t.title}${t.assignedTo?' · '+t.assignedTo:''}">◆ ${t.title}</div>`).join('');
+    return`<div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}"><div class="cal-day-num">${cell.date.getDate()}</div>${evHtml}${leadDots}${taskDots}</div>`;
   }
   const sorted=[...store.projects].filter(p=>p.startDate||p.endDate).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
 
