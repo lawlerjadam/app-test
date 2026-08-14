@@ -71,10 +71,10 @@
 <main class="main" id="main"></main>
 
 <nav class="bottom-nav">
-  <button class="bottom-nav-item active" onclick="closeMobileTray();navigate('dashboard')"><span class="bn-icon">◈</span><span>Home</span></button>
-  <button class="bottom-nav-item" onclick="toggleMobileTray('work')"><span class="bn-icon">▦</span><span>Work</span></button>
-  <button class="bottom-nav-item qc-nav-btn" onclick="closeMobileTray();toggleQC()" id="qc-btn-mobile"><span style="font-size:26px;line-height:1;font-weight:700">+</span></button>
+  <button class="bottom-nav-item active" onclick="closeMobileTray();toggleMobileTray('today')"><span class="bn-icon">◈</span><span>Today</span></button>
   <button class="bottom-nav-item" onclick="toggleMobileTray('people')"><span class="bn-icon">◎</span><span>People</span></button>
+  <button class="bottom-nav-item qc-nav-btn" onclick="closeMobileTray();toggleQC()" id="qc-btn-mobile"><span style="font-size:26px;line-height:1;font-weight:700">+</span></button>
+  <button class="bottom-nav-item" onclick="toggleMobileTray('money')"><span class="bn-icon">◱</span><span>Money</span></button>
   <button class="bottom-nav-item" onclick="toggleMobileTray('growth')"><span class="bn-icon">◉</span><span>Growth</span></button>
 </nav>
 <div class="modal-overlay" id="modal" onclick="closeModalOutside(event)"><div class="modal" id="modal-content"></div></div>

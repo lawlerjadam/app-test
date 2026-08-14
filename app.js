@@ -359,17 +359,20 @@ let calMobileWeekOffset=0;
 
 let mobileNavTray=null;
 const MOBILE_TRAY_SECTIONS={
-  work:[
+  today:[
+    {icon:'◈',label:'Home',view:'dashboard'},
     {icon:'▦',label:'Projects',view:'projects'},
     {icon:'◆',label:'Tasks',view:'tasks'},
-    {icon:'◫',label:'Calendar',view:'calendar'},
-    {icon:'◱',label:'Finance',view:'finance'},
-    {icon:'◑',label:'Snapshot',view:'snapshot'}
+    {icon:'◫',label:'Calendar',view:'calendar'}
   ],
   people:[
     {icon:'◎',label:'Team',view:'team'},
     {icon:'◇',label:'Clients',view:'contacts'},
     {icon:'◧',label:'Vendors',view:'global-suppliers'}
+  ],
+  money:[
+    {icon:'◱',label:'Finance',view:'finance'},
+    {icon:'◑',label:'Snapshot',view:'snapshot'}
   ],
   growth:[
     {icon:'◉',label:'Leads',view:'leads'},
