@@ -726,7 +726,7 @@ function setFinanceFilter(f){currentFinanceFilter=f;render();}
 function renderDashboard() {
   const today = new Date(); today.setHours(0,0,0,0);
   const todayStr = today.toISOString().slice(0,10);
-  const in30 = new Date(today); in30.setDate(in30.getDate()+30);
+  const in30 = new Date(today); in30.setDate(in30.getDate()+5);
   const in30Str = in30.toISOString().slice(0,10);
 
   // ── Priorities ──────────────────────────────────────────────────────────────
@@ -763,7 +763,7 @@ function renderDashboard() {
 
   const hasPriorities = overduePayments.length || todayTasks.length || todayProdDays.length;
 
-  // ── Coming Up (next 30 days) ─────────────────────────────────────────────
+  // ── Coming Up (next 5 days) ──────────────────────────────────────────────
   const upcoming = [];
   store.projects.forEach(p => {
     if(p.status==='completed') return;
@@ -830,7 +830,7 @@ function renderDashboard() {
 
       ${upcoming.length ? `
       <div style="margin-bottom:28px">
-        <div class="section-title" style="margin-bottom:12px">Coming Up <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">next 30 days</span></div>
+        <div class="section-title" style="margin-bottom:12px">Coming Up <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">next 5 days</span></div>
         <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
           ${upcoming.map((item,i)=>`
             <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;${i>0?'border-top:1px solid var(--border)':''}${item.projectId?';cursor:pointer':''}" ${item.projectId?`onclick="${item.leadId?"navigate('leads')":"navigate('project-detail',"+item.projectId+")"}"`:''}>
