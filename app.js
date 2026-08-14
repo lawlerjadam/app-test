@@ -359,19 +359,19 @@ let calMobileWeekOffset=0;
 
 let mobileNavTray=null;
 const MOBILE_TRAY_SECTIONS={
-  studio:[
+  work:[
     {icon:'▦',label:'Projects',view:'projects'},
     {icon:'◆',label:'Tasks',view:'tasks'},
     {icon:'◫',label:'Calendar',view:'calendar'},
     {icon:'◱',label:'Finance',view:'finance'},
-    {icon:'◧',label:'Snapshot',view:'snapshot'}
+    {icon:'◑',label:'Snapshot',view:'snapshot'}
   ],
-  resources:[
+  people:[
     {icon:'◎',label:'Team',view:'team'},
     {icon:'◇',label:'Clients',view:'contacts'},
     {icon:'◧',label:'Vendors',view:'global-suppliers'}
   ],
-  future:[
+  growth:[
     {icon:'◉',label:'Leads',view:'leads'},
     {icon:'✦',label:'Ideas',view:'ideas'},
     {icon:'◌',label:'Feedback',view:'feedback'},
@@ -439,15 +439,15 @@ function navigate(view, projectId, memberId) {
   if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={snapshot:1,dashboard:2,projects:3,tasks:4,calendar:5,finance:6,team:7,contacts:8,'global-suppliers':9,leads:10,ideas:11,feedback:12};
+  const navMap={dashboard:1,projects:2,tasks:3,calendar:4,team:5,contacts:6,'global-suppliers':7,finance:8,snapshot:9,leads:10,ideas:11,feedback:12};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
-  const studioViews=['projects','project-detail','tasks','calendar','finance','snapshot'];
-  const resourceViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
-  const futureViews=['leads','ideas','feedback'];
+  const workViews=['projects','project-detail','tasks','calendar','finance','snapshot'];
+  const peopleViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
+  const growthViews=['leads','ideas','feedback'];
   const bnItems=document.querySelectorAll('.bottom-nav-item');
-  if(studioViews.includes(view)) bnItems[1]?.classList.add('active');
-  else if(resourceViews.includes(view)) bnItems[3]?.classList.add('active');
-  else if(futureViews.includes(view)) bnItems[4]?.classList.add('active');
+  if(workViews.includes(view)) bnItems[1]?.classList.add('active');
+  else if(peopleViews.includes(view)) bnItems[3]?.classList.add('active');
+  else if(growthViews.includes(view)) bnItems[4]?.classList.add('active');
   else bnItems[0]?.classList.add('active');
   document.getElementById('main').scrollTo(0,0);
   render();
