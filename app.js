@@ -1367,7 +1367,7 @@ function renderBudgetTab(p) {
 
   // Internal profit summary
   const profitSummary = `
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px">
+    <div class="budget-profit-grid">
       <div style="background:var(--navy);border-radius:10px;padding:14px 16px">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.45);font-weight:700;margin-bottom:5px">Client Budget</div>
         <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px">$${clientTotal.toLocaleString()}</div>
