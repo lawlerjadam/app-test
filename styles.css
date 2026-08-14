@@ -391,8 +391,6 @@
     .cal-mobile-view { display: block; }
     .cal-desktop-view { display: none; }
     .ideas-grid { grid-template-columns: 1fr; }
-    .budget-summary { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .budget-value { font-size: 16px; }
     .budget-desktop-table { display: none; }
     .budget-mobile-cards { display: block; }
     .pipeline { grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -401,8 +399,8 @@
     .modal { padding: 20px; }
     .cal-day { min-height: 52px; padding: 4px; }
     .cal-event { display: none; }
-    .tabs { width: 100%; }
-    .tab { padding: 7px 8px; font-size: 11px; }
+    .tabs { width: 100%; display: grid; grid-template-columns: 1fr 1fr; overflow-x: visible; }
+    .tab { padding: 8px 6px; font-size: 11px; text-align: center; }
     .toast { bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 12px); left: 16px; right: 16px; text-align: center; }
     .signoff-step { padding: 12px; gap: 10px; }
     .signoff-step-label { font-size: 13px; }
@@ -411,6 +409,10 @@
     .snap-grid-4-sm { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .finance-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
     .finance-net { grid-column: 1 / -1; }
-    .contact-row { flex-wrap: wrap; align-items: flex-start; }
+    .budget-summary { grid-template-columns: 1fr; gap: 8px; }
+    .budget-stat { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+    .budget-value { font-size: 18px; }
+    .contact-row { flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+    .contact-row > div[style*="text-align:right"] { width: 100%; text-align: left !important; }
     .contact-actions { width: 100%; justify-content: flex-end; padding-top: 4px; }
   }
