@@ -230,7 +230,8 @@ const defaultData = {
     {id:2,company:'XSignal AV',category:'AV + Content Tech',contactName:'XKeiko Tanaka',contactEmail:'xkeiko@example.ca',contactPhone:'(416) 555-0402',website:'',notes:'Example vendor — edit or delete to get started.'}
   ],
   feedback:[],
-  nextId:{projects:2,team:3,companies:2,contacts:2,leads:2,expenses:1,ideas:2,shootDays:1,suppliers:3,equipment:1,payments:2,keyContacts:1,contracts:1,templates:2,tasks:7,assets:1,globalSuppliers:3,invoices:3,clientPayments:2,feedback:1}
+  tasks:[],
+  nextId:{projects:2,team:3,companies:2,contacts:2,leads:2,expenses:1,ideas:2,shootDays:1,suppliers:3,equipment:1,payments:2,keyContacts:1,contracts:1,templates:2,tasks:7,assets:1,globalSuppliers:3,invoices:3,clientPayments:2,feedback:1,gtasks:1}
 };
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
@@ -282,6 +283,8 @@ if (!store.contractTemplates) store.contractTemplates = [{id:1,name:'Standard Fr
 if (!store.globalSuppliers) store.globalSuppliers = [];
 if (!store.feedback) store.feedback = [];
 if (!store.nextId.feedback) store.nextId.feedback = 1;
+if (!store.tasks) store.tasks = [];
+if (!store.nextId.gtasks) store.nextId.gtasks = 1;
 
 // ─── MIGRATION: Companies model ───────────────────────────────────────────────
 if (!store.companies) {
@@ -358,6 +361,7 @@ let mobileNavTray=null;
 const MOBILE_TRAY_SECTIONS={
   studio:[
     {icon:'▦',label:'Projects',view:'projects'},
+    {icon:'◆',label:'Tasks',view:'tasks'},
     {icon:'◫',label:'Calendar',view:'calendar'},
     {icon:'◱',label:'Finance',view:'finance'},
     {icon:'◧',label:'Snapshot',view:'snapshot'}
@@ -429,14 +433,15 @@ function navigateToContact(contactId) {
   else navigate('contacts');
 }
 function navigate(view, projectId, memberId) {
+  if(view!=='tasks') tasksFilter='all';
   currentView=view;
   if(projectId!==undefined){currentProject=store.projects.find(p=>p.id===projectId);currentTab='brief';}
   if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={snapshot:1,dashboard:2,projects:3,calendar:4,finance:5,team:6,contacts:7,'global-suppliers':8,leads:9,ideas:10,feedback:11};
+  const navMap={snapshot:1,dashboard:2,projects:3,tasks:4,calendar:5,finance:6,team:7,contacts:8,'global-suppliers':9,leads:10,ideas:11,feedback:12};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
-  const studioViews=['projects','project-detail','calendar','finance','snapshot'];
+  const studioViews=['projects','project-detail','tasks','calendar','finance','snapshot'];
   const resourceViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
   const futureViews=['leads','ideas','feedback'];
   const bnItems=document.querySelectorAll('.bottom-nav-item');
@@ -454,6 +459,7 @@ function render() {
   else if(currentView==='dashboard') m.innerHTML=renderDashboard();
   else if(currentView==='projects') m.innerHTML=renderProjects();
   else if(currentView==='project-detail') m.innerHTML=renderProjectDetail();
+  else if(currentView==='tasks') m.innerHTML=renderTasks();
   else if(currentView==='leads') m.innerHTML=renderLeads();
   else if(currentView==='calendar') m.innerHTML=renderCalendar();
   else if(currentView==='ideas') m.innerHTML=renderIdeas();
@@ -741,6 +747,12 @@ function renderDashboard() {
       if(t.dueDate===todayStr && t.status!=='done') todayTasks.push({...t, projectName:p.name, projectId:p.id});
     });
   });
+  (store.tasks||[]).forEach(t => {
+    if(t.dueDate===todayStr && t.status!=='done') {
+      const proj = t.projectId ? store.projects.find(p=>p.id===t.projectId) : null;
+      todayTasks.push({...t, name:t.title, projectName:proj?proj.name:'General', projectId:t.projectId||null});
+    }
+  });
 
   const todayProdDays = [];
   store.projects.forEach(p => {
@@ -960,7 +972,7 @@ function renderProjectDetail() {
       <div class="tabs">
         <div class="tab ${currentTab==='brief'?'active':''}" onclick="switchTab('brief')">Brief</div>
         <div class="tab ${currentTab==='timeline'?'active':''}" onclick="switchTab('timeline')">Timeline</div>
-
+        <div class="tab ${currentTab==='tasks'?'active':''}" onclick="switchTab('tasks')">Tasks</div>
         <div class="tab ${currentTab==='production'?'active':''}" onclick="switchTab('production')">Production</div>
         <div class="tab ${currentTab==='assets'?'active':''}" onclick="switchTab('assets')">Assets</div>
         <div class="tab ${currentTab==='team'?'active':''}" onclick="switchTab('team')">Team</div>
@@ -970,7 +982,7 @@ function renderProjectDetail() {
       </div>
       ${currentTab==='brief'?renderBriefTab(p):''}
       ${currentTab==='timeline'?renderTimelineTab(p):''}
-
+      ${currentTab==='tasks'?renderProjectTasksTab(p):''}
       ${currentTab==='production'?renderProductionTab(p):''}
       ${currentTab==='assets'?renderAssetsTab(p):''}
       ${currentTab==='team'?renderTeamTab(p):''}
@@ -1692,11 +1704,12 @@ function renderCalendar() {
     if(p.production&&p.production.shootDays){p.production.shootDays.forEach(sd=>{const d=new Date(sd.date+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:sd.location||p.name,sublabel:p.name+(sd.callTime?' · Call '+sd.callTime:''),icon:'◉',color:'var(--orange)',projectId:p.id});});}
     if(p.tasks){p.tasks.forEach(t=>{if(!t.dueDate||t.status==='done')return;const d=new Date(t.dueDate+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:t.name,sublabel:p.name+' · '+t.category+(t.assignedTo?' · '+t.assignedTo:''),icon:'◆',color:t.status==='in-progress'?'var(--blue)':t.status==='blocked'?'var(--red)':'var(--muted)',projectId:p.id});});}
   });
+  (store.tasks||[]).forEach(t=>{if(!t.dueDate||t.status==='done')return;const d=new Date(t.dueDate+'T12:00:00');if(d>=todayD&&d<=in5){const proj=t.projectId?store.projects.find(p=>p.id===t.projectId):null;docket.push({date:d,label:t.title,sublabel:(proj?proj.name:'General')+' · '+t.category+(t.assignedTo?' · '+t.assignedTo:''),icon:'◆',color:t.status==='in-progress'?'var(--blue)':'var(--muted)',isGlobalTask:true});}});
   store.leads.forEach(l=>{if(!l.nextAction||!l.nextActionDate)return;const d=new Date(l.nextActionDate+'T12:00:00');if(d>=todayD&&d<=in5)docket.push({date:d,label:l.nextAction,sublabel:l.company+' · Lead',icon:'◉',color:'var(--blue)',leadId:l.id});});
   docket.sort((a,b)=>a.date-b.date);
   const docketHtml = docket.length===0
     ? `<div class="empty-state" style="padding:20px"><p>Nothing scheduled in the next 5 days.</p></div>`
-    : docket.map(item=>`<div class="cal-list-item" onclick="${item.leadId?"navigate('leads')":"navigate('project-detail',"+item.projectId+")"}">
+    : docket.map(item=>`<div class="cal-list-item" onclick="${item.leadId?"navigate('leads')":item.isGlobalTask?"navigate('tasks')":"navigate('project-detail',"+item.projectId+")"}">
         <div style="background:${item.color};color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">${item.icon}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:14px">${item.label}</div>
@@ -1735,6 +1748,152 @@ function renderIdeas() {
       ${store.ideas.length===0?`<div class="empty-state"><div class="empty-icon">✦</div><p>No ideas yet. Drop the first one.</p></div>`:''}
       <div class="ideas-grid">${store.ideas.map(idea=>`<div class="idea-card"><div class="idea-category-tag">${idea.category}</div><div class="idea-title">${idea.title}</div><div class="idea-desc">${idea.description}</div><div class="idea-footer"><div class="idea-by">By <strong>${idea.submittedBy}</strong> · ${formatDate(idea.date)}</div><button class="btn btn-ghost btn-sm" onclick="deleteIdea(${idea.id})">✕</button></div></div>`).join('')}</div>
     </div>`;
+}
+
+// ─── TASKS ────────────────────────────────────────────────────────────────────
+let tasksFilter = 'all'; // 'all' | 'general' | project id (number)
+const GT_STATUS = [{key:'todo',label:'To Do'},{key:'in-progress',label:'In Progress'},{key:'done',label:'Done'}];
+const GT_STATUS_COLOR = {'todo':'var(--muted)','in-progress':'var(--blue)','done':'var(--green)'};
+
+function renderTasks() {
+  const allTasks = store.tasks || [];
+  const projects = store.projects;
+  // Build filter pills
+  const pills = [
+    {key:'all', label:'All'},
+    {key:'general', label:'General'},
+    ...projects.map(p=>({key:p.id, label:p.name.split('—')[0].trim()}))
+  ];
+  const filtered = tasksFilter==='all' ? allTasks
+    : tasksFilter==='general' ? allTasks.filter(t=>!t.projectId)
+    : allTasks.filter(t=>t.projectId===tasksFilter);
+
+  const pillsHtml = pills.map(p=>`<div class="kanban-filter-pill ${tasksFilter===p.key?'active':''}" onclick="tasksFilter=${typeof p.key==='number'?p.key:`'${p.key}'`};render()">${p.label}</div>`).join('');
+  const kanban = renderTasksKanban(filtered, null);
+
+  return `
+    <div class="topbar"><div><div class="page-title">Tasks</div><div class="page-sub">${allTasks.filter(t=>t.status!=='done').length} open · ${allTasks.filter(t=>t.status==='done').length} done</div></div><button class="btn btn-primary" onclick="openGlobalTaskModal()">+ Add Task</button></div>
+    <div class="content">
+      <div class="kanban-filter">${pillsHtml}</div>
+      ${kanban}
+    </div>`;
+}
+
+function renderTasksKanban(tasks, projectId) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return `<div class="kanban-board">${GT_STATUS.map(col=>{
+    const colTasks = tasks.filter(t=>t.status===col.key);
+    const cards = colTasks.map(t=>{
+      const proj = t.projectId ? store.projects.find(p=>p.id===t.projectId) : null;
+      const due = t.dueDate ? new Date(t.dueDate+'T00:00:00') : null;
+      const overdue = due && due < today && t.status!=='done';
+      return `<div class="kanban-card" onclick="openEditGlobalTaskModal(${t.id})">
+        <div class="kanban-card-title">${t.title}</div>
+        <div class="kanban-card-meta">
+          <span class="kanban-card-badge">${t.category}</span>
+          ${proj?`<span class="kanban-card-project">▦ ${proj.name.split('—')[0].trim()}</span>`:'<span style="font-size:11px;color:var(--muted)">General</span>'}
+        </div>
+        ${t.dueDate?`<div class="kanban-card-due ${overdue?'overdue':''}">⏱ ${overdue?'Overdue · ':''}${formatDate(t.dueDate)}</div>`:''}
+        ${t.assignedTo?`<div class="kanban-card-assignee">◎ ${t.assignedTo}</div>`:''}
+        ${t.notes?`<div class="kanban-card-notes">${t.notes}</div>`:''}
+        <div class="kanban-card-actions">
+          ${col.key!=='todo'?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();moveGlobalTask(${t.id},'todo')" title="Move to To Do">← To Do</button>`:''}
+          ${col.key!=='in-progress'?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();moveGlobalTask(${t.id},'in-progress')" title="Move to In Progress">${col.key==='todo'?'→':'←'} In Progress</button>`:''}
+          ${col.key!=='done'?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();moveGlobalTask(${t.id},'done')" title="Mark done">✓ Done</button>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteGlobalTask(${t.id})" style="margin-left:auto">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="kanban-col">
+      <div class="kanban-col-header">
+        <div class="kanban-col-title" style="color:${GT_STATUS_COLOR[col.key]}">${col.label}</div>
+        <div class="kanban-col-count">${colTasks.length}</div>
+      </div>
+      ${cards}
+      <button class="kanban-add-btn" onclick="openGlobalTaskModal(${projectId||'null'},'${col.key}')">+ Add task</button>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function openGlobalTaskModal(projectId, status) {
+  const memberNames = [...new Set([...store.team.map(m=>m.name),'Adam','Ruthie'])];
+  const memberOpts = memberNames.map(n=>`<option value="${n}">${n}</option>`).join('');
+  const projectOpts = store.projects.map(p=>`<option value="${p.id}" ${projectId===p.id?'selected':''}>${p.name}</option>`).join('');
+  const statusSel = (status||'todo');
+  openModal(`
+    <div class="modal-title">Add Task</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Task Title</label><input id="gt-title" placeholder="e.g. Send deck to client"></div>
+      <div class="form-group"><label>Category</label><select id="gt-cat">${TASK_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Status</label><select id="gt-status">${GT_STATUS.map(s=>`<option value="${s.key}" ${s.key===statusSel?'selected':''}>${s.label}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Due Date</label><input id="gt-due" type="date"></div>
+      <div class="form-group"><label>Assigned To</label><select id="gt-assign"><option value="">— Unassigned —</option>${memberOpts}</select></div>
+      <div class="form-group"><label>Project (optional)</label><select id="gt-project"><option value="">— General —</option>${projectOpts}</select></div>
+      <div class="form-group full"><label>Notes</label><textarea id="gt-notes" placeholder="Any context or details…" style="min-height:72px"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createGlobalTask()">Add Task</button></div>`);
+}
+
+function createGlobalTask() {
+  const title = document.getElementById('gt-title').value.trim();
+  if (!title) { toast('Title required'); return; }
+  const projVal = document.getElementById('gt-project').value;
+  store.tasks.push({
+    id: store.nextId.gtasks++,
+    title,
+    category: document.getElementById('gt-cat').value,
+    status: document.getElementById('gt-status').value,
+    dueDate: document.getElementById('gt-due').value,
+    assignedTo: document.getElementById('gt-assign').value,
+    projectId: projVal ? parseInt(projVal) : null,
+    notes: document.getElementById('gt-notes').value.trim()
+  });
+  closeModal(); save(); toast('Task added'); render();
+}
+
+function openEditGlobalTaskModal(id) {
+  const t = store.tasks.find(x=>x.id===id); if (!t) return;
+  const memberNames = [...new Set([...store.team.map(m=>m.name),'Adam','Ruthie'])];
+  const memberOpts = memberNames.map(n=>`<option value="${n}" ${t.assignedTo===n?'selected':''}>${n}</option>`).join('');
+  const projectOpts = store.projects.map(p=>`<option value="${p.id}" ${t.projectId===p.id?'selected':''}>${p.name}</option>`).join('');
+  openModal(`
+    <div class="modal-title">Edit Task</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Task Title</label><input id="gt-title" value="${esc(t.title)}"></div>
+      <div class="form-group"><label>Category</label><select id="gt-cat">${TASK_CATS.map(c=>`<option ${t.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Status</label><select id="gt-status">${GT_STATUS.map(s=>`<option value="${s.key}" ${t.status===s.key?'selected':''}>${s.label}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Due Date</label><input id="gt-due" type="date" value="${t.dueDate||''}"></div>
+      <div class="form-group"><label>Assigned To</label><select id="gt-assign"><option value="">— Unassigned —</option>${memberOpts}</select></div>
+      <div class="form-group"><label>Project (optional)</label><select id="gt-project"><option value="">— General —</option>${projectOpts}</select></div>
+      <div class="form-group full"><label>Notes</label><textarea id="gt-notes" style="min-height:72px">${t.notes||''}</textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost btn-sm" onclick="deleteGlobalTask(${id})" style="margin-right:auto;color:var(--red)">Delete</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGlobalTask(${id})">Save</button></div>`);
+}
+
+function saveGlobalTask(id) {
+  const t = store.tasks.find(x=>x.id===id); if (!t) return;
+  const title = document.getElementById('gt-title').value.trim();
+  if (!title) { toast('Title required'); return; }
+  const projVal = document.getElementById('gt-project').value;
+  t.title = title;
+  t.category = document.getElementById('gt-cat').value;
+  t.status = document.getElementById('gt-status').value;
+  t.dueDate = document.getElementById('gt-due').value;
+  t.assignedTo = document.getElementById('gt-assign').value;
+  t.projectId = projVal ? parseInt(projVal) : null;
+  t.notes = document.getElementById('gt-notes').value.trim();
+  closeModal(); save(); toast('Task saved'); render();
+}
+
+function deleteGlobalTask(id) {
+  store.tasks = store.tasks.filter(t=>t.id!==id);
+  closeModal(); save(); toast('Task removed'); render();
+}
+
+function moveGlobalTask(id, status) {
+  const t = store.tasks.find(x=>x.id===id); if (!t) return;
+  t.status = status;
+  save(); render();
 }
 
 // ─── LEADS ────────────────────────────────────────────────────────────────────
@@ -2147,6 +2306,19 @@ function saveMemberCRM(id) {
   m.notes=document.getElementById('f-notes').value;
   currentMember=m;
   closeModal();save();toast('Saved');render();
+}
+
+// ─── PROJECT TASKS TAB ────────────────────────────────────────────────────────
+function renderProjectTasksTab(p) {
+  const tasks = (store.tasks||[]).filter(t=>t.projectId===p.id);
+  const open = tasks.filter(t=>t.status!=='done').length;
+  return `
+    <div class="section-header">
+      <div class="section-title">Tasks · ${open} open</div>
+      <button class="btn btn-primary btn-sm" onclick="openGlobalTaskModal(${p.id})">+ Add Task</button>
+    </div>
+    ${tasks.length===0?`<div class="empty-state"><div class="empty-icon">◆</div><p>No tasks yet for this project.</p></div>`:''}
+    ${renderTasksKanban(tasks, p.id)}`;
 }
 
 // ─── TIMELINE TAB ─────────────────────────────────────────────────────────────
@@ -3138,26 +3310,24 @@ function closeQC(){
 }
 function openQuickTaskModal(){
   const projectOpts=store.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const memberNames=[...new Set([...store.team.map(m=>m.name),'Adam','Ruthie'])];
   openModal(`
     <div class="modal-title">◆ Add Task</div>
     <div class="form-grid">
-      <div class="form-group full"><label>Project</label><select id="qt-project"><option value="">— Select project —</option>${projectOpts}</select></div>
-      <div class="form-group full"><label>Task Name</label><input id="qt-name" placeholder="e.g. Send proposal draft"></div>
+      <div class="form-group full"><label>Task Title</label><input id="qt-name" placeholder="e.g. Send proposal draft"></div>
       <div class="form-group"><label>Category</label><select id="qt-cat">${TASK_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Status</label><select id="qt-status"><option value="todo">To Do</option><option value="in-progress">In Progress</option></select></div>
       <div class="form-group"><label>Due Date</label><input id="qt-due" type="date"></div>
-      <div class="form-group"><label>Status</label><select id="qt-status"><option value="not-started">Not Started</option><option value="in-progress">In Progress</option></select></div>
-      <div class="form-group"><label>Assign To</label><select id="qt-assign"><option value="">— Unassigned —</option>${store.team.map(m=>`<option>${m.name}</option>`).join('')}<option>Adam</option></select></div>
+      <div class="form-group"><label>Assign To</label><select id="qt-assign"><option value="">— Unassigned —</option>${memberNames.map(n=>`<option>${n}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Project (optional)</label><select id="qt-project"><option value="">— General —</option>${projectOpts}</select></div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="quickAddTask()">Add Task</button></div>`);
 }
 function quickAddTask(){
-  const projId=parseInt(document.getElementById('qt-project').value);
   const n=document.getElementById('qt-name').value.trim();
-  if(!projId){toast('Select a project');return;}
-  if(!n){toast('Task name required');return;}
-  const p=store.projects.find(x=>x.id===projId);
-  if(!p.tasks)p.tasks=[];
-  p.tasks.push({id:store.nextId.tasks++,name:n,category:document.getElementById('qt-cat').value,status:document.getElementById('qt-status').value,startDate:'',dueDate:document.getElementById('qt-due').value,assignedTo:document.getElementById('qt-assign').value});
+  if(!n){toast('Task title required');return;}
+  const projVal=document.getElementById('qt-project').value;
+  store.tasks.push({id:store.nextId.gtasks++,title:n,category:document.getElementById('qt-cat').value,status:document.getElementById('qt-status').value,dueDate:document.getElementById('qt-due').value,assignedTo:document.getElementById('qt-assign').value,projectId:projVal?parseInt(projVal):null,notes:''});
   closeModal();save();toast('Task added ◆');render();
 }
 function openQuickExpenseModal(){
