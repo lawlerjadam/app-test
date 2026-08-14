@@ -788,7 +788,7 @@ function renderDashboard() {
   const greeting = hr<12?'morning':hr<17?'afternoon':'evening';
 
   return `
-    <div class="topbar"><div><div class="page-title">How ya feelin'?</div><div class="page-sub">${new Date().toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="storage-badge">● Saved</div></div>
+    <div class="topbar"><div><div class="page-title">How ya feelin'?</div><div class="page-sub">${new Date().toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="storage-badge">● Saved</div><div style="font-size:10px;color:var(--muted);opacity:0.4">v4</div></div>
     <div class="content">
 
       <div style="margin-bottom:28px">
