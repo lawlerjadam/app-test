@@ -116,6 +116,9 @@
   .crm-stat { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
   .crm-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; font-weight: 700; }
   .crm-stat-value { font-size: 18px; font-weight: 800; color: var(--navy); }
+  .company-layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+  .client-payments-table { display: block; }
+  .client-payments-cards { display: none; }
   .payment-total-row { display: flex; gap: 14px; margin-bottom: 18px; }
   .payment-total { flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; text-align: center; }
   .payment-total-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 4px; font-weight: 700; }
@@ -415,4 +418,10 @@
     .contact-row { flex-wrap: wrap; align-items: flex-start; gap: 8px; }
     .contact-row > div[style*="text-align:right"] { width: 100%; text-align: left !important; }
     .contact-actions { width: 100%; justify-content: flex-end; padding-top: 4px; }
+    .company-layout { grid-template-columns: 1fr; }
+    .payment-total-row { gap: 8px; }
+    .payment-total { padding: 10px 12px; }
+    .payment-total-value { font-size: 16px; }
+    .client-payments-table { display: none; }
+    .client-payments-cards { display: block; }
   }

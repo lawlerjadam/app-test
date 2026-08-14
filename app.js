@@ -2573,7 +2573,7 @@ function renderContactProfile() {
     <div class="card" style="padding:0;overflow:hidden">
       ${co.payments.length===0
         ? `<div class="empty-state"><div class="empty-icon">$</div><p>No payments logged yet.</p></div>`
-        : `<div class="table-wrap"><table class="table">
+        : `<div class="client-payments-table"><div class="table-wrap"><table class="table">
             <thead><tr><th>Description</th><th>Project</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th><th></th></tr></thead>
             <tbody>${[...co.payments].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(p=>{
               const proj=p.projectId?store.projects.find(x=>x.id===p.projectId):null;
@@ -2589,7 +2589,24 @@ function renderContactProfile() {
                 </td>
               </tr>`;
             }).join('')}</tbody>
-          </table></div>`}
+          </table></div></div>
+          <div class="client-payments-cards" style="padding:8px">${[...co.payments].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(p=>{
+            const proj=p.projectId?store.projects.find(x=>x.id===p.projectId):null;
+            return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                <div style="font-weight:700;font-size:14px;color:var(--navy);flex:1;min-width:0;margin-right:8px">${p.description}</div>
+                <div style="font-size:16px;font-weight:800;color:var(--green);flex-shrink:0">$${(p.amount||0).toLocaleString()}</div>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${proj?proj.name+' · ':''}${p.date?formatDate(p.date):'—'}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span class="status-badge badge-${p.status}">${p.status}</span>
+                <div style="display:flex;gap:4px">
+                  <button class="btn btn-ghost btn-sm" onclick="cycleClientPaymentStatus(${p.id})">↻</button>
+                  <button class="btn btn-ghost btn-sm" onclick="deleteClientPayment(${p.id})">✕</button>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}</div>`}
     </div>`;
 
   return `
@@ -2598,7 +2615,7 @@ function renderContactProfile() {
       <button class="btn btn-ghost btn-sm" onclick="openEditCompanyModal(${co.id})">Edit</button>
     </div>
     <div class="content">
-      <div style="display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start">
+      <div class="company-layout">
         <div>${sidebarHtml}</div>
         <div>${paymentsHtml}</div>
       </div>
