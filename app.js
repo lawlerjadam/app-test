@@ -1676,7 +1676,9 @@ function renderCalendar() {
       else{margin='1px -6px';radius='0';}
       return`<div class="cal-event" style="background:${clr}CC;color:#fff;margin:${margin};border-radius:${radius};padding:2px ${leftEdge?'5px':'1px'}" onclick="event.stopPropagation();navigate('project-detail',${p.id})">${leftEdge?p.name.split('—')[0].trim():''}</div>`;
     }).join('');
-    return`<div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}"><div class="cal-day-num">${cell.date.getDate()}</div>${evHtml}</div>`;
+    const cellDateStr=cell.date.toDateString();
+    const leadDots=store.leads.filter(l=>l.nextAction&&l.nextActionDate&&new Date(l.nextActionDate+'T12:00:00').toDateString()===cellDateStr).map(l=>`<div style="font-size:9px;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;cursor:pointer" onclick="event.stopPropagation();navigate('leads')" title="${l.nextAction} · ${l.company}">◉ ${l.nextAction}</div>`).join('');
+    return`<div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}"><div class="cal-day-num">${cell.date.getDate()}</div>${evHtml}${leadDots}</div>`;
   }
   const sorted=[...store.projects].filter(p=>p.startDate||p.endDate).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
 
