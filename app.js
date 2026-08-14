@@ -914,8 +914,6 @@ function renderProjectCard(p) {
   const {forecast,actuals}=getBudgetTotals(p);
   const pct=forecast>0?Math.round(actuals/forecast*100):0;
   const teamInitials=p.teamIds.slice(0,3).map(id=>{const m=store.team.find(t=>t.id===id);return m?`<div class="team-avatar-sm">${initials(m.name)}</div>`:''}).join('');
-  const soProgress=signoffProgress(p);
-  const soTotal=SIGNOFF_STEPS.length;
   const health=getProjectHealth(p);
   return `
     <div class="project-card status-${p.status}" style="--project-color:${p.color||'#2563EB'}" onclick="navigate('project-detail',${p.id})">
@@ -923,10 +921,6 @@ function renderProjectCard(p) {
       <div style="margin-top:10px">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Budget</span><span>$${actuals.toLocaleString()} / $${forecast.toLocaleString()}</span></div>
         <div class="budget-bar"><div class="budget-bar-fill ${pct>100?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
-      </div>
-      <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Sign-off</span><span>${soProgress} / ${soTotal}</span></div>
-        <div class="budget-bar"><div class="budget-bar-fill" style="width:${Math.round(soProgress/soTotal*100)}%;background:var(--accent)"></div></div>
       </div>
       <div class="project-meta">
         <div class="meta-item"><strong>${p.type}</strong>Type</div>
