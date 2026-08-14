@@ -971,8 +971,7 @@ function renderProjectDetail() {
     <div class="content">
       <div class="tabs">
         <div class="tab ${currentTab==='brief'?'active':''}" onclick="switchTab('brief')">Brief</div>
-        <div class="tab ${currentTab==='timeline'?'active':''}" onclick="switchTab('timeline')">Timeline</div>
-        <div class="tab ${currentTab==='tasks'?'active':''}" onclick="switchTab('tasks')">Tasks</div>
+        <div class="tab ${currentTab==='timeline'||currentTab==='tasks'?'active':''}" onclick="switchTab('timeline')">Timeline & Tasks</div>
         <div class="tab ${currentTab==='production'?'active':''}" onclick="switchTab('production')">Production</div>
         <div class="tab ${currentTab==='assets'?'active':''}" onclick="switchTab('assets')">Assets</div>
         <div class="tab ${currentTab==='team'?'active':''}" onclick="switchTab('team')">Team</div>
@@ -981,8 +980,7 @@ function renderProjectDetail() {
         <div class="tab ${currentTab==='contacts'?'active':''}" onclick="switchTab('contacts')">Clients</div>
       </div>
       ${currentTab==='brief'?renderBriefTab(p):''}
-      ${currentTab==='timeline'?renderTimelineTab(p):''}
-      ${currentTab==='tasks'?renderProjectTasksTab(p):''}
+      ${currentTab==='timeline'?renderTimelineTab(p)+renderProjectTasksTab(p):''}
       ${currentTab==='production'?renderProductionTab(p):''}
       ${currentTab==='assets'?renderAssetsTab(p):''}
       ${currentTab==='team'?renderTeamTab(p):''}
@@ -2313,6 +2311,7 @@ function renderProjectTasksTab(p) {
   const tasks = (store.tasks||[]).filter(t=>t.projectId===p.id);
   const open = tasks.filter(t=>t.status!=='done').length;
   return `
+    <div style="margin-top:28px"></div>
     <div class="section-header">
       <div class="section-title">Tasks · ${open} open</div>
       <button class="btn btn-primary btn-sm" onclick="openGlobalTaskModal(${p.id})">+ Add Task</button>
