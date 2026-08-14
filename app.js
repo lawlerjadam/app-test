@@ -116,6 +116,27 @@ function closeFutureFeels() {
   document.getElementById('ff-overlay').style.display = 'none';
 }
 
+function addFeelToIdeas() {
+  const f = ffHistory[ffHistoryIdx];
+  if (!f) return;
+  const title = f.company || f.title;
+  // Don't add duplicates
+  if (store.ideas.some(i => i.title === title)) {
+    toast('Already in Ideas Park ✦');
+    return;
+  }
+  store.ideas.unshift({
+    id: store.nextId.ideas++,
+    title,
+    category: f.type === 'idea' ? 'Other' : f.type === 'lead' ? 'Brand' : 'Event',
+    description: f.detail + (f.action ? '\n\nNext step: ' + f.action : ''),
+    submittedBy: currentUserName,
+    date: new Date().toISOString().split('T')[0]
+  });
+  save();
+  toast('Added to Ideas Park ✦');
+}
+
 // ─── SIGN-OFF STEPS ───────────────────────────────────────────────────────────
 const SIGNOFF_STEPS = [
   { id: 'brief',        label: 'Brief signed off' },
