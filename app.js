@@ -350,7 +350,7 @@ store.team.forEach(m => {
 } // end runMigrations()
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
-let currentView='dashboard', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active', currentFinanceFilter='all';
+let currentView='projects', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active', currentFinanceFilter='all';
 let currentMember=null, currentMemberTab='overview';
 let currentContact=null, currentContactTab='overview';
 let currentCompany=null;
@@ -362,7 +362,6 @@ let calMobileWeekOffset=0;
 let mobileNavTray=null;
 const MOBILE_TRAY_SECTIONS={
   today:[
-    {icon:'◈',label:'Home',view:'dashboard'},
     {icon:'▦',label:'Projects',view:'projects'},
     {icon:'◆',label:'Tasks',view:'tasks'},
     {icon:'◫',label:'Calendar',view:'calendar'}
@@ -444,7 +443,7 @@ function navigate(view, projectId, memberId) {
   if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={dashboard:1,projects:2,tasks:3,calendar:4,team:5,contacts:6,'global-suppliers':7,finance:8,snapshot:9,leads:10,ideas:11,feedback:12};
+  const navMap={projects:1,tasks:2,calendar:3,team:4,contacts:5,'global-suppliers':6,finance:7,snapshot:8,leads:9,ideas:10,feedback:11};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
   const workViews=['projects','project-detail','tasks','calendar','finance','snapshot'];
   const peopleViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
@@ -461,7 +460,6 @@ function navigate(view, projectId, memberId) {
 function render() {
   const m=document.getElementById('main');
   if(currentView==='snapshot') m.innerHTML=renderSnapshot();
-  else if(currentView==='dashboard') m.innerHTML=renderDashboard();
   else if(currentView==='projects') m.innerHTML=renderProjects();
   else if(currentView==='project-detail') m.innerHTML=renderProjectDetail();
   else if(currentView==='tasks') m.innerHTML=renderTasks();
@@ -667,44 +665,6 @@ function renderSnapshot() {
         </div>`;
       })()}
 
-      <!-- Team Capacity -->
-      ${(()=>{
-        const activeP=store.projects.filter(p=>p.status==='active'||p.status==='planning');
-        if(store.team.length===0)return'';
-        const AVAIL_COLOR={'available':'var(--green)','busy':'var(--orange)','away':'var(--muted)'};
-        const AVAIL_LABEL2={'available':'Available','busy':'Busy','away':'Away'};
-        const rows=store.team.map(m=>{
-          const totalDays=activeP.reduce((s,p)=>s+((p.teamAllocation&&p.teamAllocation[m.id])||0),0);
-          const projCount=activeP.filter(p=>p.teamIds.includes(m.id)).length;
-          const avail=getMemberAvailability(m);
-          const capMax=60;
-          const pct=Math.min(100,Math.round((totalDays/capMax)*100));
-          const barColor=pct>=80?'var(--red)':pct>=50?'var(--orange)':'var(--green)';
-          return`<div style="padding:10px 0;border-bottom:1px solid var(--border)" onclick="navigate('team-profile',undefined,${m.id})" style="cursor:pointer">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer" onclick="navigate('team-profile',undefined,${m.id})">
-              <div class="team-avatar-sm">${initials(m.name)}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-weight:700;font-size:13px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
-                <div style="font-size:11px;color:var(--muted)">${m.role}</div>
-              </div>
-              <div style="text-align:right;flex-shrink:0">
-                <div style="font-size:13px;font-weight:700;color:var(--navy)">${totalDays} days</div>
-                <div style="font-size:11px;color:${AVAIL_COLOR[avail]||'var(--muted)'};font-weight:600">${AVAIL_LABEL2[avail]||avail} · ${projCount} project${projCount!==1?'s':''}</div>
-              </div>
-            </div>
-            <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
-              <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.4s"></div>
-            </div>
-          </div>`;
-        }).join('');
-        return`<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
-            <div style="font-size:13px;font-weight:800;color:var(--navy)">Team Capacity</div>
-            <div style="font-size:11px;color:var(--muted)">Active + planning projects · bar = % of 60-day baseline</div>
-          </div>
-          ${rows}
-        </div>`;
-      })()}
 
       <!-- Quarters -->
       ${sorted.map(q=>renderQ(q)).join('')}
