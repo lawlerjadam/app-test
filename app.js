@@ -1802,7 +1802,7 @@ function renderCalendar() {
 
   // ── Horizon view ─────────────────────────────────────────────────────────────
   const hzHeaderCells = days.map(d=>`<div class="hz-day-head">${d}</div>`).join('');
-  const hzRows = Array.from({length:8},(_,w)=>{
+  const hzRows = Array.from({length:5},(_,w)=>{
     const rowMon=new Date(thisMonday); rowMon.setDate(thisMonday.getDate()+w*7);
     const isNow=w===0;
     const wLabel=w===0?'This week':w===1?'Next week':`+${w} weeks`;
