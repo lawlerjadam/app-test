@@ -3717,12 +3717,16 @@ async function renderFLWork() {
   const myEmail = currentUser.email?.toLowerCase();
   const myName = _flMember.name || '';
 
-  const [sowRes, invRes] = await Promise.all([
+  const [sowRes, invRes, timeRes] = await Promise.all([
     _sb.from('sows').select('*').eq('freelancer_email', myEmail).order('created_at', { ascending: false }),
-    _sb.from('freelancer_invoices').select('*').eq('freelancer_email', myEmail).order('submitted_at', { ascending: false })
+    _sb.from('freelancer_invoices').select('*').eq('freelancer_email', myEmail).order('submitted_at', { ascending: false }),
+    _sb.from('time_entries').select('*').eq('freelancer_email', myEmail).order('date', { ascending: false })
   ]);
   const sows = sowRes.data || [];
   const invoices = invRes.data || [];
+  const timeEntries = timeRes.data || [];
+  const period = flGetCurrentPeriod();
+  const uninvoiced = timeEntries.filter(e => !e.invoice_id);
 
   const myTasks = (store.tasks || []).filter(t => t.assignedTo === myName);
   const activeTasks = myTasks.filter(t => t.status !== 'done');
@@ -3793,15 +3797,85 @@ async function renderFLWork() {
         + (sow.scope ? '<div style="font-size:13px;line-height:1.6;margin-bottom:8px">' + sow.scope + '</div>' : '')
         + (sow.deliverables ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><strong>Deliverables:</strong> ' + sow.deliverables + '</div>' : '')
         + (sow.timeline ? '<div style="font-size:12px;color:var(--muted);margin-bottom:12px"><strong>Timeline:</strong> ' + sow.timeline + '</div>' : '')
+        + (canInvoice ? (function() {
+            const logged = timeEntries.filter(e => e.sow_id === sow.id).reduce((s,e) => s + (e.hours||0), 0);
+            const est = sow.estimated_hours || 0;
+            const pct = est > 0 ? Math.min(100, Math.round(logged/est*100)) : 0;
+            const over = est > 0 && logged > est;
+            return '<div style="margin-bottom:14px">'
+              + '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px">'
+              + '<span>Hours logged</span><span style="font-weight:700;color:' + (over?'var(--red)':'var(--text)') + '">' + logged + 'h / ' + est + 'h est.</span>'
+              + '</div>'
+              + '<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">'
+              + '<div style="height:100%;width:' + pct + '%;background:' + (over?'var(--red)':pct>80?'#E8A020':'var(--green)') + ';border-radius:3px;transition:width 0.3s"></div>'
+              + '</div>'
+              + (over ? '<div style="margin-top:6px;font-size:11px;font-weight:600;color:var(--red)">⚠ Hours exceed SOW estimate — please flag this with the team.</div>' : '')
+              + '</div>';
+          })() : '')
         + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px">'
         + (sow.status === 'sent' ? '<button class="btn btn-primary btn-sm" onclick="flRespondSOW(\'' + sow.id + '\',\'accepted\')">Accept</button><button class="btn btn-ghost btn-sm" onclick="flCounterSOWModal(\'' + sow.id + '\')">Counter</button><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="flRespondSOW(\'' + sow.id + '\',\'declined\')">Decline</button>' : '')
         + (sow.status === 'countered' ? '<span style="font-size:12px;color:#A06020">Your counter is with the team — awaiting response.</span>' : '')
+        + (canInvoice ? '<button class="btn btn-ghost btn-sm" onclick="flLogTimeModal(\'' + sow.id + '\',\'' + (sow.project_id || '') + '\',\'' + (sow.project_name || 'General').replace(/'/g,"") + '\',' + (sow.rate || 0) + ')">+ Log Time</button>' : '')
         + (canInvoice && sowInvoices.length === 0 ? '<button class="btn btn-primary btn-sm" onclick="flSubmitInvoiceModal(\'' + sow.id + '\',\'' + (sow.project_id || '') + '\',' + (sow.rate || 0) + ',' + (sow.estimated_hours || 0) + ')">Submit Invoice</button>' : '')
         + sowInvoices.map(inv => '<span class="fl-sow-status ' + inv.status + '" style="pointer-events:none">Invoice: ' + inv.status + '</span>').join('')
         + '</div>'
         + (sow.counter_note ? '<div style="margin-top:10px;font-size:12px;background:rgba(200,140,40,0.07);border:1px solid rgba(200,140,40,0.18);border-radius:8px;padding:10px;color:var(--text)"><strong>Your counter:</strong> ' + sow.counter_note + '</div>' : '')
         + '</div>';
     });
+  }
+
+  // Timesheet section
+  html += '<div class="fl-section-label">⏱ Timesheet — ' + period.label + '</div>';
+  const periodEntries = timeEntries.filter(e => e.date >= period.start && e.date <= period.end);
+  const uninvoicedPeriod = periodEntries.filter(e => !e.invoice_id);
+  const uninvoicedTotal = uninvoicedPeriod.reduce((s,e) => s+(e.hours||0), 0);
+
+  // Calculate uninvoiced subtotal across SOWs (each entry uses its SOW rate)
+  const uninvoicedSubtotal = uninvoicedPeriod.reduce((s,e) => {
+    const sow = sows.find(sw => sw.id === e.sow_id);
+    return s + (e.hours||0) * (sow?.rate||0);
+  }, 0);
+
+  if (uninvoicedTotal > 0) {
+    html += '<div style="background:var(--navy);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">'
+      + '<div>'
+      + '<div style="font-size:13px;font-weight:700;color:#fff">' + uninvoicedTotal + 'h uninvoiced · $' + uninvoicedSubtotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</div>'
+      + '<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px">Ready to invoice for this period</div>'
+      + '</div>'
+      + '<button class="btn btn-primary btn-sm" onclick="flCreateInvoiceFromTime()">Create Invoice</button>'
+      + '</div>';
+  }
+
+  if (periodEntries.length === 0) {
+    html += '<div class="fl-card"><div style="color:var(--muted);font-size:13px;text-align:center;padding:12px 0">No time logged this period yet.</div></div>';
+  } else {
+    // Group by date
+    const byDate = {};
+    periodEntries.forEach(e => { if (!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); });
+    html += '<div class="fl-card" style="padding:4px 20px">';
+    Object.keys(byDate).sort((a,b)=>b.localeCompare(a)).forEach(date => {
+      const dayEntries = byDate[date];
+      const dayTotal = dayEntries.reduce((s,e)=>s+(e.hours||0),0);
+      html += '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+        + '<div style="font-size:12px;font-weight:700;color:var(--navy)">' + formatDate(date) + '</div>'
+        + '<div style="font-size:12px;font-weight:700;color:var(--muted)">' + dayTotal + 'h</div>'
+        + '</div>';
+      dayEntries.forEach(e => {
+        const sow = sows.find(sw => sw.id === e.sow_id);
+        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">'
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:13px;color:var(--text)">' + (e.project_name||'General') + (sow?' · '+sow.title:'') + '</div>'
+          + (e.notes ? '<div style="font-size:11px;color:var(--muted)">' + e.notes + '</div>' : '')
+          + '</div>'
+          + '<div style="font-size:13px;font-weight:600;flex-shrink:0;color:' + (e.invoice_id?'var(--muted)':'var(--text)') + '">' + e.hours + 'h</div>'
+          + (e.invoice_id ? '<span style="font-size:10px;color:var(--muted);flex-shrink:0">invoiced</span>' : '')
+          + '<button class="btn btn-ghost btn-sm" style="flex-shrink:0;padding:2px 8px;font-size:11px" onclick="flDeleteTimeEntry(\'' + e.id + '\')" title="Delete"' + (e.invoice_id?' disabled style="opacity:0.3"':'') + '>✕</button>'
+          + '</div>';
+      });
+      html += '</div>';
+    });
+    html += '</div>';
   }
 
   if (body) body.innerHTML = html;
@@ -4028,6 +4102,213 @@ async function flDoChangePassword() {
   closeModal(); toast('Password updated ✓');
 }
 
+// ─── TIME TRACKING ────────────────────────────────────────────────────────────
+
+function flGetCurrentPeriod() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
+  const monthName = now.toLocaleString('en-CA', { month: 'long', year: 'numeric' });
+  if (day <= 15) {
+    return {
+      start: new Date(year, month, 1).toISOString().split('T')[0],
+      end: new Date(year, month, 15).toISOString().split('T')[0],
+      label: '1–15 ' + monthName
+    };
+  } else {
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    return {
+      start: new Date(year, month, 16).toISOString().split('T')[0],
+      end: new Date(year, month, lastDay).toISOString().split('T')[0],
+      label: '16–' + lastDay + ' ' + monthName
+    };
+  }
+}
+
+function flLogTimeModal(sowId, projectId, projectName, rate) {
+  const today = new Date().toISOString().split('T')[0];
+  // Build SOW select — only accepted/agreed SOWs
+  openModal('<div class="modal-title">Log Time</div>'
+    + '<div class="form-grid">'
+    + '<div class="form-group"><label>Date</label><input id="fl-te-date" type="date" value="' + today + '"></div>'
+    + '<div class="form-group"><label>Hours</label><input id="fl-te-hours" type="number" step="0.5" min="0.5" placeholder="e.g. 4"></div>'
+    + '<div class="form-group full"><label>Notes (optional)</label><input id="fl-te-notes" placeholder="What did you work on?"></div>'
+    + '</div>'
+    + '<input type="hidden" id="fl-te-sow-id" value="' + sowId + '">'
+    + '<input type="hidden" id="fl-te-project-id" value="' + projectId + '">'
+    + '<input type="hidden" id="fl-te-project-name" value="' + projectName + '">'
+    + '<input type="hidden" id="fl-te-rate" value="' + rate + '">'
+    + '<div class="modal-footer">'
+    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn btn-primary" onclick="flSaveTimeEntry()">Log Time</button>'
+    + '</div>');
+}
+
+async function flSaveTimeEntry() {
+  const date = document.getElementById('fl-te-date').value;
+  const hours = parseFloat(document.getElementById('fl-te-hours').value) || 0;
+  const notes = document.getElementById('fl-te-notes').value.trim();
+  const sowId = document.getElementById('fl-te-sow-id').value;
+  const projectId = document.getElementById('fl-te-project-id').value;
+  const projectName = document.getElementById('fl-te-project-name').value;
+  if (!date) { toast('Date required'); return; }
+  if (!hours || hours <= 0) { toast('Hours required'); return; }
+  const { error } = await _sb.from('time_entries').insert({
+    freelancer_email: currentUser.email,
+    freelancer_name: _flMember?.name || currentUserName,
+    sow_id: sowId || null,
+    project_id: projectId || null,
+    project_name: projectName || '',
+    date,
+    hours,
+    notes
+  });
+  if (error) { toast('Error: ' + error.message); return; }
+  closeModal(); toast('Time logged ✓');
+  renderFLWork();
+}
+
+async function flDeleteTimeEntry(entryId) {
+  const { error } = await _sb.from('time_entries').delete().eq('id', entryId);
+  if (error) { toast('Error: ' + error.message); return; }
+  toast('Entry removed');
+  renderFLWork();
+}
+
+async function flCreateInvoiceFromTime() {
+  const myEmail = currentUser?.email?.toLowerCase();
+  const period = flGetCurrentPeriod();
+  // Re-fetch fresh data
+  const [sowRes, timeRes] = await Promise.all([
+    _sb.from('sows').select('*').eq('freelancer_email', myEmail),
+    _sb.from('time_entries').select('*').eq('freelancer_email', myEmail).eq('invoice_id', null).gte('date', period.start).lte('date', period.end)
+  ]);
+  const sows = sowRes.data || [];
+  const entries = timeRes.data || [];
+  if (entries.length === 0) { toast('No uninvoiced time entries this period'); return; }
+
+  // Group by SOW and calculate totals
+  const sowGroups = {};
+  entries.forEach(e => {
+    const key = e.sow_id || 'general';
+    if (!sowGroups[key]) {
+      const sow = sows.find(s => s.id === e.sow_id);
+      sowGroups[key] = { sow, entries: [], hours: 0, subtotal: 0 };
+    }
+    sowGroups[key].entries.push(e);
+    sowGroups[key].hours += e.hours || 0;
+    const rate = sowGroups[key].sow?.rate || 0;
+    sowGroups[key].subtotal += (e.hours || 0) * rate;
+  });
+
+  const totalHours = entries.reduce((s,e) => s+(e.hours||0), 0);
+  const totalSubtotal = Object.values(sowGroups).reduce((s,g) => s+g.subtotal, 0);
+
+  // Build breakdown for display
+  let breakdownHtml = '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:14px">'
+    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:8px">Time Breakdown</div>';
+  Object.values(sowGroups).forEach(g => {
+    const rate = g.sow?.rate || 0;
+    breakdownHtml += '<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">'
+      + '<span>' + (g.sow?.title || 'General') + ' · ' + g.hours + 'h @ $' + rate + '/hr</span>'
+      + '<span style="font-weight:700">$' + g.subtotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</span>'
+      + '</div>';
+  });
+  breakdownHtml += '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding:8px 0 0;color:var(--navy)">'
+    + '<span>Total · ' + totalHours + 'h</span>'
+    + '<span>$' + totalSubtotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</span>'
+    + '</div></div>';
+
+  // Check for over-forecast warnings
+  let warnings = '';
+  Object.values(sowGroups).forEach(g => {
+    if (g.sow && g.hours > (g.sow.estimated_hours || 0)) {
+      warnings += '<div style="background:rgba(200,80,40,0.07);border:1px solid rgba(200,80,40,0.18);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:10px">⚠ ' + g.sow.title + ': ' + g.hours + 'h logged exceeds ' + g.sow.estimated_hours + 'h estimate</div>';
+    }
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  // Store entry IDs for linking after submit
+  window._flPendingTimeEntryIds = entries.map(e => e.id);
+  window._flPendingSOWGroups = sowGroups;
+
+  openModal('<div class="modal-title">Invoice — ' + period.label + '</div>'
+    + warnings
+    + breakdownHtml
+    + '<div class="form-grid">'
+    + '<div class="form-group"><label>Invoice Number</label><input id="fl-inv-num" placeholder="INV-001"></div>'
+    + '<div class="form-group"><label>Invoice Date</label><input id="fl-inv-date" type="date" value="' + today + '"></div>'
+    + '<div class="form-group"><label>HST / VAT %</label><input id="fl-inv-vat" type="number" value="0" oninput="flUpdateTimeInvoiceTotal(' + totalSubtotal + ')"></div>'
+    + '<div class="form-group"><label>Gross Total</label><input id="fl-inv-total" readonly style="font-weight:700;font-size:15px" value="$' + totalSubtotal.toFixed(2) + '"></div>'
+    + '<div class="form-group full"><label>Bank / E-Transfer Details</label><textarea id="fl-inv-bank" rows="2" placeholder="Bank name, account number, or e-transfer email…"></textarea></div>'
+    + '<div class="form-group full"><label>Notes (optional)</label><textarea id="fl-inv-notes" rows="2"></textarea></div>'
+    + '</div>'
+    + '<div class="modal-footer">'
+    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn btn-primary" onclick="flSubmitTimeInvoice(' + totalHours + ',' + totalSubtotal + ')">Submit Invoice</button>'
+    + '</div>');
+}
+
+function flUpdateTimeInvoiceTotal(subtotal) {
+  const vat = parseFloat(document.getElementById('fl-inv-vat')?.value) || 0;
+  const el = document.getElementById('fl-inv-total');
+  if (el) el.value = '$' + (subtotal * (1 + vat/100)).toFixed(2);
+}
+
+async function flSubmitTimeInvoice(totalHours, subtotal) {
+  const num = document.getElementById('fl-inv-num').value.trim();
+  const date = document.getElementById('fl-inv-date').value;
+  const vat = parseFloat(document.getElementById('fl-inv-vat').value) || 0;
+  const bank = document.getElementById('fl-inv-bank').value.trim();
+  const notes = document.getElementById('fl-inv-notes').value.trim();
+  if (!num) { toast('Invoice number required'); return; }
+  if (!date) { toast('Invoice date required'); return; }
+  const vatAmt = subtotal * vat / 100;
+  const gross = subtotal + vatAmt;
+  const period = flGetCurrentPeriod();
+
+  // Pick first SOW's project for linking (or null if multiple)
+  const groups = Object.values(window._flPendingSOWGroups || {});
+  const firstSow = groups[0]?.sow;
+
+  // Build breakdown note
+  const breakdownNote = groups.map(g => (g.sow?.title||'General') + ': ' + g.hours + 'h @ $' + (g.sow?.rate||0) + '/hr = $' + g.subtotal.toFixed(2)).join('\n');
+  const fullNotes = ('Period: ' + period.label + '\n' + breakdownNote + (notes ? '\n' + notes : '')).trim();
+
+  const { data: inv, error } = await _sb.from('freelancer_invoices').insert({
+    sow_id: firstSow?.id || null,
+    freelancer_email: currentUser.email,
+    freelancer_name: _flMember?.name || currentUserName,
+    project_id: firstSow?.project_id || null,
+    project_name: firstSow?.project_name || '',
+    invoice_number: num,
+    invoice_date: date,
+    hours_worked: totalHours,
+    rate: subtotal / (totalHours || 1),
+    subtotal,
+    vat_rate: vat,
+    vat_amount: vatAmt,
+    gross_total: gross,
+    bank_details: bank,
+    notes: fullNotes,
+    status: 'pending'
+  }).select().single();
+
+  if (error) { toast('Error: ' + error.message); return; }
+
+  // Link time entries to this invoice
+  const entryIds = window._flPendingTimeEntryIds || [];
+  if (entryIds.length > 0 && inv?.id) {
+    await _sb.from('time_entries').update({ invoice_id: inv.id }).in('id', entryIds);
+  }
+
+  closeModal(); toast('Invoice submitted ✓');
+  delete window._flPendingTimeEntryIds;
+  delete window._flPendingSOWGroups;
+  renderFLWork();
+}
+
 // ─── ADMIN SOW MANAGEMENT ─────────────────────────────────────────────────────
 
 function renderMemberSOWsAdmin(m) {
@@ -4038,12 +4319,14 @@ function renderMemberSOWsAdmin(m) {
 async function adminLoadSOWsTab(memberId) {
   const m = store.team.find(t => t.id === memberId);
   if (!m) return;
-  const [sowRes, invRes] = await Promise.all([
+  const [sowRes, invRes, timeRes] = await Promise.all([
     _sb.from('sows').select('*').eq('freelancer_email', m.email).order('created_at', { ascending: false }),
-    _sb.from('freelancer_invoices').select('*').eq('freelancer_email', m.email).order('submitted_at', { ascending: false })
+    _sb.from('freelancer_invoices').select('*').eq('freelancer_email', m.email).order('submitted_at', { ascending: false }),
+    _sb.from('time_entries').select('*').eq('freelancer_email', m.email).order('date', { ascending: false })
   ]);
   const sows = sowRes.data || [];
   const invoices = invRes.data || [];
+  const timeEntries = timeRes.data || [];
 
   let html = '<div class="section-header" style="margin-top:24px">'
     + '<div class="section-title">Statements of Work</div>'
@@ -4058,9 +4341,26 @@ async function adminLoadSOWsTab(memberId) {
       html += '<div class="card" style="margin-bottom:12px">'
         + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px">'
         + '<div><div style="font-weight:700;font-size:14px">' + sow.title + '</div>'
-        + '<div style="font-size:12px;color:var(--muted);margin-top:3px">' + (sow.project_name || 'General') + ' · $' + (sow.rate || 0) + '/hr · ' + (sow.estimated_hours || 0) + 'h · $' + ((sow.rate || 0) * (sow.estimated_hours || 0)).toLocaleString() + '</div>'
+        + '<div style="font-size:12px;color:var(--muted);margin-top:3px">' + (sow.project_name || 'General') + ' · $' + (sow.rate || 0) + '/hr · ' + (sow.estimated_hours || 0) + 'h est.</div>'
         + '</div><span class="fl-sow-status ' + sow.status + '">' + sow.status + '</span>'
         + '</div>'
+        + (function() {
+            const logged = timeEntries.filter(e => e.sow_id === sow.id).reduce((s,e)=>s+(e.hours||0),0);
+            const est = sow.estimated_hours || 0;
+            const pct = est > 0 ? Math.min(100, Math.round(logged/est*100)) : 0;
+            const over = est > 0 && logged > est;
+            const uninv = timeEntries.filter(e => e.sow_id === sow.id && !e.invoice_id).reduce((s,e)=>s+(e.hours||0),0);
+            return '<div style="margin-bottom:10px">'
+              + '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">'
+              + '<span>Hours: ' + logged + 'h logged / ' + est + 'h est.' + (uninv>0?' · <strong>'+uninv+'h uninvoiced</strong>':'') + '</span>'
+              + '<span style="font-weight:700;color:' + (over?'var(--red)':'var(--muted)') + '">' + pct + '%</span>'
+              + '</div>'
+              + '<div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">'
+              + '<div style="height:100%;width:' + pct + '%;background:' + (over?'var(--red)':pct>80?'#E8A020':'var(--green)') + ';border-radius:3px"></div>'
+              + '</div>'
+              + (over ? '<div style="margin-top:5px;font-size:11px;font-weight:600;color:var(--red)">⚠ Over forecast by ' + (logged-est) + 'h — discuss with freelancer</div>' : '')
+              + '</div>';
+          })()
         + (sow.counter_note
           ? '<div style="background:rgba(200,140,40,0.07);border:1px solid rgba(200,140,40,0.18);border-radius:8px;padding:12px;font-size:13px;margin-bottom:10px">'
             + '<div style="font-weight:600;margin-bottom:4px;color:#A06020">Counter from freelancer:</div>'
