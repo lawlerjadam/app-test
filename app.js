@@ -350,7 +350,7 @@ store.team.forEach(m => {
 } // end runMigrations()
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
-let currentView='projects', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active', currentFinanceFilter='all';
+let currentView='tasks', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active', currentFinanceFilter='all';
 let currentMember=null, currentMemberTab='overview';
 let currentContact=null, currentContactTab='overview';
 let currentCompany=null;
@@ -1721,6 +1721,80 @@ let tasksFilter = 'all'; // 'all' | 'general' | project id (number)
 const GT_STATUS = [{key:'todo',label:'To Do'},{key:'in-progress',label:'In Progress'},{key:'done',label:'Done'}];
 const GT_STATUS_COLOR = {'todo':'var(--muted)','in-progress':'var(--blue)','done':'var(--green)'};
 
+function renderUpcomingStrip() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in3 = new Date(today); in3.setDate(in3.getDate() + 3);
+
+  const inRange = d => { const dt = new Date(d + 'T00:00:00'); return dt >= today && dt <= in3; };
+  const fmtDate = d => {
+    const dt = new Date(d + 'T00:00:00');
+    const diff = Math.round((dt - today) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    return dt.toLocaleDateString('en-CA', {weekday:'short', month:'short', day:'numeric'});
+  };
+
+  // Global tasks
+  const upTasks = (store.tasks||[])
+    .filter(t => t.dueDate && inRange(t.dueDate) && t.status !== 'done')
+    .map(t => {
+      const proj = t.projectId ? store.projects.find(p=>p.id===t.projectId) : null;
+      return { label: t.title, sub: proj ? proj.name : 'General', date: t.dueDate, onclick: `navigate('tasks')` };
+    })
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  // Project milestones (p.tasks)
+  const upMilestones = [];
+  store.projects.forEach(p => {
+    (p.tasks||[]).filter(t => t.dueDate && inRange(t.dueDate) && t.status !== 'done').forEach(t => {
+      upMilestones.push({ label: t.name, sub: p.name, date: t.dueDate, onclick: `navigate('project-detail',undefined,${p.id})` });
+    });
+  });
+  upMilestones.sort((a,b) => a.date.localeCompare(b.date));
+
+  // Invoices: outgoing (p.invoices pending) + incoming (co.payments pending)
+  const upInvoices = [];
+  store.projects.forEach(p => {
+    (p.invoices||[]).filter(i => i.date && inRange(i.date) && i.status !== 'paid').forEach(i => {
+      upInvoices.push({ label: i.supplier || 'Invoice', sub: p.name + ' · $' + (i.amount||0).toLocaleString(), date: i.date, tag: 'out', onclick: `navigate('project-detail',undefined,${p.id})` });
+    });
+  });
+  (store.companies||[]).forEach(co => {
+    (co.payments||[]).filter(pay => pay.date && inRange(pay.date) && pay.status !== 'paid').forEach(pay => {
+      const proj = pay.projectId ? store.projects.find(p=>p.id===pay.projectId) : null;
+      upInvoices.push({ label: co.name, sub: (proj ? proj.name + ' · ' : '') + '$' + (pay.amount||0).toLocaleString(), date: pay.date, tag: 'in', onclick: `navigate('finance')` });
+    });
+  });
+  upInvoices.sort((a,b) => a.date.localeCompare(b.date));
+
+  function section(title, icon, items, empty) {
+    const rows = items.length
+      ? items.map(item => `<div class="upcoming-row" onclick="${item.onclick}">
+          <div style="flex:1;min-width:0">
+            <div class="upcoming-label">${item.label}</div>
+            <div class="upcoming-sub">${item.sub}</div>
+          </div>
+          ${item.tag ? `<span class="upcoming-tag ${item.tag === 'in' ? 'tag-in' : 'tag-out'}">${item.tag === 'in' ? 'IN' : 'OUT'}</span>` : ''}
+          <div class="upcoming-date">${fmtDate(item.date)}</div>
+        </div>`).join('')
+      : `<div class="upcoming-empty">${empty}</div>`;
+    return `<div class="upcoming-card">
+      <div class="upcoming-head">
+        <span class="upcoming-icon">${icon}</span>
+        <span class="upcoming-title">${title}</span>
+        ${items.length ? `<span class="upcoming-count">${items.length}</span>` : ''}
+      </div>
+      ${rows}
+    </div>`;
+  }
+
+  return `<div class="upcoming-strip">
+    ${section('Tasks', '◆', upTasks, 'No tasks due in the next 3 days')}
+    ${section('Milestones', '◈', upMilestones, 'No milestones due in the next 3 days')}
+    ${section('Invoices', '◱', upInvoices, 'No invoices due in the next 3 days')}
+  </div>`;
+}
+
 function renderTasks() {
   const allTasks = store.tasks || [];
   const projects = store.projects;
@@ -1740,6 +1814,7 @@ function renderTasks() {
   return `
     <div class="topbar"><div><div class="page-title">Tasks</div><div class="page-sub">${allTasks.filter(t=>t.status!=='done').length} open · ${allTasks.filter(t=>t.status==='done').length} done</div></div><button class="btn btn-primary" onclick="openGlobalTaskModal()">+ Add Task</button></div>
     <div class="content">
+      ${renderUpcomingStrip()}
       <div class="kanban-filter">${pillsHtml}</div>
       ${kanban}
     </div>`;
