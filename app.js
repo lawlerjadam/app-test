@@ -285,6 +285,8 @@ if (!store.feedback) store.feedback = [];
 if (!store.nextId.feedback) store.nextId.feedback = 1;
 if (!store.tasks) store.tasks = [];
 if (!store.nextId.gtasks) store.nextId.gtasks = 1;
+if (store.onboarding === undefined) store.onboarding = '';
+store.team.forEach(m => { if (m.isFreelancer === undefined) m.isFreelancer = false; });
 
 // ─── MIGRATION: Companies model ───────────────────────────────────────────────
 if (!store.companies) {
@@ -1986,10 +1988,12 @@ function renderTeamProfile() {
         <div class="tab ${currentMemberTab==='overview'?'active':''}" onclick="currentMemberTab='overview';render()">Overview</div>
         <div class="tab ${currentMemberTab==='contracts'?'active':''}" onclick="currentMemberTab='contracts';render()">Contracts</div>
         <div class="tab ${currentMemberTab==='payments'?'active':''}" onclick="currentMemberTab='payments';render()">Payments</div>
+        ${m.isFreelancer?`<div class="tab ${currentMemberTab==='sows'?'active':''}" onclick="currentMemberTab='sows';render()">SOWs & Invoices</div>`:''}
       </div>
       ${currentMemberTab==='overview'?renderMemberOverview(m):''}
       ${currentMemberTab==='contracts'?renderMemberContracts(m):''}
       ${currentMemberTab==='payments'?renderMemberPayments(m):''}
+      ${currentMemberTab==='sows'?renderMemberSOWsAdmin(m):''}
     </div>`;
 }
 
@@ -2288,8 +2292,14 @@ function openEditMemberCRMModal(id) {
       <div class="form-group"><label>Contract Status</label><select id="f-contract"><option value="not-sent" ${m.contractStatus==='not-sent'?'selected':''}>Not Sent</option><option value="sent" ${m.contractStatus==='sent'?'selected':''}>Sent</option><option value="signed" ${m.contractStatus==='signed'?'selected':''}>Signed</option><option value="expired" ${m.contractStatus==='expired'?'selected':''}>Expired</option></select></div>
       <div class="form-group"><label>Worker Status</label><select id="f-ir35"><option value="outside" ${m.ir35==='outside'?'selected':''}>Self-Employed</option><option value="inside" ${m.ir35==='inside'?'selected':''}>T4 Employee</option><option value="not-assessed" ${m.ir35==='not-assessed'?'selected':''}>Not Assessed</option></select></div>
       <div class="form-group"><label>Payment Terms (days)</label><input id="f-terms" value="${m.paymentTerms||'30'}"></div>
-      <div class="form-group"></div>
       <div class="form-group full"><label>Notes</label><textarea id="f-notes">${m.notes||''}</textarea></div>
+      <div class="form-group full" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;font-size:13px">
+          <input id="f-is-freelancer" type="checkbox" ${m.isFreelancer?'checked':''} style="width:16px;height:16px;accent-color:var(--navy)">
+          Enable Freelancer Portal for this person
+        </label>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;margin-left:26px">When enabled, they'll see a dedicated portal (not the full app) when they log in.</div>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveMemberCRM(${id})">Save</button></div>`);
 }
@@ -2306,6 +2316,7 @@ function saveMemberCRM(id) {
   m.ir35=document.getElementById('f-ir35').value;
   m.paymentTerms=document.getElementById('f-terms').value;
   m.notes=document.getElementById('f-notes').value;
+  m.isFreelancer=document.getElementById('f-is-freelancer').checked;
   currentMember=m;
   closeModal();save();toast('Saved');render();
 }
@@ -3485,10 +3496,26 @@ async function afterLogin(session) {
   currentUserName = profile?.name || currentUser.email.split('@')[0];
   store = await loadFromSupabase();
   runMigrations();
+  hideLoginScreen();
+
+  // Sync logos across all logo slots
+  const sidebarLogo = document.querySelector('.sidebar-logo img');
+  const loginLogo = document.getElementById('login-logo');
+  const flLogo = document.getElementById('fl-logo');
+  if (sidebarLogo && loginLogo) loginLogo.src = sidebarLogo.src;
+  if (sidebarLogo && flLogo) flLogo.src = sidebarLogo.src;
+
+  // Check if this user is a freelancer
+  const myEmail = currentUser.email?.toLowerCase();
+  const myMember = store.team.find(m => m.email?.toLowerCase() === myEmail);
+  if (myMember?.isFreelancer) {
+    showFreelancerPortal(myMember);
+    return;
+  }
+
   updateUserChip();
   if (currentUserRole === 'viewer') document.body.classList.add('viewer-mode');
   else document.body.classList.remove('viewer-mode');
-  hideLoginScreen();
   render();
 }
 
@@ -3628,6 +3655,7 @@ _sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = null;
     currentUserRole = 'member';
     store = {};
+    hideFreelancerPortal();
     showLoginScreen();
   }
   // Ignore TOKEN_REFRESHED, USER_UPDATED etc — don't reload store
@@ -3643,6 +3671,506 @@ async function initApp() {
   } else {
     showLoginScreen();
   }
+}
+
+// ─── FREELANCER PORTAL ────────────────────────────────────────────────────────
+let _flMember = null;
+
+function showFreelancerPortal(member) {
+  _flMember = member;
+  const el = document.getElementById('freelancer-screen');
+  if (el) el.style.display = 'flex';
+  const sidebarLogo = document.querySelector('.sidebar-logo img');
+  const flLogo = document.getElementById('fl-logo');
+  if (sidebarLogo && flLogo) flLogo.src = sidebarLogo.src;
+  flNavigate('work');
+}
+
+function hideFreelancerPortal() {
+  const el = document.getElementById('freelancer-screen');
+  if (el) el.style.display = 'none';
+  _flMember = null;
+}
+
+function flNavigate(view) {
+  document.querySelectorAll('.fl-nav-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.flview === view));
+  const body = document.getElementById('fl-body');
+  if (!body) return;
+  if (view === 'work') {
+    body.innerHTML = '<div style="color:var(--muted);padding:40px 0;text-align:center;font-size:13px">Loading your work…</div>';
+    renderFLWork();
+  } else if (view === 'availability') {
+    body.innerHTML = renderFLAvailability();
+  } else if (view === 'onboarding') {
+    body.innerHTML = renderFLOnboarding();
+  }
+}
+
+async function renderFLWork() {
+  const body = document.getElementById('fl-body');
+  if (!_flMember || !currentUser) return;
+  const myEmail = currentUser.email?.toLowerCase();
+  const myName = _flMember.name || '';
+
+  const [sowRes, invRes] = await Promise.all([
+    _sb.from('sows').select('*').eq('freelancer_email', myEmail).order('created_at', { ascending: false }),
+    _sb.from('freelancer_invoices').select('*').eq('freelancer_email', myEmail).order('submitted_at', { ascending: false })
+  ]);
+  const sows = sowRes.data || [];
+  const invoices = invRes.data || [];
+
+  const myTasks = (store.tasks || []).filter(t => t.assignedTo === myName);
+  const activeTasks = myTasks.filter(t => t.status !== 'done');
+  const doneTasks = myTasks.filter(t => t.status === 'done');
+  const myProjects = store.projects.filter(p => (p.teamIds || []).includes(_flMember.id));
+
+  let html = '';
+
+  // Tasks
+  html += '<div class="fl-section-label">◆ My Tasks</div>';
+  if (myTasks.length === 0) {
+    html += '<div class="fl-card"><div style="color:var(--muted);font-size:13px;text-align:center;padding:12px 0">No tasks assigned to you yet.</div></div>';
+  } else {
+    html += '<div class="fl-card" style="padding:4px 20px">';
+    activeTasks.forEach(t => {
+      const proj = t.projectId ? store.projects.find(p => p.id === t.projectId) : null;
+      html += '<div class="fl-task-row">'
+        + '<div class="fl-check" onclick="flToggleTask(' + t.id + ')"></div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:14px;font-weight:600;color:var(--text)">' + t.title + '</div>'
+        + '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + (proj ? proj.name : 'General') + (t.dueDate ? ' · Due ' + formatDate(t.dueDate) : '') + '</div>'
+        + '</div>'
+        + (t.category ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--bg);color:var(--muted);flex-shrink:0">' + t.category + '</span>' : '')
+        + '</div>';
+    });
+    if (doneTasks.length > 0) {
+      html += '<div style="border-top:1px solid var(--border);margin-top:6px;padding:8px 0 4px">'
+        + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px">Completed (' + doneTasks.length + ')</div>';
+      doneTasks.forEach(t => {
+        html += '<div class="fl-task-row" style="opacity:0.5">'
+          + '<div class="fl-check done" onclick="flToggleTask(' + t.id + ')">✓</div>'
+          + '<div style="flex:1;min-width:0;text-decoration:line-through;font-size:13px;color:var(--muted)">' + t.title + '</div>'
+          + '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // Projects
+  if (myProjects.length > 0) {
+    html += '<div class="fl-section-label">▦ My Projects</div><div class="fl-card" style="padding:4px 20px">';
+    myProjects.forEach(p => {
+      html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'
+        + '<div style="width:9px;height:9px;border-radius:50%;background:' + (p.color || 'var(--blue)') + ';flex-shrink:0"></div>'
+        + '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">' + p.name + '</div><div style="font-size:11px;color:var(--muted)">' + (p.client || '') + '</div></div>'
+        + '<span class="status-badge badge-' + p.status + '">' + p.status + '</span>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // SOWs
+  html += '<div class="fl-section-label">◈ Statements of Work</div>';
+  if (sows.length === 0) {
+    html += '<div class="fl-card"><div style="color:var(--muted);font-size:13px;text-align:center;padding:12px 0">No SOWs sent to you yet.</div></div>';
+  } else {
+    sows.forEach(sow => {
+      const sowInvoices = invoices.filter(i => i.sow_id === sow.id);
+      const canInvoice = sow.status === 'agreed' || sow.status === 'accepted';
+      html += '<div class="fl-card">'
+        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">'
+        + '<div><div class="fl-card-title">' + sow.title + '</div>'
+        + '<div class="fl-card-sub" style="margin-top:3px">' + (sow.project_name || 'General') + ' · $' + (sow.rate || 0) + '/hr · ' + (sow.estimated_hours || 0) + 'h est. · $' + ((sow.rate || 0) * (sow.estimated_hours || 0)).toLocaleString() + ' total</div></div>'
+        + '<span class="fl-sow-status ' + sow.status + '">' + sow.status + '</span>'
+        + '</div>'
+        + (sow.scope ? '<div style="font-size:13px;line-height:1.6;margin-bottom:8px">' + sow.scope + '</div>' : '')
+        + (sow.deliverables ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><strong>Deliverables:</strong> ' + sow.deliverables + '</div>' : '')
+        + (sow.timeline ? '<div style="font-size:12px;color:var(--muted);margin-bottom:12px"><strong>Timeline:</strong> ' + sow.timeline + '</div>' : '')
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px">'
+        + (sow.status === 'sent' ? '<button class="btn btn-primary btn-sm" onclick="flRespondSOW(\'' + sow.id + '\',\'accepted\')">Accept</button><button class="btn btn-ghost btn-sm" onclick="flCounterSOWModal(\'' + sow.id + '\')">Counter</button><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="flRespondSOW(\'' + sow.id + '\',\'declined\')">Decline</button>' : '')
+        + (sow.status === 'countered' ? '<span style="font-size:12px;color:#A06020">Your counter is with the team — awaiting response.</span>' : '')
+        + (canInvoice && sowInvoices.length === 0 ? '<button class="btn btn-primary btn-sm" onclick="flSubmitInvoiceModal(\'' + sow.id + '\',\'' + (sow.project_id || '') + '\',' + (sow.rate || 0) + ',' + (sow.estimated_hours || 0) + ')">Submit Invoice</button>' : '')
+        + sowInvoices.map(inv => '<span class="fl-sow-status ' + inv.status + '" style="pointer-events:none">Invoice: ' + inv.status + '</span>').join('')
+        + '</div>'
+        + (sow.counter_note ? '<div style="margin-top:10px;font-size:12px;background:rgba(200,140,40,0.07);border:1px solid rgba(200,140,40,0.18);border-radius:8px;padding:10px;color:var(--text)"><strong>Your counter:</strong> ' + sow.counter_note + '</div>' : '')
+        + '</div>';
+    });
+  }
+
+  if (body) body.innerHTML = html;
+}
+
+function flToggleTask(taskId) {
+  const task = (store.tasks || []).find(t => t.id === taskId);
+  if (!task) return;
+  task.status = task.status === 'done' ? 'todo' : 'done';
+  save();
+  renderFLWork();
+}
+
+async function flRespondSOW(sowId, status) {
+  const { error } = await _sb.from('sows').update({ status, updated_at: new Date().toISOString() }).eq('id', sowId);
+  if (error) { toast('Error: ' + error.message); return; }
+  toast(status === 'accepted' ? 'SOW accepted ✓' : 'Declined');
+  renderFLWork();
+}
+
+function flCounterSOWModal(sowId) {
+  openModal('<div class="modal-title">Counter Proposal</div>'
+    + '<div class="form-group"><label>Your counter note</label>'
+    + '<textarea id="fl-counter-note" rows="4" placeholder="Describe your counter — different rate, scope adjustment, timeline change…"></textarea></div>'
+    + '<div class="modal-footer">'
+    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn btn-primary" onclick="flSubmitCounter(\'' + sowId + '\')">Submit Counter</button>'
+    + '</div>');
+}
+
+async function flSubmitCounter(sowId) {
+  const note = document.getElementById('fl-counter-note').value.trim();
+  if (!note) { toast('Please add a note'); return; }
+  const { error } = await _sb.from('sows').update({ status: 'countered', counter_note: note, updated_at: new Date().toISOString() }).eq('id', sowId);
+  if (error) { toast('Error: ' + error.message); return; }
+  closeModal(); toast('Counter submitted ✓');
+  renderFLWork();
+}
+
+function flSubmitInvoiceModal(sowId, projectId, rate, estimatedHours) {
+  const today = new Date().toISOString().split('T')[0];
+  openModal('<div class="modal-title">Submit Invoice</div>'
+    + '<div class="form-grid">'
+    + '<div class="form-group"><label>Invoice Number</label><input id="fl-inv-num" placeholder="INV-001"></div>'
+    + '<div class="form-group"><label>Invoice Date</label><input id="fl-inv-date" type="date" value="' + today + '"></div>'
+    + '<div class="form-group"><label>Hours Worked</label><input id="fl-inv-hours" type="number" step="0.5" value="' + estimatedHours + '" oninput="flUpdateInvoiceTotal()"></div>'
+    + '<div class="form-group"><label>Rate ($/hr)</label><input id="fl-inv-rate" type="number" value="' + rate + '" oninput="flUpdateInvoiceTotal()"></div>'
+    + '<div class="form-group"><label>HST / VAT %</label><input id="fl-inv-vat" type="number" value="0" oninput="flUpdateInvoiceTotal()"></div>'
+    + '<div class="form-group"><label>Gross Total</label><input id="fl-inv-total" readonly style="font-weight:700;font-size:15px"></div>'
+    + '<div class="form-group full"><label>Bank / E-Transfer Details</label><textarea id="fl-inv-bank" rows="2" placeholder="Bank name, account number, or e-transfer email…"></textarea></div>'
+    + '<div class="form-group full"><label>Notes (optional)</label><textarea id="fl-inv-notes" rows="2"></textarea></div>'
+    + '</div>'
+    + '<div class="modal-footer">'
+    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn btn-primary" onclick="flSubmitInvoice(\'' + sowId + '\',\'' + (projectId || '') + '\')">Submit Invoice</button>'
+    + '</div>');
+  flUpdateInvoiceTotal();
+}
+
+function flUpdateInvoiceTotal() {
+  const hours = parseFloat(document.getElementById('fl-inv-hours')?.value) || 0;
+  const rate = parseFloat(document.getElementById('fl-inv-rate')?.value) || 0;
+  const vat = parseFloat(document.getElementById('fl-inv-vat')?.value) || 0;
+  const sub = hours * rate;
+  const vatAmt = sub * vat / 100;
+  const el = document.getElementById('fl-inv-total');
+  if (el) el.value = '$' + (sub + vatAmt).toFixed(2);
+}
+
+async function flSubmitInvoice(sowId, projectId) {
+  const num = document.getElementById('fl-inv-num').value.trim();
+  const date = document.getElementById('fl-inv-date').value;
+  const hours = parseFloat(document.getElementById('fl-inv-hours').value) || 0;
+  const rate = parseFloat(document.getElementById('fl-inv-rate').value) || 0;
+  const vat = parseFloat(document.getElementById('fl-inv-vat').value) || 0;
+  const bank = document.getElementById('fl-inv-bank').value.trim();
+  const notes = document.getElementById('fl-inv-notes').value.trim();
+  if (!num) { toast('Invoice number required'); return; }
+  if (!date) { toast('Invoice date required'); return; }
+  const sub = hours * rate;
+  const vatAmt = sub * vat / 100;
+  const gross = sub + vatAmt;
+  const proj = projectId ? store.projects.find(p => String(p.id) === String(projectId)) : null;
+  const { error } = await _sb.from('freelancer_invoices').insert({
+    sow_id: sowId,
+    freelancer_email: currentUser.email,
+    freelancer_name: _flMember?.name || currentUserName,
+    project_id: projectId || null,
+    project_name: proj?.name || '',
+    invoice_number: num,
+    invoice_date: date,
+    hours_worked: hours,
+    rate: rate,
+    subtotal: sub,
+    vat_rate: vat,
+    vat_amount: vatAmt,
+    gross_total: gross,
+    bank_details: bank,
+    notes: notes,
+    status: 'pending'
+  });
+  if (error) { toast('Error: ' + error.message); return; }
+  closeModal(); toast('Invoice submitted ✓');
+  renderFLWork();
+}
+
+function renderFLAvailability() {
+  const m = _flMember;
+  if (!m) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const periods = m.availabilityPeriods || [];
+  const current = getMemberAvailability(m);
+  const periodRows = periods.map(p => {
+    const from = new Date(p.from + 'T00:00:00');
+    const to = new Date(p.to + 'T00:00:00');
+    const isCurrent = today >= from && today <= to;
+    const isPast = today > to;
+    return '<div class="fl-task-row" style="opacity:' + (isPast ? '0.45' : '1') + '">'
+      + '<span class="status-badge badge-' + p.type + '" style="flex-shrink:0">' + (AVAIL_LABEL[p.type] || p.type) + '</span>'
+      + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">' + formatDate(p.from) + ' → ' + formatDate(p.to) + '</div>'
+      + (p.note ? '<div style="font-size:11px;color:var(--muted)">' + p.note + '</div>' : '') + '</div>'
+      + (isCurrent ? '<span style="font-size:10px;font-weight:700;background:var(--accent);color:var(--navy);padding:2px 7px;border-radius:20px;flex-shrink:0">Now</span>' : '')
+      + '</div>';
+  }).join('');
+  return '<div class="fl-section-label">My Status</div>'
+    + '<div class="fl-card">'
+    + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
+    + '<span class="status-badge badge-' + current + '" style="font-size:13px;padding:6px 14px">' + (AVAIL_LABEL[current] || current) + '</span>'
+    + '<div style="font-size:12px;color:var(--muted)">Current status</div></div>'
+    + '<label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px">Update Status</label>'
+    + '<select id="fl-avail-select" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)" onchange="flUpdateAvailability()">'
+    + '<option value="available"' + (m.availability === 'available' ? ' selected' : '') + '>Available</option>'
+    + '<option value="busy"' + (m.availability === 'busy' ? ' selected' : '') + '>Busy</option>'
+    + '<option value="away"' + (m.availability === 'away' ? ' selected' : '') + '>Away</option>'
+    + '</select></div>'
+    + '<div class="fl-section-label">Scheduled Periods</div>'
+    + '<div class="fl-card" style="padding:4px 20px">'
+    + (periods.length === 0 ? '<div style="padding:16px 0;color:var(--muted);font-size:13px;text-align:center">No periods scheduled.</div>' : periodRows)
+    + '</div>'
+    + '<button class="btn btn-primary" style="margin-top:12px" onclick="flAddAvailabilityModal()">+ Add Period</button>';
+}
+
+function flUpdateAvailability() {
+  if (!_flMember) return;
+  const val = document.getElementById('fl-avail-select').value;
+  _flMember.availability = val;
+  const m = store.team.find(t => t.id === _flMember.id);
+  if (m) m.availability = val;
+  save(); toast('Availability updated ✓');
+}
+
+function flAddAvailabilityModal() {
+  const today = new Date().toISOString().split('T')[0];
+  openModal('<div class="modal-title">Add Availability Period</div>'
+    + '<div class="form-grid">'
+    + '<div class="form-group"><label>From</label><input id="fl-ap-from" type="date" value="' + today + '"></div>'
+    + '<div class="form-group"><label>To</label><input id="fl-ap-to" type="date"></div>'
+    + '<div class="form-group full"><label>Type</label><select id="fl-ap-type"><option value="available">Available</option><option value="busy">Busy</option><option value="away">Away</option></select></div>'
+    + '<div class="form-group full"><label>Note (optional)</label><input id="fl-ap-note" placeholder="Holiday, other project…"></div>'
+    + '</div>'
+    + '<div class="modal-footer">'
+    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn btn-primary" onclick="flSaveAvailabilityPeriod()">Add Period</button>'
+    + '</div>');
+}
+
+function flSaveAvailabilityPeriod() {
+  if (!_flMember) return;
+  const from = document.getElementById('fl-ap-from').value;
+  const to = document.getElementById('fl-ap-to').value;
+  const type = document.getElementById('fl-ap-type').value;
+  const note = document.getElementById('fl-ap-note').value.trim();
+  if (!from || !to) { toast('From and To dates required'); return; }
+  const m = store.team.find(t => t.id === _flMember.id);
+  if (!m) return;
+  if (!m.availabilityPeriods) m.availabilityPeriods = [];
+  m.availabilityPeriods.push({ id: Date.now(), from, to, type, note });
+  _flMember.availabilityPeriods = m.availabilityPeriods;
+  closeModal(); save(); toast('Period added ✓');
+  document.getElementById('fl-body').innerHTML = renderFLAvailability();
+}
+
+function renderFLOnboarding() {
+  const isAdmin = currentUserRole === 'admin';
+  const content = store.onboarding || '';
+  return '<div class="fl-section-label">Welcome</div>'
+    + '<div class="fl-card">'
+    + (content
+      ? '<div style="font-size:14px;line-height:1.75;white-space:pre-wrap">' + content + '</div>'
+      : '<div style="color:var(--muted);font-size:13px;padding:12px 0;text-align:center">Onboarding content coming soon. Check back here for important info about working with us.</div>')
+    + '</div>'
+    + (isAdmin ? '<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="flEditOnboardingModal()">Edit Onboarding Content</button>' : '');
+}
+
+function flEditOnboardingModal() {
+  openModal('<div class="modal-title">Edit Onboarding Content</div>'
+    + '<div class="form-group"><label>Content (shown to all freelancers on their Onboarding tab)</label>'
+    + '<textarea id="fl-onboard-content" rows="12" placeholder="Write your welcome message, house rules, how to submit invoices, who to contact…">' + (store.onboarding || '') + '</textarea></div>'
+    + '<div class="modal-footer">'
+    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn btn-primary" onclick="flSaveOnboarding()">Save</button>'
+    + '</div>');
+}
+
+function flSaveOnboarding() {
+  store.onboarding = document.getElementById('fl-onboard-content').value;
+  closeModal(); save(); toast('Onboarding updated ✓');
+  document.getElementById('fl-body').innerHTML = renderFLOnboarding();
+}
+
+async function flChangePassword() {
+  openModal('<div class="modal-title">Change Password</div>'
+    + '<div class="form-group"><label>New Password</label><input id="fl-new-pw" type="password" placeholder="Min 8 characters"></div>'
+    + '<div class="modal-footer">'
+    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn btn-primary" onclick="flDoChangePassword()">Update Password</button>'
+    + '</div>');
+}
+
+async function flDoChangePassword() {
+  const pw = document.getElementById('fl-new-pw').value;
+  if (pw.length < 8) { toast('Password must be at least 8 characters'); return; }
+  const { error } = await _sb.auth.updateUser({ password: pw });
+  if (error) { toast('Error: ' + error.message); return; }
+  closeModal(); toast('Password updated ✓');
+}
+
+// ─── ADMIN SOW MANAGEMENT ─────────────────────────────────────────────────────
+
+function renderMemberSOWsAdmin(m) {
+  setTimeout(() => adminLoadSOWsTab(m.id), 50);
+  return '<div id="fl-sows-tab-content"><div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Loading SOWs…</div></div>';
+}
+
+async function adminLoadSOWsTab(memberId) {
+  const m = store.team.find(t => t.id === memberId);
+  if (!m) return;
+  const [sowRes, invRes] = await Promise.all([
+    _sb.from('sows').select('*').eq('freelancer_email', m.email).order('created_at', { ascending: false }),
+    _sb.from('freelancer_invoices').select('*').eq('freelancer_email', m.email).order('submitted_at', { ascending: false })
+  ]);
+  const sows = sowRes.data || [];
+  const invoices = invRes.data || [];
+
+  let html = '<div class="section-header" style="margin-top:24px">'
+    + '<div class="section-title">Statements of Work</div>'
+    + '<button class="btn btn-primary btn-sm" onclick="openCreateSOWModal(' + memberId + ')">+ Create SOW</button>'
+    + '</div>';
+
+  if (sows.length === 0) {
+    html += '<div class="card"><div class="empty-state"><div class="empty-icon">◈</div><p>No SOWs sent yet.</p></div></div>';
+  } else {
+    sows.forEach(sow => {
+      const sowInvoices = invoices.filter(i => i.sow_id === sow.id);
+      html += '<div class="card" style="margin-bottom:12px">'
+        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px">'
+        + '<div><div style="font-weight:700;font-size:14px">' + sow.title + '</div>'
+        + '<div style="font-size:12px;color:var(--muted);margin-top:3px">' + (sow.project_name || 'General') + ' · $' + (sow.rate || 0) + '/hr · ' + (sow.estimated_hours || 0) + 'h · $' + ((sow.rate || 0) * (sow.estimated_hours || 0)).toLocaleString() + '</div>'
+        + '</div><span class="fl-sow-status ' + sow.status + '">' + sow.status + '</span>'
+        + '</div>'
+        + (sow.counter_note
+          ? '<div style="background:rgba(200,140,40,0.07);border:1px solid rgba(200,140,40,0.18);border-radius:8px;padding:12px;font-size:13px;margin-bottom:10px">'
+            + '<div style="font-weight:600;margin-bottom:4px;color:#A06020">Counter from freelancer:</div>'
+            + '<div style="color:var(--text)">' + sow.counter_note + '</div>'
+            + '<div style="display:flex;gap:8px;margin-top:10px">'
+            + '<button class="btn btn-primary btn-sm" onclick="adminRespondCounter(\'' + sow.id + '\',\'agreed\',' + memberId + ')">Agree to Counter</button>'
+            + '<button class="btn btn-ghost btn-sm" onclick="adminRespondCounter(\'' + sow.id + '\',\'declined\',' + memberId + ')">Decline</button>'
+            + '</div></div>'
+          : '')
+        + (sowInvoices.length > 0
+          ? '<div style="margin-top:8px">' + sowInvoices.map(inv =>
+              '<div style="display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:6px">'
+              + '<div style="flex:1;min-width:0">'
+              + '<div style="font-size:13px;font-weight:600">' + inv.invoice_number + ' · $' + (inv.gross_total || 0).toLocaleString() + '</div>'
+              + '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + formatDate(inv.invoice_date) + ' · ' + inv.hours_worked + 'h @ $' + inv.rate + '/hr</div>'
+              + (inv.bank_details ? '<div style="font-size:11px;color:var(--muted);margin-top:1px">Pay to: ' + inv.bank_details + '</div>' : '')
+              + (inv.notes ? '<div style="font-size:11px;color:var(--muted);margin-top:1px">' + inv.notes + '</div>' : '')
+              + '</div>'
+              + '<span class="fl-sow-status ' + inv.status + '">' + inv.status + '</span>'
+              + (inv.status === 'pending' ? '<button class="btn btn-primary btn-sm" onclick="adminApproveInvoice(\'' + inv.id + '\',\'' + (sow.project_id || '') + '\',' + (inv.gross_total || 0) + ',\'' + m.name + '\',' + memberId + ')">Approve & Pay</button>' : '')
+              + '</div>'
+            ).join('') + '</div>'
+          : '')
+        + '</div>';
+    });
+  }
+
+  const container = document.getElementById('fl-sows-tab-content');
+  if (container) container.innerHTML = html;
+}
+
+function openCreateSOWModal(memberId) {
+  const m = store.team.find(t => t.id === memberId);
+  if (!m) return;
+  const projectOpts = store.projects
+    .filter(p => p.status === 'active' || p.status === 'planning')
+    .map(p => '<option value="' + p.id + '">' + p.name + '</option>').join('');
+  openModal('<div class="modal-title">Create SOW — ' + m.name + '</div>'
+    + '<div class="form-grid">'
+    + '<div class="form-group full"><label>Project (optional)</label><select id="sow-project"><option value="">— General (no project) —</option>' + projectOpts + '</select></div>'
+    + '<div class="form-group full"><label>SOW Title</label><input id="sow-title" placeholder="e.g. Photography Shoot — Q3 Campaign"></div>'
+    + '<div class="form-group full"><label>Scope of Work</label><textarea id="sow-scope" rows="3" placeholder="What are they being hired to do?"></textarea></div>'
+    + '<div class="form-group full"><label>Deliverables</label><textarea id="sow-deliverables" rows="2" placeholder="List what they\'ll deliver…"></textarea></div>'
+    + '<div class="form-group"><label>Timeline</label><input id="sow-timeline" placeholder="e.g. Aug 15 – Aug 30"></div>'
+    + '<div class="form-group"><label>Hourly Rate ($)</label><input id="sow-rate" type="number" step="0.5" value="' + (m.rate || 0) + '" oninput="adminUpdateSOWFee()"></div>'
+    + '<div class="form-group"><label>Estimated Hours</label><input id="sow-hours" type="number" step="0.5" value="0" oninput="adminUpdateSOWFee()"></div>'
+    + '<div class="form-group"><label>Estimated Fee</label><input id="sow-fee" readonly style="font-weight:700;font-size:15px" value="$0.00"></div>'
+    + '</div>'
+    + '<div class="modal-footer">'
+    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn btn-primary" onclick="adminCreateSOW(' + memberId + ')">Send SOW</button>'
+    + '</div>');
+}
+
+function adminUpdateSOWFee() {
+  const rate = parseFloat(document.getElementById('sow-rate')?.value) || 0;
+  const hours = parseFloat(document.getElementById('sow-hours')?.value) || 0;
+  const el = document.getElementById('sow-fee');
+  if (el) el.value = '$' + (rate * hours).toFixed(2);
+}
+
+async function adminCreateSOW(memberId) {
+  const m = store.team.find(t => t.id === memberId);
+  if (!m) return;
+  const projectId = document.getElementById('sow-project').value;
+  const title = document.getElementById('sow-title').value.trim();
+  const scope = document.getElementById('sow-scope').value.trim();
+  const deliverables = document.getElementById('sow-deliverables').value.trim();
+  const timeline = document.getElementById('sow-timeline').value.trim();
+  const rate = parseFloat(document.getElementById('sow-rate').value) || 0;
+  const hours = parseFloat(document.getElementById('sow-hours').value) || 0;
+  if (!title) { toast('SOW title required'); return; }
+  const proj = projectId ? store.projects.find(p => String(p.id) === String(projectId)) : null;
+  const { error } = await _sb.from('sows').insert({
+    project_id: projectId || null,
+    project_name: proj?.name || '',
+    freelancer_email: m.email,
+    freelancer_name: m.name,
+    title,
+    scope,
+    deliverables,
+    timeline,
+    rate,
+    estimated_hours: hours,
+    fee: rate * hours,
+    status: 'sent'
+  });
+  if (error) { toast('Error: ' + error.message); return; }
+  closeModal(); toast('SOW sent ✓');
+  adminLoadSOWsTab(memberId);
+}
+
+async function adminRespondCounter(sowId, status, memberId) {
+  const { error } = await _sb.from('sows').update({ status, updated_at: new Date().toISOString() }).eq('id', sowId);
+  if (error) { toast('Error: ' + error.message); return; }
+  toast(status === 'agreed' ? 'Counter agreed ✓' : 'Counter declined');
+  adminLoadSOWsTab(memberId);
+}
+
+async function adminApproveInvoice(invoiceId, projectId, grossTotal, memberName, memberId) {
+  const { error } = await _sb.from('freelancer_invoices').update({ status: 'paid' }).eq('id', invoiceId);
+  if (error) { toast('Error: ' + error.message); return; }
+  // Feed into project budget actuals (Team line)
+  if (projectId) {
+    const proj = store.projects.find(p => String(p.id) === String(projectId));
+    if (proj) {
+      ensureBudgetLines(proj);
+      const teamLine = proj.budgetLines.find(l => l.category === 'Team');
+      if (teamLine) teamLine.actuals = (teamLine.actuals || 0) + grossTotal;
+      save();
+    }
+  }
+  toast('Invoice approved & marked paid ✓');
+  adminLoadSOWsTab(memberId);
 }
 
 initApp();

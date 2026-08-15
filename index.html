@@ -134,6 +134,25 @@
   </div>
 </div>
 
+<!-- FREELANCER PORTAL -->
+<div id="freelancer-screen" style="display:none;position:fixed;inset:0;z-index:9998;flex-direction:column;background:var(--bg);overflow:hidden">
+  <header class="fl-header">
+    <div class="fl-header-inner">
+      <img id="fl-logo" style="height:28px;object-fit:contain">
+      <div class="fl-header-actions">
+        <button class="btn btn-ghost btn-sm" onclick="flChangePassword()">Change Password</button>
+        <button class="btn btn-ghost btn-sm" onclick="handleSignOut()">Sign Out</button>
+      </div>
+    </div>
+    <nav class="fl-nav">
+      <button class="fl-nav-btn active" data-flview="work" onclick="flNavigate('work')">Work</button>
+      <button class="fl-nav-btn" data-flview="availability" onclick="flNavigate('availability')">Availability</button>
+      <button class="fl-nav-btn" data-flview="onboarding" onclick="flNavigate('onboarding')">Onboarding</button>
+    </nav>
+  </header>
+  <main class="fl-body" id="fl-body"></main>
+</div>
+
 <script src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
