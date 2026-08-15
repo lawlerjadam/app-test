@@ -358,6 +358,7 @@ let convertingLeadId=null;
 let highlightLeadId=null;
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let calMobileWeekOffset=0;
+let calView='horizon'; // 'horizon' | 'month'
 
 let mobileNavTray=null;
 const MOBILE_TRAY_SECTIONS={
@@ -1553,6 +1554,7 @@ function deleteInvoice(id) {
 }
 
 // ─── CALENDAR ─────────────────────────────────────────────────────────────────
+function calSetView(v){calView=v;render();}
 function renderCalendar() {
   const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const monthNamesShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1691,16 +1693,139 @@ function renderCalendar() {
 
   const finalMobileView=mobileView.replace('DOCKET_PLACEHOLDER',docketHtml).replace('ALL_PROJECTS_PLACEHOLDER',allProjectsHtml);
 
+  // ── Shared helpers for desktop views ────────────────────────────────────────
+  const todayNow = new Date();
+  const todayFlat = new Date(todayNow); todayFlat.setHours(0,0,0,0);
+  const dow0 = (todayFlat.getDay()+6)%7;
+  const thisMonday = new Date(todayFlat); thisMonday.setDate(todayFlat.getDate()-dow0);
+
+  function urgColor(diffDays) {
+    if(diffDays<=0)  return 'var(--red)';
+    if(diffDays<=3)  return 'var(--red)';
+    if(diffDays<=7)  return 'var(--orange)';
+    if(diffDays<=14) return '#BA7517';
+    return 'var(--green)';
+  }
+
+  // Point events (tasks + milestones + invoices) on a given date string
+  function pointsOnDate(cellDate) {
+    const s = cellDate.toDateString();
+    const diff = Math.round((cellDate-todayFlat)/86400000);
+    const pts = [];
+    (store.tasks||[]).forEach(t=>{
+      if(t.dueDate&&t.status!=='done'&&new Date(t.dueDate+'T12:00:00').toDateString()===s){
+        const proj=t.projectId?store.projects.find(p=>p.id===t.projectId):null;
+        pts.push({icon:'◆',label:t.title,sub:proj?proj.name:'General',diff,color:urgColor(diff),onclick:`navigate('tasks')`});
+      }
+    });
+    store.projects.forEach(p=>{
+      (p.tasks||[]).forEach(t=>{
+        if(t.dueDate&&t.status!=='done'&&new Date(t.dueDate+'T12:00:00').toDateString()===s)
+          pts.push({icon:'◈',label:t.name,sub:p.name,diff,color:urgColor(diff),onclick:`navigate('project-detail',${p.id})`});
+      });
+      (p.invoices||[]).filter(i=>i.date&&i.status!=='paid'&&new Date(i.date+'T12:00:00').toDateString()===s)
+        .forEach(i=>pts.push({icon:'◱',label:i.supplier||'Invoice',sub:p.name,diff,color:urgColor(diff),onclick:`navigate('project-detail',${p.id})`}));
+    });
+    return pts;
+  }
+
+  // ── Week drain strip ─────────────────────────────────────────────────────────
+  const nowHourPct = Math.round((todayNow.getHours()*60+todayNow.getMinutes())/1440*100);
+  const drainHtml = Array.from({length:7},(_,i)=>{
+    const d=new Date(thisMonday); d.setDate(thisMonday.getDate()+i);
+    const isToday=d.toDateString()===todayFlat.toDateString();
+    const isPast=d<todayFlat;
+    const fill=isPast?100:isToday?nowHourPct:0;
+    const barCol=fill>80?'var(--red)':fill>50?'var(--orange)':fill>0?'var(--blue)':'var(--border)';
+    const pts=pointsOnDate(d);
+    const numHtml=isToday
+      ?`<div class="hz-drain-num" style="background:var(--accent);color:var(--navy);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px">${d.getDate()}</div>`
+      :`<div class="hz-drain-num">${d.getDate()}</div>`;
+    return`<div class="hz-drain-day${isToday?' today':''}${isPast?' past':''}">
+      <div class="hz-drain-name">${['M','T','W','T','F','S','S'][i]}</div>
+      ${numHtml}
+      <div class="hz-drain-bar-bg"><div class="hz-drain-bar-fill" style="height:${fill}%;background:${barCol}"></div></div>
+      ${pts.length?`<div class="hz-drain-count">${pts.length}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // ── Horizon view ─────────────────────────────────────────────────────────────
+  const hzHeaderCells = days.map(d=>`<div class="hz-day-head">${d}</div>`).join('');
+  const hzRows = Array.from({length:8},(_,w)=>{
+    const rowMon=new Date(thisMonday); rowMon.setDate(thisMonday.getDate()+w*7);
+    const isNow=w===0;
+    const wLabel=w===0?'This week':w===1?'Next week':`+${w} weeks`;
+    const cells2=Array.from({length:7},(_,d2)=>{
+      const cell=new Date(rowMon); cell.setDate(rowMon.getDate()+d2);
+      const isToday2=cell.toDateString()===todayFlat.toDateString();
+      const isPast2=cell<todayFlat;
+      const diff2=Math.round((cell-todayFlat)/86400000);
+      const cStr=cell.toDateString();
+      // Project spans
+      const spans=store.projects.filter(p=>{
+        if(!p.startDate||!p.endDate)return false;
+        const s2=new Date(p.startDate+'T00:00:00'),e2=new Date(p.endDate+'T23:59:59');
+        return cell>=s2&&cell<=e2;
+      });
+      const spansHtml=spans.slice(0,2).map(p=>{
+        const isStart=new Date(p.startDate+'T12:00:00').toDateString()===cStr;
+        const isEnd=new Date(p.endDate+'T12:00:00').toDateString()===cStr;
+        const col=p.color||'var(--blue)';
+        return`<div class="hz-span" style="background:${col}20;${isStart?`border-left:2px solid ${col}`:'border-left:2px solid transparent'};color:${col}" onclick="navigate('project-detail',${p.id})">${isStart?`<span class="hz-span-name">${p.name.split('—')[0].trim()}</span>`:''}</div>`;
+      }).join('');
+      // Deadline marker
+      const deadlines=store.projects.filter(p=>p.endDate&&new Date(p.endDate+'T12:00:00').toDateString()===cStr);
+      const deadlineHtml=deadlines.map(p=>`<div class="hz-deadline-bar" style="background:${p.color||'var(--red)'}"></div>`).join('');
+      // Point events
+      const pts=pointsOnDate(cell);
+      const ptsHtml=pts.slice(0,3).map(pt=>`<div class="hz-point" style="color:${pt.color}" onclick="${pt.onclick}">
+        <span class="hz-point-icon">${pt.icon}</span>
+        <span class="hz-point-label">${pt.label}</span>
+        ${!isPast2?`<span class="hz-point-tminus">T-${diff2}</span>`:''}
+      </div>`).join('');
+      // Month pip on 1st of month
+      const monthPip=cell.getDate()===1?`<span class="hz-cell-month">${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][cell.getMonth()]}</span>`:'';
+      return`<div class="hz-cell${isToday2?' hz-today':''}${isPast2?' hz-past':''}">
+        <div class="hz-cell-num">${cell.getDate()}${monthPip}</div>
+        ${deadlineHtml}${spansHtml}${ptsHtml}
+      </div>`;
+    }).join('');
+    return`<div class="hz-row${isNow?' hz-now':''}">
+      <div class="hz-week-label">${wLabel}</div>
+      <div class="hz-days">${cells2}</div>
+    </div>`;
+  }).join('');
+
+  const horizonHtml=`<div class="hz-grid">
+    <div class="hz-grid-header"><div class="hz-header-spacer"></div><div class="hz-day-heads">${hzHeaderCells}</div></div>
+    ${hzRows}
+  </div>`;
+
+  // ── Month grid (existing, kept as toggle) ────────────────────────────────────
+  const monthGridHtml=`
+    <div class="cal-nav">
+      <button class="btn btn-ghost btn-sm" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}render()">← Prev</button>
+      <div class="cal-month">${monthNames[calMonth]} ${calYear}</div>
+      <button class="btn btn-ghost btn-sm" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}render()">Next →</button>
+    </div>
+    <div class="cal-grid"><div class="cal-header">${days.map(d=>`<div class="cal-header-cell">${d}</div>`).join('')}</div><div class="cal-body">${cells.map(c=>renderCell(c)).join('')}</div></div>`;
+
   return `
-    <div class="topbar"><div><div class="page-title">Calendar</div><div class="page-sub">Project timeline overview</div></div></div>
+    <div class="topbar">
+      <div><div class="page-title">Calendar</div><div class="page-sub">8-week horizon · today pinned top-left</div></div>
+      <div class="cal-view-toggle">
+        <button class="cal-view-btn${calView==='horizon'?' active':''}" onclick="calSetView('horizon')">Horizon</button>
+        <button class="cal-view-btn${calView==='month'?' active':''}" onclick="calSetView('month')">Month</button>
+      </div>
+    </div>
     <div class="content">
       ${finalMobileView}
       <div class="cal-desktop-view">
-        <div class="section-header"><div class="section-title">On the docket</div><div style="font-size:12px;color:var(--muted)">Next 5 days</div></div>
+        <div class="hz-drain-strip">${drainHtml}</div>
+        <div class="section-header" style="margin-bottom:12px"><div class="section-title">On the docket</div><div style="font-size:12px;color:var(--muted)">Next 5 days</div></div>
         <div class="cal-list" style="margin-bottom:24px">${docketHtml}</div>
-        <div class="cal-nav"><button class="btn btn-ghost btn-sm" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}render()">← Prev</button><div class="cal-month">${monthNames[calMonth]} ${calYear}</div><button class="btn btn-ghost btn-sm" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}render()">Next →</button></div>
-        <div class="cal-grid"><div class="cal-header">${days.map(d=>`<div class="cal-header-cell">${d}</div>`).join('')}</div><div class="cal-body">${cells.map(c=>renderCell(c)).join('')}</div></div>
-        <div class="section-header"><div class="section-title">All Projects</div></div>
+        ${calView==='horizon' ? horizonHtml : monthGridHtml}
+        <div class="section-header" style="margin-top:24px"><div class="section-title">All Projects</div></div>
         <div class="cal-list">${allProjectsHtml}</div>
       </div>
     </div>`;
