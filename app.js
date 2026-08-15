@@ -1894,6 +1894,7 @@ function renderIdeas() {
 
 // ─── TASKS ────────────────────────────────────────────────────────────────────
 let tasksFilter = 'all'; // 'all' | 'general' | project id (number)
+let tasksView = 'kanban'; // 'kanban' | 'runway'
 const GT_STATUS = [{key:'todo',label:'To Do'},{key:'in-progress',label:'In Progress'},{key:'done',label:'Done'}];
 const GT_STATUS_COLOR = {'todo':'var(--muted)','in-progress':'var(--blue)','done':'var(--green)'};
 
@@ -1971,6 +1972,84 @@ function renderUpcomingStrip() {
   </div>`;
 }
 
+function renderTasksRunway(tasks) {
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  function urgCol(diff) {
+    if (diff < 0)  return { bar:'var(--red)',    text:'#A32D2D', bg:'#FCEBEB', label:'Overdue' };
+    if (diff <= 3) return { bar:'var(--red)',    text:'#A32D2D', bg:'#FCEBEB', label: diff===0?'Today':diff===1?'Tomorrow':`${diff} days` };
+    if (diff <= 7) return { bar:'var(--orange)', text:'#7A3510', bg:'#FEF3C7', label:`${diff} days` };
+    if (diff <= 14)return { bar:'#BA7517',       text:'#7A3510', bg:'#FEF3C7', label:`${diff} days` };
+    return           { bar:'var(--green)',   text:'#0F6E56', bg:'#D1FAE5', label:`${diff} days` };
+  }
+
+  const dated   = tasks.filter(t => t.dueDate && t.status !== 'done')
+    .map(t => ({ ...t, _diff: Math.round((new Date(t.dueDate+'T00:00:00') - today) / 86400000) }))
+    .sort((a,b) => a._diff - b._diff);
+  const overdue = dated.filter(t => t._diff < 0);
+  const upcoming= dated.filter(t => t._diff >= 0);
+  const nodated = tasks.filter(t => !t.dueDate && t.status !== 'done');
+  const done    = tasks.filter(t => t.status === 'done');
+
+  // Runway scale: 0 to max(30, furthest due date) days
+  const maxDiff = Math.max(30, ...upcoming.map(t => t._diff));
+
+  function taskRow(t, showRunway=true) {
+    const diff = t._diff ?? 0;
+    const c = urgCol(diff);
+    const proj = t.projectId ? store.projects.find(p=>p.id===t.projectId) : null;
+    const pct = showRunway ? Math.min(100, Math.max(2, Math.round((diff / maxDiff) * 100))) : 0;
+    const statusDot = t.status==='in-progress' ? 'var(--blue)' : t.status==='done' ? 'var(--green)' : 'var(--muted)';
+    return `<div class="runway-row" onclick="openGlobalTaskModal(${t.id})">
+      <div class="runway-tminus" style="color:${c.bar}">
+        ${diff < 0 ? `<span style="font-size:10px;font-weight:700">OVERDUE</span>` : `T-${diff}`}
+      </div>
+      <div class="runway-info">
+        <div class="runway-title">${t.title}</div>
+        <div class="runway-meta">
+          <span style="width:7px;height:7px;border-radius:50%;background:${statusDot};display:inline-block;flex-shrink:0"></span>
+          ${t.status.replace('-',' ')}${proj ? ' · ' + proj.name : ''}${t.assignedTo ? ' · ' + t.assignedTo : ''}
+        </div>
+        ${showRunway ? `<div class="runway-track">
+          <div class="runway-fill" style="width:${pct}%;background:${c.bar}"></div>
+        </div>` : ''}
+      </div>
+      <div class="runway-badge" style="background:${c.bg};color:${c.text}">${c.label}</div>
+    </div>`;
+  }
+
+  function section(label, rows, emptyMsg, color='var(--muted)') {
+    return `<div class="runway-section">
+      <div class="runway-section-head" style="color:${color}">${label}</div>
+      ${rows.length ? rows.join('') : `<div class="runway-empty">${emptyMsg}</div>`}
+    </div>`;
+  }
+
+  return `<div class="runway-board">
+    ${overdue.length ? section('Overdue', overdue.map(t=>taskRow(t,false)), '', 'var(--red)') : ''}
+    ${section('Upcoming', upcoming.map(t=>taskRow(t,true)), 'No tasks with due dates — add one above.')}
+    ${section('No date', nodated.map(t=>{
+      const proj = t.projectId ? store.projects.find(p=>p.id===t.projectId) : null;
+      return `<div class="runway-row" onclick="openGlobalTaskModal(${t.id})">
+        <div class="runway-tminus" style="color:var(--muted)">—</div>
+        <div class="runway-info">
+          <div class="runway-title">${t.title}</div>
+          <div class="runway-meta">${t.status.replace('-',' ')}${proj?' · '+proj.name:''}${t.assignedTo?' · '+t.assignedTo:''}</div>
+        </div>
+        <div class="runway-badge" style="background:var(--surface);color:var(--muted);border:1px solid var(--border)">No date</div>
+      </div>`;
+    }), 'No undated tasks.')}
+    ${done.length ? `<div class="runway-section">
+      <div class="runway-section-head" style="color:var(--muted)">Done (${done.length})</div>
+      ${done.map(t=>{const proj=t.projectId?store.projects.find(p=>p.id===t.projectId):null;return`<div class="runway-row" style="opacity:0.45">
+        <div class="runway-tminus" style="color:var(--muted)">✓</div>
+        <div class="runway-info"><div class="runway-title" style="text-decoration:line-through">${t.title}</div><div class="runway-meta">${proj?proj.name:'General'}</div></div>
+        <div class="runway-badge" style="background:var(--surface);color:var(--muted)">done</div>
+      </div>`;}).join('')}
+    </div>` : ''}
+  </div>`;
+}
+
 function renderTasks() {
   const allTasks = store.tasks || [];
   const projects = store.projects;
@@ -1985,14 +2064,19 @@ function renderTasks() {
     : allTasks.filter(t=>t.projectId===tasksFilter);
 
   const pillsHtml = pills.map(p=>`<div class="kanban-filter-pill ${tasksFilter===p.key?'active':''}" onclick="tasksFilter=${typeof p.key==='number'?p.key:`'${p.key}'`};render()">${p.label}</div>`).join('');
-  const kanban = renderTasksKanban(filtered, null);
+  const viewToggle = `<div style="display:flex;gap:6px">
+    <button class="cal-view-btn${tasksView==='kanban'?' active':''}" onclick="tasksView='kanban';render()">Kanban</button>
+    <button class="cal-view-btn${tasksView==='runway'?' active':''}" onclick="tasksView='runway';render()">Runway</button>
+  </div>`;
+  const body = tasksView==='runway' ? renderTasksRunway(filtered) : renderTasksKanban(filtered, null);
 
   return `
-    <div class="topbar"><div><div class="page-title">Tasks</div><div class="page-sub">${allTasks.filter(t=>t.status!=='done').length} open · ${allTasks.filter(t=>t.status==='done').length} done</div></div><button class="btn btn-primary" onclick="openGlobalTaskModal()">+ Add Task</button></div>
+    <div class="topbar"><div><div class="page-title">Tasks</div><div class="page-sub">${allTasks.filter(t=>t.status!=='done').length} open · ${allTasks.filter(t=>t.status==='done').length} done</div></div>
+    <div style="display:flex;align-items:center;gap:10px">${viewToggle}<button class="btn btn-primary" onclick="openGlobalTaskModal()">+ Add Task</button></div></div>
     <div class="content">
       ${renderUpcomingStrip()}
       <div class="kanban-filter">${pillsHtml}</div>
-      ${kanban}
+      ${body}
     </div>`;
 }
 
