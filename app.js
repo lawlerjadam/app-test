@@ -3508,7 +3508,7 @@ async function afterLogin(session) {
   // Check if this user is a freelancer
   const myEmail = currentUser.email?.toLowerCase();
   const myMember = store.team.find(m => m.email?.toLowerCase() === myEmail);
-  if (myMember?.isFreelancer) {
+  if (myMember?.isFreelancer && currentUserRole !== 'admin') {
     showFreelancerPortal(myMember);
     return;
   }
