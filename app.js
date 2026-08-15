@@ -1928,7 +1928,11 @@ function renderTeam() {
   const pendingTotal = store.team.reduce((s,m)=>s+m.payments.filter(p=>p.status==='pending').reduce((a,p)=>a+p.amount,0),0);
   const overdueTotal = store.team.reduce((s,m)=>s+m.payments.filter(p=>p.status==='overdue').reduce((a,p)=>a+p.amount,0),0);
   return `
-    <div class="topbar"><div><div class="page-title">Team</div><div class="page-sub">${store.team.length} freelancers · ${avail.available} available</div></div><button class="btn btn-primary" onclick="openNewMemberModal()">+ Add</button></div>
+    <div class="topbar"><div><div class="page-title">Team</div><div class="page-sub">${store.team.length} freelancers · ${avail.available} available</div></div>
+      <div style="display:flex;gap:8px">
+        ${currentUserRole==='admin'?`<button class="btn btn-ghost btn-sm" onclick="flEditOnboardingModal()">Edit Onboarding</button>`:''}
+        <button class="btn btn-primary" onclick="openNewMemberModal()">+ Add</button>
+      </div></div>
     <div class="content">
       <div class="stats-row" style="margin-bottom:20px">
         <div class="stat-card"><div class="stat-label">Available</div><div class="stat-value" style="color:var(--green)">${avail.available}</div></div>
@@ -3980,7 +3984,6 @@ function flSaveAvailabilityPeriod() {
 }
 
 function renderFLOnboarding() {
-  const isAdmin = currentUserRole === 'admin';
   const content = store.onboarding || '';
   return '<div class="fl-section-label">Welcome</div>'
     + '<div class="fl-card">'
@@ -3988,7 +3991,7 @@ function renderFLOnboarding() {
       ? '<div style="font-size:14px;line-height:1.75;white-space:pre-wrap">' + content + '</div>'
       : '<div style="color:var(--muted);font-size:13px;padding:12px 0;text-align:center">Onboarding content coming soon. Check back here for important info about working with us.</div>')
     + '</div>'
-    + (isAdmin ? '<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="flEditOnboardingModal()">Edit Onboarding Content</button>' : '');
+    ;
 }
 
 function flEditOnboardingModal() {
