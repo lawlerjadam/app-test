@@ -339,6 +339,29 @@ if (!store._calExamplesAdded) {
   save();
 }
 
+// ─── MIGRATION: Example team member payments ───────────────────────────────────
+if (!store._memberPaymentsAdded) {
+  if (!store.nextId.payments) store.nextId.payments = 1;
+  const td2 = d => { const r=new Date(); r.setDate(r.getDate()+d); return r.toISOString().split('T')[0]; };
+  const mx = store.team.find(m => m.id === 1); // XMaya Chen
+  if (mx && mx.payments && mx.payments.length === 0) {
+    mx.payments.push(
+      {id:store.nextId.payments++, description:'X Day rate — pre-production week', projectId:1, amount:3200, date:td2(-14), status:'paid'},
+      {id:store.nextId.payments++, description:'X Day rate — shoot week',           projectId:1, amount:4000, date:td2(-7),  status:'paid'},
+      {id:store.nextId.payments++, description:'X Day rate — wrap & delivery',      projectId:1, amount:1600, date:td2(10),  status:'pending'}
+    );
+  }
+  const jx = store.team.find(m => m.id === 2); // XJordan Park
+  if (jx && jx.payments && jx.payments.length === 0) {
+    jx.payments.push(
+      {id:store.nextId.payments++, description:'X Creative direction — concept phase', projectId:1, amount:3750, date:td2(-10), status:'paid'},
+      {id:store.nextId.payments++, description:'X Creative direction — production',    projectId:1, amount:3750, date:td2(5),   status:'pending'}
+    );
+  }
+  store._memberPaymentsAdded = true;
+  save();
+}
+
 // ─── MIGRATION: Companies model ───────────────────────────────────────────────
 if (!store.companies) {
   store.companies = [];
@@ -1924,7 +1947,7 @@ function renderUpcomingStrip() {
   const upMilestones = [];
   store.projects.forEach(p => {
     (p.tasks||[]).filter(t => t.dueDate && inRange(t.dueDate) && t.status !== 'done').forEach(t => {
-      upMilestones.push({ label: t.name, sub: p.name, date: t.dueDate, onclick: `navigate('project-detail',undefined,${p.id})` });
+      upMilestones.push({ label: t.name, sub: p.name, date: t.dueDate, onclick: `navigate('project-detail',${p.id})` });
     });
   });
   upMilestones.sort((a,b) => a.date.localeCompare(b.date));
@@ -1933,7 +1956,7 @@ function renderUpcomingStrip() {
   const upInvoices = [];
   store.projects.forEach(p => {
     (p.invoices||[]).filter(i => i.date && inRange(i.date) && i.status !== 'paid').forEach(i => {
-      upInvoices.push({ label: i.supplier || 'Invoice', sub: p.name + ' · $' + (i.amount||0).toLocaleString(), date: i.date, tag: 'out', onclick: `navigate('project-detail',undefined,${p.id})` });
+      upInvoices.push({ label: i.supplier || 'Invoice', sub: p.name + ' · $' + (i.amount||0).toLocaleString(), date: i.date, tag: 'out', onclick: `navigate('project-detail',${p.id})` });
     });
   });
   (store.companies||[]).forEach(co => {
@@ -2000,7 +2023,7 @@ function renderTasksRunway(tasks) {
     const proj = t.projectId ? store.projects.find(p=>p.id===t.projectId) : null;
     const pct = showRunway ? Math.min(100, Math.max(2, Math.round((diff / maxDiff) * 100))) : 0;
     const statusDot = t.status==='in-progress' ? 'var(--blue)' : t.status==='done' ? 'var(--green)' : 'var(--muted)';
-    return `<div class="runway-row" onclick="openGlobalTaskModal(${t.id})">
+    return `<div class="runway-row" onclick="openEditGlobalTaskModal(${t.id})">
       <div class="runway-tminus" style="color:${c.bar}">
         ${diff < 0 ? `<span style="font-size:10px;font-weight:700">OVERDUE</span>` : `T-${diff}`}
       </div>
@@ -2030,7 +2053,7 @@ function renderTasksRunway(tasks) {
     ${section('Upcoming', upcoming.map(t=>taskRow(t,true)), 'No tasks with due dates — add one above.')}
     ${section('No date', nodated.map(t=>{
       const proj = t.projectId ? store.projects.find(p=>p.id===t.projectId) : null;
-      return `<div class="runway-row" onclick="openGlobalTaskModal(${t.id})">
+      return `<div class="runway-row" onclick="openEditGlobalTaskModal(${t.id})">
         <div class="runway-tminus" style="color:var(--muted)">—</div>
         <div class="runway-info">
           <div class="runway-title">${t.title}</div>
