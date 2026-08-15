@@ -1917,7 +1917,7 @@ function renderIdeas() {
 
 // ─── TASKS ────────────────────────────────────────────────────────────────────
 let tasksFilter = 'all'; // 'all' | 'general' | project id (number)
-let tasksView = 'kanban'; // 'kanban' | 'runway'
+let tasksView = 'runway'; // 'kanban' | 'runway'
 const GT_STATUS = [{key:'todo',label:'To Do'},{key:'in-progress',label:'In Progress'},{key:'done',label:'Done'}];
 const GT_STATUS_COLOR = {'todo':'var(--muted)','in-progress':'var(--blue)','done':'var(--green)'};
 
