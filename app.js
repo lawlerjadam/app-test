@@ -2906,7 +2906,12 @@ function renderContacts() {
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 function openModal(html){document.getElementById('modal-content').innerHTML=html;document.getElementById('modal').classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
-function closeModalOutside(e){if(e.target===document.getElementById('modal'))closeModal();}
+// Only close if the drag started on the backdrop itself (not inside modal content)
+let _modalMousedownOnBackdrop = false;
+document.getElementById('modal')?.addEventListener('mousedown', function(e){
+  _modalMousedownOnBackdrop = e.target === this;
+});
+function closeModalOutside(e){if(e.target===document.getElementById('modal')&&_modalMousedownOnBackdrop)closeModal();}
 function statusOpts(sel){return LEAD_STATUSES.map(s=>`<option value="${s.key}" ${sel===s.key?'selected':''}>${s.label}</option>`).join('');}
 
 function openNewIdeaModal(){const mn=store.team.map(m=>`<option>${m.name}</option>`).join('');openModal(`<div class="modal-title">✦ New Idea</div><div class="form-grid"><div class="form-group full"><label>Idea Title</label><input id="i-title" placeholder="Give it a name..."></div><div class="form-group"><label>Category</label><select id="i-cat"><option>Brand</option><option>Event</option><option>Space</option><option>Print</option><option>Digital</option><option>Product</option><option>Other</option></select></div><div class="form-group"><label>Submitted By</label><select id="i-by"><option value="">— Select —</option>${mn}<option value="Other">Other</option></select></div><div class="form-group full"><label>Description</label><textarea id="i-desc" placeholder="Describe the idea — no filter needed..."></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createIdea()">Add Idea</button></div>`);}
