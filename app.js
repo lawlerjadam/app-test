@@ -2569,6 +2569,8 @@ function renderFinance() {
   const outItems = [];
   store.projects.forEach(p => {
     (p.invoices||[]).forEach(inv => {
+      // Paid freelancer invoices are already captured via m.payments below — skip to avoid duplication
+      if (inv.type === 'freelancer' && inv.status === 'paid') return;
       outItems.push({ date:inv.date||'', description:inv.supplier+(inv.description?' — '+inv.description:''), project:p.name, category:inv.category, amount:inv.amount||0, status:inv.status, sourceType:'invoice', projectId:p.id });
     });
   });
