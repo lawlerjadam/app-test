@@ -3744,8 +3744,9 @@ async function renderFLWork() {
         + '<div style="flex:1;min-width:0">'
         + '<div style="font-size:14px;font-weight:600;color:var(--text)">' + t.title + '</div>'
         + '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + (proj ? proj.name : 'General') + (t.dueDate ? ' · Due ' + formatDate(t.dueDate) : '') + '</div>'
+        + (t.notes ? '<div style="font-size:12px;color:var(--text);margin-top:4px;line-height:1.5;opacity:0.75">' + t.notes + '</div>' : '')
         + '</div>'
-        + (t.category ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--bg);color:var(--muted);flex-shrink:0">' + t.category + '</span>' : '')
+        + (t.category ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--bg);color:var(--muted);flex-shrink:0;align-self:flex-start">' + t.category + '</span>' : '')
         + '</div>';
     });
     if (doneTasks.length > 0) {
