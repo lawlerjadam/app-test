@@ -919,7 +919,8 @@ function getBudgetTotals(p) {
   const margin    = Math.round(hardForecast * 0.2);   // planned FELT margin
   const feltCost  = Math.round(hardForecast * 0.8) + feeForecast; // FELT's target spend
   // Actuals = what FELT actually paid
-  const invoiceActuals = (p.invoices||[]).filter(i=>i.status==='paid').reduce((s,i)=>s+(i.amount||0),0);
+  // Exclude type:'freelancer' invoices — those are already captured via m.payments (teamActuals) to avoid double-counting
+  const invoiceActuals = (p.invoices||[]).filter(i=>i.status==='paid'&&i.type!=='freelancer').reduce((s,i)=>s+(i.amount||0),0);
   const teamActuals = store.team.reduce((s,m)=>s+(m.payments||[]).filter(pay=>pay.status==='paid'&&pay.projectId===p.id).reduce((a,pay)=>a+(pay.amount||0),0),0);
   const actuals = invoiceActuals + teamActuals;
   const actualMargin = forecast - actuals; // actual profit to FELT
@@ -1345,7 +1346,8 @@ function ensureBudgetLines(p) {
 function renderBudgetTab(p) {
   ensureBudgetLines(p);
   const paidByCat={};
-  (p.invoices||[]).filter(i=>i.status==='paid').forEach(i=>{paidByCat[i.category]=(paidByCat[i.category]||0)+(i.amount||0);});
+  // Exclude type:'freelancer' — those flow through m.payments below to avoid double-counting
+  (p.invoices||[]).filter(i=>i.status==='paid'&&i.type!=='freelancer').forEach(i=>{paidByCat[i.category]=(paidByCat[i.category]||0)+(i.amount||0);});
   store.team.forEach(m=>(m.payments||[]).filter(pay=>pay.status==='paid'&&pay.projectId===p.id).forEach(pay=>{paidByCat['Team']=(paidByCat['Team']||0)+(pay.amount||0);}));
 
   const hardLines = p.budgetLines.filter(l=>HARD_COST_CATS.includes(l.category));
@@ -3959,7 +3961,7 @@ async function flSubmitInvoice(sowId, projectId) {
   const vatAmt = sub * vat / 100;
   const gross = sub + vatAmt;
   const proj = projectId ? store.projects.find(p => String(p.id) === String(projectId)) : null;
-  const { error } = await _sb.from('freelancer_invoices').insert({
+  const { data: inv, error } = await _sb.from('freelancer_invoices').insert({
     sow_id: sowId,
     freelancer_email: currentUser.email,
     freelancer_name: _flMember?.name || currentUserName,
@@ -3976,8 +3978,26 @@ async function flSubmitInvoice(sowId, projectId) {
     bank_details: bank,
     notes: notes,
     status: 'pending'
-  });
+  }).select().single();
   if (error) { toast('Error: ' + error.message); return; }
+  // Add pending entry to project invoices tab
+  if (proj && inv?.id) {
+    if (!proj.invoices) proj.invoices = [];
+    if (!store.nextId.invoices) store.nextId.invoices = 1;
+    proj.invoices.push({
+      id: store.nextId.invoices++,
+      freelancerInvoiceId: inv.id,
+      supplier: _flMember?.name || currentUserName,
+      description: 'Freelancer Invoice ' + num,
+      category: 'Team',
+      amount: gross,
+      date: date,
+      status: 'pending',
+      type: 'freelancer',
+      notes: notes
+    });
+    save();
+  }
   closeModal(); toast('Invoice submitted ✓');
   renderFLWork();
 }
@@ -4303,6 +4323,27 @@ async function flSubmitTimeInvoice(totalHours, subtotal) {
     await _sb.from('time_entries').update({ invoice_id: inv.id }).in('id', entryIds);
   }
 
+  // Add pending entry to project invoices tab
+  const linkedProjectId = firstSow?.project_id || null;
+  const linkedProj = linkedProjectId ? store.projects.find(p => String(p.id) === String(linkedProjectId)) : null;
+  if (linkedProj && inv?.id) {
+    if (!linkedProj.invoices) linkedProj.invoices = [];
+    if (!store.nextId.invoices) store.nextId.invoices = 1;
+    linkedProj.invoices.push({
+      id: store.nextId.invoices++,
+      freelancerInvoiceId: inv.id,
+      supplier: _flMember?.name || currentUserName,
+      description: 'Freelancer Invoice ' + num,
+      category: 'Team',
+      amount: gross,
+      date: date,
+      status: 'pending',
+      type: 'freelancer',
+      notes: fullNotes
+    });
+    save();
+  }
+
   closeModal(); toast('Invoice submitted ✓');
   delete window._flPendingTimeEntryIds;
   delete window._flPendingSOWGroups;
@@ -4461,20 +4502,58 @@ async function adminRespondCounter(sowId, status, memberId) {
 }
 
 async function adminApproveInvoice(invoiceId, projectId, grossTotal, memberName, memberId) {
+  // Fetch the invoice details first
+  const { data: inv, error: fetchErr } = await _sb.from('freelancer_invoices').select('*').eq('id', invoiceId).single();
+  if (fetchErr) { toast('Error: ' + fetchErr.message); return; }
   const { error } = await _sb.from('freelancer_invoices').update({ status: 'paid' }).eq('id', invoiceId);
   if (error) { toast('Error: ' + error.message); return; }
-  // Feed into project budget actuals (Team line)
-  if (projectId) {
-    const proj = store.projects.find(p => String(p.id) === String(projectId));
-    if (proj) {
-      ensureBudgetLines(proj);
-      const teamLine = proj.budgetLines.find(l => l.category === 'Team');
-      if (teamLine) teamLine.actuals = (teamLine.actuals || 0) + grossTotal;
-      save();
+
+  const today = new Date().toISOString().split('T')[0];
+  const m = store.team.find(t => t.id === memberId);
+  const proj = projectId ? store.projects.find(p => String(p.id) === String(projectId)) : null;
+
+  // 1. Add to team member payments tab
+  if (m) {
+    if (!m.payments) m.payments = [];
+    if (!store.nextId.payments) store.nextId.payments = 1;
+    m.payments.push({
+      id: store.nextId.payments++,
+      description: 'Invoice ' + (inv.invoice_number || invoiceId.slice(0,8)),
+      projectId: proj ? proj.id : null,
+      amount: grossTotal,
+      date: inv.invoice_date || today,
+      status: 'paid'
+    });
+  }
+
+  // 2. Add / update in project invoices tab
+  if (proj) {
+    if (!proj.invoices) proj.invoices = [];
+    if (!store.nextId.invoices) store.nextId.invoices = 1;
+    // Update if pending entry already exists, otherwise add new
+    const existing = proj.invoices.find(i => i.freelancerInvoiceId === invoiceId);
+    if (existing) {
+      existing.status = 'paid';
+    } else {
+      proj.invoices.push({
+        id: store.nextId.invoices++,
+        freelancerInvoiceId: invoiceId,
+        supplier: memberName,
+        description: 'Freelancer Invoice ' + (inv.invoice_number || ''),
+        category: 'Team',
+        amount: grossTotal,
+        date: inv.invoice_date || today,
+        status: 'paid',
+        type: 'freelancer',
+        notes: inv.notes || ''
+      });
     }
   }
+
+  save();
   toast('Invoice approved & marked paid ✓');
   adminLoadSOWsTab(memberId);
+  if (currentView === 'project-detail' && currentProject?.id === proj?.id) render();
 }
 
 initApp();
