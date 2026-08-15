@@ -288,6 +288,57 @@ if (!store.nextId.gtasks) store.nextId.gtasks = 1;
 if (store.onboarding === undefined) store.onboarding = '';
 store.team.forEach(m => { if (m.isFreelancer === undefined) m.isFreelancer = false; });
 
+// ─── MIGRATION: Calendar example data ─────────────────────────────────────────
+if (!store._calExamplesAdded) {
+  const td = d => { const r=new Date(); r.setDate(r.getDate()+d); return r.toISOString().split('T')[0]; };
+  // Example global tasks
+  const exTasks = [
+    {title:'X Creative brief review',      category:'Creative',    status:'todo',        dueDate:td(2),  assignedTo:'XMaya Chen',  projectId:1, notes:''},
+    {title:'X Client presentation prep',   category:'Client',      status:'in-progress', dueDate:td(5),  assignedTo:'XJordan Park', projectId:1, notes:''},
+    {title:'X Post-event photo selects',   category:'Creative',    status:'todo',        dueDate:td(9),  assignedTo:'XMaya Chen',  projectId:1, notes:''},
+    {title:'X Vendor final payments list', category:'Finance',     status:'todo',        dueDate:td(13), assignedTo:'',            projectId:null, notes:''},
+    {title:'X Final wrap document',        category:'Production',  status:'todo',        dueDate:td(19), assignedTo:'XJordan Park', projectId:1, notes:''},
+  ];
+  exTasks.forEach(t => { store.tasks.push({id: store.nextId.gtasks++, ...t}); });
+
+  // Example milestones on project 1
+  const p1 = store.projects.find(p => p.id === 1);
+  if (p1) {
+    if (!p1.tasks) p1.tasks = [];
+    const exMilestones = [
+      {id:101, name:'X Creative concepts sign-off', category:'Creative',    startDate:'', dueDate:td(3),  status:'not-started', assignedTo:'XJordan Park'},
+      {id:102, name:'X Production schedule locked',  category:'Production',  startDate:'', dueDate:td(7),  status:'not-started', assignedTo:'XMaya Chen'},
+      {id:103, name:'X All vendors confirmed',       category:'Production',  startDate:'', dueDate:td(11), status:'not-started', assignedTo:'XMaya Chen'},
+      {id:104, name:'X Install complete',            category:'Production',  startDate:'', dueDate:td(16), status:'not-started', assignedTo:''},
+      {id:105, name:'X Client sign-off on activation',category:'Client',    startDate:'', dueDate:td(22), status:'not-started', assignedTo:'XMaya Chen'},
+    ];
+    p1.tasks = [...p1.tasks.filter(t=>t.id<100), ...exMilestones];
+
+    // Example outgoing invoices on project 1
+    if (!p1.invoices) p1.invoices = [];
+    if (!store.nextId.invoices) store.nextId.invoices = 10;
+    p1.invoices.push(
+      {id:store.nextId.invoices++, supplier:'XCreative Supply Co.', description:'X Print & signage production', category:'Print Collateral', amount:2600, date:td(4),  status:'pending', notes:'', type:undefined},
+      {id:store.nextId.invoices++, supplier:'XLens & Frame Photography', description:'X Event photography package', category:'Other', amount:4800, date:td(8),  status:'pending', notes:'', type:undefined},
+      {id:store.nextId.invoices++, supplier:'XUrban Catering Ltd.', description:'X Staff catering, 3-day install', category:'Other', amount:1950, date:td(14), status:'pending', notes:'', type:undefined}
+    );
+  }
+
+  // Example incoming client payment on company 1
+  const co1 = store.companies?.find(c => c.id === 1);
+  if (co1) {
+    if (!co1.payments) co1.payments = [];
+    if (!store.nextId.clientPayments) store.nextId.clientPayments = 10;
+    co1.payments.push(
+      {id:store.nextId.clientPayments++, description:'X Progress payment — 25%', projectId:1, amount:20500, date:td(6),  status:'pending'},
+      {id:store.nextId.clientPayments++, description:'X Final balance — 25%',    projectId:1, amount:20500, date:td(20), status:'pending'}
+    );
+  }
+
+  store._calExamplesAdded = true;
+  save();
+}
+
 // ─── MIGRATION: Companies model ───────────────────────────────────────────────
 if (!store.companies) {
   store.companies = [];
