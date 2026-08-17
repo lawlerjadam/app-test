@@ -2,7 +2,7 @@
 // Only caches static assets (icons, manifest).
 // CSS, JS and HTML always come from the network so updates appear immediately.
 
-const CACHE_NAME = 'felt-studio-v15';
+const CACHE_NAME = 'felt-studio-v16';
 
 // Only cache things that never change between deployments
 const STATIC_ASSETS = [
