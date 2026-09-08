@@ -2545,7 +2545,10 @@ function openLeadDetailModal(id) {
     </div>
     ${l.contactName ? `<div style="font-size:13px;color:var(--muted);margin-bottom:4px">◎ ${l.contactName}${l.contactRole ? ' · ' + l.contactRole : ''}${l.contactEmail ? ' · ' + l.contactEmail : ''}</div>` : ''}
     ${l.notes ? `<div style="font-size:13px;color:var(--text);margin-bottom:4px;line-height:1.5">${l.notes}</div>` : ''}
-    ${converted ? `<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:8px;cursor:pointer" onclick="closeModal();navigate('project-detail',${converted.id})">→ Converted: ${converted.name}</div>` : ''}
+    ${converted ? `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
+      <div style="font-size:13px;color:var(--green);font-weight:600;cursor:pointer" onclick="closeModal();navigate('project-detail',${converted.id})">→ Converted: ${converted.name}</div>
+      <button class="btn btn-ghost btn-sm" style="color:var(--muted)" onclick="unconvertLead(${id})">Unlink project</button>
+    </div>` : ''}
     ${actionsHtml}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
@@ -3853,6 +3856,21 @@ function createLead(){const c=document.getElementById('l-company').value.trim();
 function openEditLeadModal(id){const l=store.leads.find(x=>x.id===id);openModal(`<div class="modal-title">Edit Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" value="${l.company}"></div><div class="form-group"><label>Contact Name</label><input id="l-contact" value="${l.contactName||''}"></div><div class="form-group"><label>Contact Role / Title</label><input id="l-role" value="${l.contactRole||''}" placeholder="e.g. Brand Marketing Lead"></div><div class="form-group"><label>Contact Email</label><input id="l-email" value="${l.contactEmail||''}"></div><div class="form-group"><label>Contact Phone</label><input id="l-phone" value="${l.contactPhone||''}" placeholder="(416) 555-0000"></div><div class="form-group"><label>Project Type</label><select id="l-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" value="${l.estimatedValue||0}"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts(l.status)}</select></div><div class="form-group"><label>Next Action</label><input id="l-action" list="lead-actions-edit" value="${l.nextAction||''}" placeholder="e.g. Send Proposal"><datalist id="lead-actions-edit"><option>Send Proposal</option><option>Follow Up</option><option>Discovery Call</option><option>Pitch Presentation</option><option>Send Contract</option><option>Check In</option><option>Meeting</option></datalist></div><div class="form-group"><label>Action Date</label><input id="l-action-date" type="date" value="${l.nextActionDate||''}"></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes">${l.notes||''}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveLead(${id})">Save</button></div>`);}
 function saveLead(id){const l=store.leads.find(x=>x.id===id);l.company=document.getElementById('l-company').value.trim()||l.company;l.contactName=document.getElementById('l-contact').value;l.contactRole=document.getElementById('l-role').value;l.contactEmail=document.getElementById('l-email').value;l.contactPhone=document.getElementById('l-phone').value;l.projectType=document.getElementById('l-type').value;l.estimatedValue=parseInt(document.getElementById('l-value').value)||0;l.status=document.getElementById('l-status').value;l.notes=document.getElementById('l-notes').value;l.nextAction=document.getElementById('l-action').value.trim();l.nextActionDate=document.getElementById('l-action-date').value;closeModal();toast('Lead saved');save();render();}
 function deleteLead(id){showConfirm('Delete this lead? This cannot be undone.',()=>{store.leads=store.leads.filter(l=>l.id!==id);toast('Lead removed');save();render();});}
+
+function unconvertLead(id) {
+  const l = store.leads.find(x => x.id === id);
+  if (!l) return;
+  const projName = l.convertedProjectId ? (store.projects.find(p => p.id === l.convertedProjectId)?.name || 'the project') : 'the project';
+  showConfirm(`Unlink this lead from ${projName}? The project won't be deleted — just disconnected from this lead.`, () => {
+    const proj = store.projects.find(p => p.id === l.convertedProjectId);
+    if (proj) proj.leadId = null;
+    l.convertedProjectId = null;
+    save();
+    closeModal();
+    openLeadDetailModal(id);
+    toast('Lead unlinked from project');
+  }, { label: 'Unlink', danger: false });
+}
 
 function openConvertLeadModal(id) {
   convertingLeadId = id;
