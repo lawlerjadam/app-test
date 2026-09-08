@@ -3886,6 +3886,7 @@ async function afterLogin(session) {
   updateUserChip();
   if (currentUserRole === 'viewer') document.body.classList.add('viewer-mode');
   else document.body.classList.remove('viewer-mode');
+  renderFinanceBadge();
   render();
 }
 
@@ -4917,8 +4918,26 @@ async function adminApproveInvoice(invoiceId, projectId, grossTotal, memberName,
 
   save();
   toast('Invoice approved & marked paid ✓');
+  renderFinanceBadge();
   adminLoadSOWsTab(memberId);
   if (currentView === 'project-detail' && currentProject?.id === proj?.id) render();
+}
+
+// ─── FINANCE BADGE ────────────────────────────────────────────────────────────
+async function renderFinanceBadge() {
+  if (!_sb || currentUserRole !== 'admin') return;
+  try {
+    const { data } = await _sb.from('freelancer_invoices').select('id').eq('status', 'pending');
+    const badge = document.getElementById('finance-badge');
+    if (!badge) return;
+    const count = data?.length || 0;
+    if (count > 0) {
+      badge.textContent = count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  } catch(e) { /* silent */ }
 }
 
 initApp();
