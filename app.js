@@ -674,6 +674,7 @@ store.team.forEach(m => {
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
 let currentView='tasks', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentFinanceFilter='all';
 let currentMember=null, currentMemberTab='overview';
+let currentSettingsTab='account';
 let navHistory = []; // back-navigation stack
 let currentContact=null, currentContactTab='overview';
 let currentCompany=null;
@@ -763,11 +764,11 @@ function navigateToContact(contactId) {
 function _applyNavActiveStates(view) {
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={projects:1,tasks:2,calendar:3,team:4,contacts:5,'global-suppliers':6,finance:7,snapshot:8,leads:9,ideas:10,feedback:11};
+  const navMap={projects:1,tasks:2,calendar:3,team:4,contacts:5,'global-suppliers':6,finance:7,snapshot:8,leads:9,ideas:10};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
   const workViews=['projects','project-detail','tasks','calendar','finance','snapshot'];
   const peopleViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
-  const growthViews=['leads','ideas','feedback'];
+  const growthViews=['leads','ideas'];
   const bnItems=document.querySelectorAll('.bottom-nav-item');
   if(workViews.includes(view)) bnItems[1]?.classList.add('active');
   else if(peopleViews.includes(view)) bnItems[3]?.classList.add('active');
@@ -829,6 +830,7 @@ function render() {
   else if(currentView==='global-suppliers') m.innerHTML=renderGlobalVendors();
   else if(currentView==='finance') m.innerHTML=renderFinance();
   else if(currentView==='feedback') m.innerHTML=renderFeedback();
+  else if(currentView==='settings') { m.innerHTML=renderSettings(); if(currentSettingsTab==='users') loadSettingsUsers(); }
   // Inject back button when history exists
   if (navHistory.length > 0) {
     const backEl = document.createElement('div');
@@ -4340,7 +4342,123 @@ async function logout() {
   await _sb.auth.signOut();
 }
 
-// ─── ACCOUNT PANEL ────────────────────────────────────────────────────────────
+// ─── SETTINGS PAGE ────────────────────────────────────────────────────────────
+function setSettingsTab(tab) { currentSettingsTab=tab; render(); if(tab==='users') loadSettingsUsers(); }
+
+function renderSettings() {
+  const tabs=[{key:'account',label:'Account'},{key:'users',label:'Users'},{key:'feedback',label:'Feedback'}];
+  const tabNav=tabs.map(t=>`<button class="btn ${currentSettingsTab===t.key?'btn-primary':'btn-ghost'} btn-sm" onclick="setSettingsTab('${t.key}')">${t.label}</button>`).join('');
+
+  let content='';
+  if(currentSettingsTab==='account') content=renderSettingsAccount();
+  else if(currentSettingsTab==='users') content=renderSettingsUsers();
+  else if(currentSettingsTab==='feedback') content=renderSettingsFeedback();
+
+  return `
+    <div class="topbar"><div><div class="page-title">Settings</div></div></div>
+    <div class="content">
+      <div class="tab-bar" style="margin-bottom:24px">${tabNav}</div>
+      ${content}
+    </div>`;
+}
+
+function renderSettingsAccount() {
+  const roleColors={admin:'var(--accent)',member:'var(--green)',viewer:'var(--muted)'};
+  return `<div style="max-width:480px">
+    <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px">
+      <div class="avatar" style="width:44px;height:44px;font-size:16px;flex-shrink:0">${initials(currentUserName)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700">${currentUserName}</div>
+        <div style="font-size:12px;color:var(--muted)">${currentUser?.email||''}</div>
+      </div>
+      <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:${roleColors[currentUserRole]||'var(--muted)'};color:${currentUserRole==='admin'?'#000':'#fff'};text-transform:capitalize;flex-shrink:0">${currentUserRole}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-ghost" style="justify-content:center" onclick="sendPasswordReset()">Send password reset email</button>
+      <button class="btn btn-ghost" style="justify-content:center;color:var(--red)" onclick="logout()">Sign out</button>
+    </div>
+  </div>`;
+}
+
+function renderSettingsUsers() {
+  if(currentUserRole!=='admin') return `<div style="color:var(--muted);font-size:14px;padding:20px 0">Admin access required to manage users.</div>`;
+  return `<div id="settings-users-content" style="max-width:520px"><div style="color:var(--muted);font-size:13px;padding:20px 0">Loading…</div></div>`;
+}
+
+async function loadSettingsUsers() {
+  const el=document.getElementById('settings-users-content');
+  if(!el||currentUserRole!=='admin') return;
+  const {data:profiles}=await _sb.rpc('get_all_profiles');
+  if(!profiles||!profiles.length){el.innerHTML=`<div style="color:var(--muted);font-size:13px">No users found.</div>`;return;}
+  const rows=profiles.map(p=>{
+    const isSelf=p.id===currentUser?.id;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div class="avatar" style="width:32px;height:32px;font-size:11px;flex-shrink:0">${(p.name||p.email||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name||'—'}</div>
+        <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.email||''}</div>
+      </div>
+      <select onchange="updateUserRole('${p.id}',this.value)" style="font-size:12px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-family:inherit;cursor:pointer" ${isSelf?'disabled title="Cannot change your own role"':''}>
+        <option value="admin" ${p.role==='admin'?'selected':''}>Admin</option>
+        <option value="member" ${p.role==='member'?'selected':''}>Member</option>
+        <option value="viewer" ${p.role==='viewer'?'selected':''}>Viewer</option>
+      </select>
+      ${!isSelf?`<button class="btn btn-ghost btn-sm" onclick="revokeUserAccess('${p.id}','${p.name||p.email}')" style="color:var(--red);flex-shrink:0">✕</button>`:'<div style="width:32px"></div>'}
+    </div>`;
+  }).join('');
+  el.innerHTML=`
+    ${rows}
+    <div style="margin-top:16px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Invite a team member</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Add new users via the Supabase dashboard — they'll be set to Member by default.</div>
+      <button class="btn btn-ghost btn-sm" onclick="window.open('https://supabase.com/dashboard/project/qyxbjtbipdpevzecbhkd/auth/users','_blank')">Open Supabase Auth →</button>
+    </div>`;
+}
+
+function renderSettingsFeedback() {
+  const fb=store.feedback||[];
+  const prioOrder={high:0,medium:1,low:2};
+  const open=fb.filter(f=>f.status!=='done').sort((a,b)=>(prioOrder[a.priority]??1)-(prioOrder[b.priority]??1)||a.id-b.id);
+  const done=fb.filter(f=>f.status==='done').sort((a,b)=>b.id-a.id);
+  const typeIcon={bug:'🐛',improvement:'✨',feature:'💡'};
+  const typeLabel={bug:'Bug',improvement:'Improvement',feature:'Feature Request'};
+  const prioColor={high:'#B03030',medium:'#A06020',low:'#5060A0'};
+  function cardHtml(f){
+    const isAdmin=currentUserRole==='admin';
+    const statusBadge=f.status==='in-progress'?`<span style="font-size:10px;font-weight:600;background:rgba(200,130,30,0.12);color:#A06020;border-radius:4px;padding:2px 7px;white-space:nowrap">In Progress</span>`:'';
+    const adminActions=isAdmin?`<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+      ${f.status==='open'?`<button onclick="setFeedbackStatus(${f.id},'in-progress')" class="btn btn-ghost btn-sm">→ In Progress</button>`:''}
+      ${f.status==='in-progress'?`<button onclick="setFeedbackStatus(${f.id},'open')" class="btn btn-ghost btn-sm">↩ Open</button><button onclick="setFeedbackStatus(${f.id},'done')" class="btn btn-ghost btn-sm" style="color:#3A7A3A;border-color:#3A7A3A">✓ Mark Done</button>`:''}
+      ${f.status==='done'?`<button onclick="setFeedbackStatus(${f.id},'open')" class="btn btn-ghost btn-sm">↩ Reopen</button>`:''}
+      <button onclick="deleteFeedback(${f.id})" class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--muted)">✕</button>
+    </div>`:'';
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:17px;flex-shrink:0;margin-top:1px;opacity:0.85">${typeIcon[f.type]||'📝'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><span style="font-size:13px;font-weight:600">${esc(f.title)}</span>${statusBadge}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--muted)">
+            <span>${typeLabel[f.type]||f.type}</span><span>·</span>
+            <span style="font-weight:600;color:${prioColor[f.priority]||'var(--muted)'}">${(f.priority||'medium').charAt(0).toUpperCase()+(f.priority||'medium').slice(1)}</span><span>·</span>
+            <span>${esc(f.submittedBy||'')}</span><span>·</span><span>${f.submittedAt||''}</span>
+          </div>
+          ${f.notes?`<p style="margin:7px 0 0;font-size:12px;color:var(--muted);line-height:1.55">${esc(f.notes)}</p>`:''}
+          ${adminActions}
+        </div>
+      </div>
+    </div>`;
+  }
+  return `<div style="max-width:660px">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+      <button class="btn btn-primary" onclick="openFeedbackModal()">+ Submit</button>
+    </div>
+    ${fb.length===0?`<div class="empty-state"><div class="empty-icon">◌</div><p>No feedback yet — use the button above to submit a bug, improvement, or feature request.</p></div>`:''}
+    ${open.length>0?`<div class="section-header"><div class="section-title">Open · ${open.length}</div></div>${open.map(cardHtml).join('')}`:''}
+    ${done.length>0?`<div class="section-header" style="${open.length?'margin-top:28px':''}"><div class="section-title">Done · ${done.length}</div></div>${done.map(cardHtml).join('')}`:''}
+  </div>`;
+}
+
+// ─── ACCOUNT PANEL (legacy — kept for any residual calls) ─────────────────────
 async function openAccountPanel() {
   // Show loading state immediately
   openModal(`<div class="modal-title">Account & Team</div><div style="padding:20px 0;text-align:center;color:var(--muted)">Loading…</div>`);
@@ -4438,7 +4556,7 @@ async function revokeUserAccess(userId, name) {
     const { error } = await _sb.from('profiles').delete().eq('id', userId);
     if (error) { toast('Error removing user'); return; }
     toast(`${name} removed ✓`);
-    openAccountPanel();
+    loadSettingsUsers();
   }, { label: 'Remove access' });
 }
 
