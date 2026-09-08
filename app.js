@@ -2812,20 +2812,6 @@ function renderMemberContracts(m) {
   const signedCount = contracts.filter(c=>c.status==='signed').length;
   const pendingCount = contracts.filter(c=>c.status==='sent').length;
 
-  // Drive folder row
-  const driveRow = `
-    <div class="crm-stat" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div>
-        <div class="crm-stat-label">Google Drive Folder</div>
-        ${m.driveFolder
-          ? `<a href="${m.driveFolder}" target="_blank" style="color:var(--blue);font-weight:700;font-size:14px">Open ${m.name.split(' ')[0]}'s folder ↗</a>`
-          : `<div style="font-size:13px;color:var(--muted)">No folder linked yet.</div>`}
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="openEditDriveFolderModal()">
-        ${m.driveFolder?'Change':'Set Folder'}
-      </button>
-    </div>`;
-
   // NDAs section
   const ndasHtml = ndas.length === 0
     ? `<div style="font-size:13px;color:var(--muted);padding:10px 0">No NDAs logged yet.</div>`
@@ -2882,7 +2868,6 @@ function renderMemberContracts(m) {
 
   return `
     <div class="crm-grid" style="margin-bottom:18px">
-      ${driveRow}
       <div class="crm-stat"><div class="crm-stat-label">Contracts Signed</div><div class="crm-stat-value" style="color:var(--green)">${signedCount}</div></div>
       <div class="crm-stat"><div class="crm-stat-label">Awaiting Signature</div><div class="crm-stat-value" style="color:var(--orange)">${pendingCount}</div></div>
     </div>
@@ -2897,21 +2882,6 @@ function renderMemberContracts(m) {
     <div class="card" style="padding:0;overflow:hidden">${contractsTable}</div>`;
 }
 
-function openEditDriveFolderModal() {
-  const m=currentMember;
-  openModal(`
-    <div class="modal-title">Google Drive Folder</div>
-    <div class="form-group full" style="margin-bottom:0">
-      <label>Paste the Google Drive folder link for ${m.name.split(' ')[0]}'s contracts</label>
-      <input id="df-url" value="${m.driveFolder||''}" placeholder="https://drive.google.com/drive/folders/...">
-    </div>
-    <div style="font-size:12px;color:var(--muted);margin-top:8px">Right-click any folder in Google Drive → Share → Copy link</div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveDriveFolder()">Save</button></div>`);
-}
-function saveDriveFolder() {
-  currentMember.driveFolder=document.getElementById('df-url').value.trim();
-  closeModal();save();toast('Drive folder saved');render();
-}
 
 function openAddTemplateModal() {
   openModal(`
@@ -3319,15 +3289,6 @@ function renderAssetsTab(p) {
       </table></div>`}
     </div>`;
 }
-function openEditAssetsFolderModal() {
-  const a=currentProject.assets||{};
-  openModal(`
-    <div class="modal-title">Project Assets Folder</div>
-    <div class="form-group full"><label>Google Drive folder link</label><input id="af-url" value="${a.driveFolder||''}" placeholder="https://drive.google.com/drive/folders/..."></div>
-    <div style="font-size:12px;color:var(--muted);margin-top:8px">Right-click a Drive folder → Share → Copy link</div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAssetsFolder()">Save</button></div>`);
-}
-function saveAssetsFolder(){if(!currentProject.assets)currentProject.assets={driveFolder:'',files:[]};currentProject.assets.driveFolder=document.getElementById('af-url').value.trim();closeModal();save();toast('Folder saved');render();}
 function openAddAssetModal(){
   const folder = `assets/project-${currentProject?.id||'0'}`;
   openModal(`
