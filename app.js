@@ -166,72 +166,93 @@ function emptyProduction() {
 
 // ─── DEFAULT DATA (X-prefixed example data — safe to delete) ──────────────────
 const defaultData = {
+  // Migration flags pre-set so fresh installs skip all migration logic
+  _calExamplesAdded: true,
+  _memberPaymentsAdded: true,
+  _leadActionsAdded: true,
+  _v3FreshExamples: true,
+
   projects:[
-    {id:1,name:'XWinterfest Activation',client:'XNorthern Spirits Co.',clientId:1,status:'active',type:'Brand Activation',color:'#E8C832',startDate:'2026-11-01',endDate:'2026-12-20',budget:0,spent:0,
-      brief:{overview:'Example project — edit or delete to get started. A multi-sensory winter brand activation at Harbourfront Centre.',objectives:'Drive brand warmth and community connection. Target 18,000 visitors over a 7-week run.',deliverables:'Custom installation, branded warming stations, LED content wall, staff uniforms, printed signage.',timeline:'Build: Nov 1–14. Soft open: Nov 15. Public opening: Nov 22. Run through Dec 20.'},
-      teamIds:[1,2],contactIds:[1],teamAllocation:{1:15,2:10},expenses:[],
+    {id:1, name:'XAurora Launch', client:'XKova Brand Co.', clientId:1, status:'active', type:'Brand Activation', color:'#7C6FF0',
+      startDate:'2026-09-22', endDate:'2026-11-14', budget:0, spent:0,
+      brief:{
+        overview:'Example project — edit or delete to get started. A 200-person product launch event for the XAurora beverage range at a downtown venue.',
+        objectives:'Introduce XAurora to key press and trade buyers. Drive 500+ social impressions on launch night. Secure 3 retail listing conversations.',
+        deliverables:'Event concept & design, venue dressing, AV + content, catering, guest management, press kit.',
+        timeline:'Pre-production: weeks 1–3. Build: week 4. Event night: Oct 30. Wrap & reporting: week 5.'
+      },
+      teamIds:[1], contactIds:[1], teamAllocation:{1:80}, expenses:[],
       budgetLines:[
-        {id:1,category:'Fabrication',forecast:28000,actuals:0},
-        {id:2,category:'Furniture & Décor',forecast:8500,actuals:0},
-        {id:3,category:'AV + Content Tech',forecast:15000,actuals:0},
-        {id:4,category:'Team',forecast:18000,actuals:0},
-        {id:5,category:'Uniforms & Materials',forecast:3200,actuals:0},
-        {id:6,category:'Print Collateral',forecast:2800,actuals:0},
-        {id:7,category:'Production Misc.',forecast:4500,actuals:0},
-        {id:8,category:'Other',forecast:2000,actuals:0}
+        {id:1,category:'Venue & Permits',forecast:18000,actuals:0},
+        {id:2,category:'Fabrication & Décor',forecast:22000,actuals:0},
+        {id:3,category:'AV + Content',forecast:16000,actuals:0},
+        {id:4,category:'Catering',forecast:12000,actuals:0},
+        {id:5,category:'Team & Freelancers',forecast:9500,actuals:0},
+        {id:6,category:'Print & Collateral',forecast:3500,actuals:0},
+        {id:7,category:'Contingency',forecast:4000,actuals:0}
       ],
       invoices:[
-        {id:1,supplier:'XNorthern Build Co.',description:'Ice structure & scenic fabrication',category:'Fabrication',amount:26400,date:'2026-11-05',status:'paid',notes:''},
-        {id:2,supplier:'XSignal AV',description:'LED wall & sound system install',category:'AV + Content Tech',amount:12500,date:'2026-12-01',status:'pending',notes:''}
+        {id:1,supplier:'XEventForge',description:'Set build & venue dressing',category:'Fabrication & Décor',amount:20800,date:'2026-10-01',status:'paid',notes:'50% deposit on signing, balance on completion.'},
+        {id:2,supplier:'XLumina AV',description:'AV equipment & crew',category:'AV + Content',amount:14400,date:'2026-10-28',status:'pending',notes:''},
+        {id:3,supplier:'XHarbour Catering',description:'Catering — 200 guests',category:'Catering',amount:10800,date:'2026-11-01',status:'pending',notes:''}
       ],
       signoff:emptySignoff(),
       production:{
         shootDays:[],
         suppliers:[
-          {id:1,globalSupplierId:1,company:'XNorthern Build Co.',contact:'XDan Clarke',category:'Fabrication',status:'confirmed',notes:'Lead fabricator.'},
-          {id:2,globalSupplierId:2,company:'XSignal AV',contact:'XKeiko Tanaka',category:'AV + Content Tech',status:'confirmed',notes:'LED wall + spatial audio.'}
+          {id:1,globalSupplierId:1,company:'XEventForge',contact:'XDan Reyes',category:'Fabrication & Décor',status:'confirmed',notes:'Venue dressing and full set build.'},
+          {id:2,globalSupplierId:2,company:'XLumina AV',contact:'XSuki Park',category:'AV + Content',status:'confirmed',notes:'Full AV package including LED screen.'}
         ],
         equipment:[],keyContacts:[],callSheetNotes:''
       },
       tasks:[
-        {id:1,name:'Kickoff',category:'Production',startDate:'',dueDate:'',status:'not-started',assignedTo:''},
-        {id:2,name:'Concept',category:'Creative',startDate:'',dueDate:'',status:'not-started',assignedTo:''},
-        {id:3,name:'Client Approval',category:'Client',startDate:'',dueDate:'',status:'not-started',assignedTo:''},
-        {id:4,name:'Production',category:'Production',startDate:'2026-11-01',dueDate:'2026-11-14',status:'not-started',assignedTo:''},
-        {id:5,name:'Install',category:'Production',startDate:'',dueDate:'2026-11-22',status:'not-started',assignedTo:''},
-        {id:6,name:'Wrap',category:'Production',startDate:'',dueDate:'2026-12-20',status:'not-started',assignedTo:''}
+        {id:201,name:'X Brief & concept approved',category:'Creative',startDate:'',dueDate:'2026-09-24',status:'done',assignedTo:'XRiley Morgan'},
+        {id:202,name:'X Venue confirmed & contracted',category:'Production',startDate:'',dueDate:'2026-09-29',status:'done',assignedTo:'XRiley Morgan'},
+        {id:203,name:'X All vendors briefed & confirmed',category:'Production',startDate:'',dueDate:'2026-10-13',status:'in-progress',assignedTo:'XRiley Morgan'},
+        {id:204,name:'X Guest list & invitations sent',category:'Client',startDate:'',dueDate:'2026-10-18',status:'not-started',assignedTo:'XRiley Morgan'},
+        {id:205,name:'X Event night & wrap',category:'Production',startDate:'',dueDate:'2026-10-30',status:'not-started',assignedTo:'XRiley Morgan'}
       ],
       assets:{driveFolder:'',files:[]}
     }
   ],
   leads:[
-    {id:1,company:'XCanada Goose',contactName:'XSasha Reeves',contactEmail:'xsasha@example.com',projectType:'Brand Activation',estimatedValue:42000,status:'proposal-sent',notes:'Example lead — edit or delete to get started.',contactRole:'Brand Partnerships',contactPhone:'',convertedProjectId:null}
+    {id:1,company:'XHarbour Coffee Co.',contactName:'XAlex Torres',contactEmail:'xalex@example.com',projectType:'Brand Experience',estimatedValue:35000,status:'meeting-booked',notes:'Example lead — edit or delete to get started.',contactRole:'Head of Marketing',contactPhone:'',convertedProjectId:null,actions:[
+      {id:1,name:'Intro call — confirmed interest in Q1 brand event',type:'Call',date:'2026-09-05',notes:'Budget range $30–40K. Wants 150-person format.',done:true}
+    ]}
   ],
   team:[
-    {id:1,name:'XMaya Chen',role:'Executive Producer',email:'xmaya@example.com',rate:800,skills:['Executive Production','Budget Management','Client Relations'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Example team member — edit or delete to get started.',payments:[],driveFolder:'',contracts:[]},
-    {id:2,name:'XJordan Park',role:'Creative Director',email:'xjordan@example.com',rate:750,skills:['Art Direction','Spatial Design','Concepting'],availability:'available',availableFrom:'',contractStatus:'signed',ir35:'outside',paymentTerms:'30',notes:'Example team member — edit or delete to get started.',payments:[],driveFolder:'',contracts:[]}
+    {id:1,name:'XRiley Morgan',role:'Project Manager',email:'xriley@example.com',rate:650,skills:['Project Management','Event Production','Vendor Coordination','Scheduling'],availability:'booked',availableFrom:'2026-11-17',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Example freelancer — edit or delete to get started.',isFreelancer:true,payments:[
+      {id:1,description:'X Project management — pre-production (2 weeks)',projectId:1,amount:6500,date:'2026-09-29',status:'paid'},
+      {id:2,description:'X Project management — production & event week',projectId:1,amount:3250,date:'2026-11-01',status:'pending'}
+    ],driveFolder:'',contracts:[]}
   ],
   companies:[
-    {id:1,name:'XNorthern Spirits Co.',industry:'Spirits',notes:'Example client — edit or delete to get started.',payments:[
-      {id:1,description:'XProject Deposit — 50%',projectId:1,amount:41000,date:'2026-10-01',status:'paid'}
+    {id:1,name:'XKova Brand Co.',industry:'Consumer Goods',notes:'Example client — edit or delete to get started.',payments:[
+      {id:1,description:'X Project deposit — 40%',projectId:1,amount:34000,date:'2026-09-15',status:'paid'},
+      {id:2,description:'X Progress payment — 30%',projectId:1,amount:25500,date:'2026-10-14',status:'pending'}
     ]}
   ],
   contacts:[
-    {id:1,companyId:1,name:'XSarah Vance',email:'xsarah@example.com',phone:'(416) 555-0100',role:'Brand Marketing Lead'}
+    {id:1,companyId:1,name:'XJamie Lee',email:'xjamie@example.com',phone:'(416) 555-0210',role:'Brand Marketing Manager'}
   ],
   ideas:[
-    {id:1,title:'XThe Quiet Hour',category:'Event',description:'Example idea — a monthly city-wide moment of intentional sound. Edit or delete to get started.',submittedBy:'XMaya Chen',date:'2026-10-15'}
+    {id:1,title:'XPop-Up Dinner Series',category:'Event',description:'Example idea — a branded intimate dinner series in unexpected spaces. Edit or delete to get started.',submittedBy:'XRiley Morgan',date:'2026-09-06'}
   ],
   contractTemplates:[
     {id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, independent contractor'}
   ],
   globalSuppliers:[
-    {id:1,company:'XNorthern Build Co.',category:'Fabrication',contactName:'XDan Clarke',contactEmail:'xdan@example.ca',contactPhone:'(416) 555-0401',website:'',notes:'Example vendor — edit or delete to get started.'},
-    {id:2,company:'XSignal AV',category:'AV + Content Tech',contactName:'XKeiko Tanaka',contactEmail:'xkeiko@example.ca',contactPhone:'(416) 555-0402',website:'',notes:'Example vendor — edit or delete to get started.'}
+    {id:1,company:'XEventForge',category:'Fabrication',contactName:'XDan Reyes',contactEmail:'xdan@example.ca',contactPhone:'(416) 555-0301',website:'',notes:'Example vendor — edit or delete to get started.'},
+    {id:2,company:'XLumina AV',category:'AV + Content Tech',contactName:'XSuki Park',contactEmail:'xsuki@example.ca',contactPhone:'(416) 555-0302',website:'',notes:'Example vendor — edit or delete to get started.'}
   ],
   feedback:[],
-  tasks:[],
-  nextId:{projects:2,team:3,companies:2,contacts:2,leads:2,expenses:1,ideas:2,shootDays:1,suppliers:3,equipment:1,payments:2,keyContacts:1,contracts:1,templates:2,tasks:7,assets:1,globalSuppliers:3,invoices:3,clientPayments:2,feedback:1,gtasks:1}
+  tasks:[
+    {id:1,title:'X Confirm final guest numbers with client',category:'Client',status:'in-progress',dueDate:'2026-10-12',assignedTo:'XRiley Morgan',projectId:1,notes:''},
+    {id:2,title:'X Review and approve AV tech rider',category:'Production',status:'todo',dueDate:'2026-10-14',assignedTo:'XRiley Morgan',projectId:1,notes:''},
+    {id:3,title:'X Send post-event report to client',category:'Client',status:'todo',dueDate:'2026-11-06',assignedTo:'XRiley Morgan',projectId:1,notes:''},
+    {id:4,title:'X Reconcile final budget actuals',category:'Finance',status:'todo',dueDate:'2026-11-08',assignedTo:'',projectId:1,notes:''}
+  ],
+  nextId:{projects:2,team:2,companies:2,contacts:2,leads:2,expenses:1,ideas:2,shootDays:1,suppliers:3,equipment:1,payments:3,keyContacts:1,contracts:1,templates:2,tasks:206,assets:1,globalSuppliers:3,invoices:4,clientPayments:3,feedback:1,gtasks:5,leadActions:2}
 };
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
@@ -367,6 +388,161 @@ if (!store._leadActionsAdded) {
   store.leads.forEach(l => { if (!l.actions) l.actions = []; });
   if (!store.nextId.leadActions) store.nextId.leadActions = 1;
   store._leadActionsAdded = true;
+  save();
+}
+
+// ─── MIGRATION: Replace all example data with single project + single freelancer
+if (!store._v3FreshExamples) {
+  const td = d => { const r=new Date(); r.setDate(r.getDate()+d); return r.toISOString().split('T')[0]; };
+
+  // Strip all X-prefixed example items
+  store.projects      = (store.projects||[]).filter(p => !p.name?.startsWith('X'));
+  store.team          = (store.team||[]).filter(m => !m.name?.startsWith('X'));
+  store.companies     = (store.companies||[]).filter(c => !c.name?.startsWith('X'));
+  store.contacts      = (store.contacts||[]).filter(c => !c.name?.startsWith('X'));
+  store.leads         = (store.leads||[]).filter(l => !l.company?.startsWith('X'));
+  store.ideas         = (store.ideas||[]).filter(i => !i.title?.startsWith('X'));
+  store.globalSuppliers = (store.globalSuppliers||[]).filter(s => !s.company?.startsWith('X'));
+  store.tasks         = (store.tasks||[]).filter(t => !t.title?.startsWith('X'));
+
+  // Ensure nextId keys exist
+  if (!store.nextId.payments)       store.nextId.payments = 1;
+  if (!store.nextId.invoices)       store.nextId.invoices = 1;
+  if (!store.nextId.clientPayments) store.nextId.clientPayments = 1;
+  if (!store.nextId.leadActions)    store.nextId.leadActions = 1;
+  if (!store.nextId.gtasks)         store.nextId.gtasks = 1;
+  if (!store.nextId.contacts)       store.nextId.contacts = 1;
+  if (!store.nextId.ideas)          store.nextId.ideas = 1;
+
+  // Add example company + contact
+  const v3CoId = store.nextId.companies++;
+  store.companies.push({
+    id: v3CoId, name: 'XKova Brand Co.', industry: 'Consumer Goods',
+    notes: 'Example client — edit or delete to get started.',
+    payments: []
+  });
+  const v3CtId = store.nextId.contacts++;
+  store.contacts.push({
+    id: v3CtId, companyId: v3CoId, name: 'XJamie Lee',
+    email: 'xjamie@example.com', phone: '(416) 555-0210', role: 'Brand Marketing Manager'
+  });
+
+  // Add example vendors
+  const v3Sv1 = store.nextId.globalSuppliers++;
+  const v3Sv2 = store.nextId.globalSuppliers++;
+  store.globalSuppliers.push(
+    {id:v3Sv1,company:'XEventForge',category:'Fabrication',contactName:'XDan Reyes',contactEmail:'xdan@example.ca',contactPhone:'(416) 555-0301',website:'',notes:'Example vendor — edit or delete to get started.'},
+    {id:v3Sv2,company:'XLumina AV',category:'AV + Content Tech',contactName:'XSuki Park',contactEmail:'xsuki@example.ca',contactPhone:'(416) 555-0302',website:'',notes:'Example vendor — edit or delete to get started.'}
+  );
+
+  // Add example freelancer
+  const v3FrId = store.nextId.team++;
+  store.team.push({
+    id: v3FrId, name: 'XRiley Morgan', role: 'Project Manager',
+    email: 'xriley@example.com', rate: 650,
+    skills: ['Project Management','Event Production','Vendor Coordination','Scheduling'],
+    availability: 'booked', availableFrom: td(45),
+    contractStatus: 'signed', ir35: 'outside', paymentTerms: '14',
+    notes: 'Example freelancer — edit or delete to get started.',
+    isFreelancer: true, payments: [], driveFolder: '', contracts: []
+  });
+
+  // Add example project
+  const v3ProjId = store.nextId.projects++;
+  const v3Inv1 = store.nextId.invoices++;
+  const v3Inv2 = store.nextId.invoices++;
+  const v3Inv3 = store.nextId.invoices++;
+  store.projects.push({
+    id: v3ProjId, name: 'XAurora Launch', client: 'XKova Brand Co.', clientId: v3CoId,
+    status: 'active', type: 'Brand Activation', color: '#7C6FF0',
+    startDate: td(-14), endDate: td(56), budget: 0, spent: 0,
+    brief:{
+      overview:'Example project — edit or delete to get started. A 200-person product launch event for the XAurora beverage range at a downtown venue.',
+      objectives:'Introduce XAurora to key press and trade buyers. Drive 500+ social impressions on launch night. Secure 3 retail listing conversations.',
+      deliverables:'Event concept & design, venue dressing, AV + content, catering, guest management, press kit.',
+      timeline:'Pre-production: weeks 1–3. Build: week 4. Event night: ' + td(21) + '. Wrap & reporting: week 5.'
+    },
+    teamIds:[v3FrId], contactIds:[v3CtId], teamAllocation:{[v3FrId]:80}, expenses:[],
+    budgetLines:[
+      {id:1,category:'Venue & Permits',forecast:18000,actuals:0},
+      {id:2,category:'Fabrication & Décor',forecast:22000,actuals:0},
+      {id:3,category:'AV + Content',forecast:16000,actuals:0},
+      {id:4,category:'Catering',forecast:12000,actuals:0},
+      {id:5,category:'Team & Freelancers',forecast:9500,actuals:0},
+      {id:6,category:'Print & Collateral',forecast:3500,actuals:0},
+      {id:7,category:'Contingency',forecast:4000,actuals:0}
+    ],
+    invoices:[
+      {id:v3Inv1,supplier:'XEventForge',description:'Set build & venue dressing',category:'Fabrication & Décor',amount:20800,date:td(-5),status:'paid',notes:'50% deposit on signing, balance on completion.'},
+      {id:v3Inv2,supplier:'XLumina AV',description:'AV equipment & crew',category:'AV + Content',amount:14400,date:td(18),status:'pending',notes:''},
+      {id:v3Inv3,supplier:'XHarbour Catering',description:'Catering — 200 guests',category:'Catering',amount:10800,date:td(22),status:'pending',notes:''}
+    ],
+    signoff: emptySignoff(),
+    production:{
+      shootDays:[],
+      suppliers:[
+        {id:1,globalSupplierId:v3Sv1,company:'XEventForge',contact:'XDan Reyes',category:'Fabrication & Décor',status:'confirmed',notes:'Venue dressing and full set build.'},
+        {id:2,globalSupplierId:v3Sv2,company:'XLumina AV',contact:'XSuki Park',category:'AV + Content',status:'confirmed',notes:'Full AV package including LED screen.'}
+      ],
+      equipment:[],keyContacts:[],callSheetNotes:''
+    },
+    tasks:[
+      {id:201,name:'X Brief & concept approved',category:'Creative',startDate:'',dueDate:td(-10),status:'done',assignedTo:'XRiley Morgan'},
+      {id:202,name:'X Venue confirmed & contracted',category:'Production',startDate:'',dueDate:td(-5),status:'done',assignedTo:'XRiley Morgan'},
+      {id:203,name:'X All vendors briefed & confirmed',category:'Production',startDate:'',dueDate:td(5),status:'in-progress',assignedTo:'XRiley Morgan'},
+      {id:204,name:'X Guest list & invitations sent',category:'Client',startDate:'',dueDate:td(10),status:'not-started',assignedTo:'XRiley Morgan'},
+      {id:205,name:'X Event night & wrap',category:'Production',startDate:'',dueDate:td(21),status:'not-started',assignedTo:'XRiley Morgan'}
+    ],
+    assets:{driveFolder:'',files:[]}
+  });
+
+  // Wire client payments to the new project
+  const v3Co = store.companies.find(c => c.id === v3CoId);
+  if (v3Co) {
+    v3Co.payments.push(
+      {id:store.nextId.clientPayments++, description:'X Project deposit — 40%', projectId:v3ProjId, amount:34000, date:td(-10), status:'paid'},
+      {id:store.nextId.clientPayments++, description:'X Progress payment — 30%', projectId:v3ProjId, amount:25500, date:td(14), status:'pending'}
+    );
+  }
+
+  // Wire freelancer payments to the new project
+  const v3Fr = store.team.find(m => m.id === v3FrId);
+  if (v3Fr) {
+    v3Fr.payments.push(
+      {id:store.nextId.payments++, description:'X Project management — pre-production (2 weeks)', projectId:v3ProjId, amount:6500, date:td(-7), status:'paid'},
+      {id:store.nextId.payments++, description:'X Project management — production & event week', projectId:v3ProjId, amount:3250, date:td(22), status:'pending'}
+    );
+  }
+
+  // Global tasks
+  store.tasks.push(
+    {id:store.nextId.gtasks++, title:'X Confirm final guest numbers with client', category:'Client', status:'in-progress', dueDate:td(4), assignedTo:'XRiley Morgan', projectId:v3ProjId, notes:''},
+    {id:store.nextId.gtasks++, title:'X Review and approve AV tech rider', category:'Production', status:'todo', dueDate:td(6), assignedTo:'XRiley Morgan', projectId:v3ProjId, notes:''},
+    {id:store.nextId.gtasks++, title:'X Send post-event report to client', category:'Client', status:'todo', dueDate:td(28), assignedTo:'XRiley Morgan', projectId:v3ProjId, notes:''},
+    {id:store.nextId.gtasks++, title:'X Reconcile final budget actuals', category:'Finance', status:'todo', dueDate:td(30), assignedTo:'', projectId:v3ProjId, notes:''}
+  );
+
+  // Lead
+  store.leads.push({
+    id:store.nextId.leads++, company:'XHarbour Coffee Co.', contactName:'XAlex Torres',
+    contactEmail:'xalex@example.com', projectType:'Brand Experience', estimatedValue:35000,
+    status:'meeting-booked', notes:'Example lead — edit or delete to get started.',
+    contactRole:'Head of Marketing', contactPhone:'', convertedProjectId:null,
+    actions:[{id:store.nextId.leadActions++, name:'Intro call — confirmed interest in Q1 brand event', type:'Call', date:td(-3), notes:'Budget range $30–40K. Wants 150-person format.', done:true}]
+  });
+
+  // Idea
+  store.ideas.push({
+    id:store.nextId.ideas++, title:'XPop-Up Dinner Series', category:'Event',
+    description:'Example idea — a branded intimate dinner series in unexpected spaces. Edit or delete to get started.',
+    submittedBy:'XRiley Morgan', date:td(-2)
+  });
+
+  // Mark all example migrations done
+  store._calExamplesAdded = true;
+  store._memberPaymentsAdded = true;
+  store._leadActionsAdded = true;
+  store._v3FreshExamples = true;
   save();
 }
 
