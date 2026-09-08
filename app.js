@@ -1323,23 +1323,6 @@ function renderProductionTab(p) {
       ${equipHtml}
     </div>
 
-    <!-- KEY CONTACTS -->
-    <div class="prod-section">
-      <div class="section-header"><div class="section-title">Key Contacts</div><button class="btn btn-primary btn-sm" onclick="openAddKeyContactModal()">+ Add</button></div>
-      ${prod.keyContacts.length===0
-        ? `<div class="empty-state"><div class="empty-icon">📞</div><p>No key contacts added. Pull from Team, Contacts, or add manually.</p></div>`
-        : `<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table class="table">
-            <thead><tr><th>Production Role</th><th>Name</th><th>Phone</th><th>Email</th><th></th></tr></thead>
-            <tbody>${prod.keyContacts.map(kc=>`<tr>
-              <td><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">${kc.productionRole}</span></td>
-              <td style="font-weight:700">${kc.name}</td>
-              <td><a href="tel:${kc.phone}" style="color:var(--blue);text-decoration:none">${kc.phone||'—'}</a></td>
-              <td><a href="mailto:${kc.email}" style="color:var(--blue);text-decoration:none">${kc.email||'—'}</a></td>
-              <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeKeyContact(${kc.id})">✕</button></td>
-            </tr>`).join('')}</tbody>
-          </table></div></div>`}
-    </div>
-
     <!-- CALL SHEET NOTES -->
     <div class="prod-section">
       <div class="section-header"><div class="section-title">Call Sheet Notes</div></div>
@@ -1439,64 +1422,6 @@ function addEquipment() {
 }
 function removeEquipment(id){showConfirm('Remove this equipment?',()=>{const p=currentProject;p.production.equipment=p.production.equipment.filter(e=>e.id!==id);save();toast('Removed');render();},{label:'Remove'});}
 
-function openAddKeyContactModal() {
-  const teamOpts = store.team.map(m=>`<option value="team:${m.id}">${m.name} — ${m.role}</option>`).join('');
-  const contactOpts = store.contacts.map(c=>{const co=c.companyId?store.companies.find(x=>x.id===c.companyId):null;return`<option value="contact:${c.id}">${c.name}${co?' — '+co.name:''}</option>`;}).join('');
-  openModal(`
-    <div class="modal-title">Add Key Contact</div>
-    <div class="form-grid">
-      <div class="form-group full"><label>Production Role</label><input id="kc-role" placeholder="e.g. Emergency Contact, Venue Manager, Client Contact"></div>
-      <div class="form-group full">
-        <label>Pull from existing</label>
-        <select id="kc-source" onchange="prefillKeyContact(this.value)">
-          <option value="">— Add manually below —</option>
-          <optgroup label="Team">${teamOpts}</optgroup>
-          <optgroup label="Contacts">${contactOpts}</optgroup>
-        </select>
-      </div>
-      <div class="form-group"><label>Name</label><input id="kc-name" placeholder="Full name"></div>
-      <div class="form-group"><label>Phone</label><input id="kc-phone" placeholder="07700 000000"></div>
-      <div class="form-group full"><label>Email</label><input id="kc-email" placeholder="email@example.com"></div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addKeyContact()">Add Contact</button></div>`);
-}
-function prefillKeyContact(val) {
-  if (!val) return;
-  const [type, id] = val.split(':');
-  const numId = parseInt(id);
-  let record;
-  if (type === 'team') record = store.team.find(m=>m.id===numId);
-  else record = store.contacts.find(c=>c.id===numId);
-  if (!record) return;
-  document.getElementById('kc-name').value = record.name || '';
-  document.getElementById('kc-phone').value = record.phone || '';
-  document.getElementById('kc-email').value = record.email || '';
-  if (!document.getElementById('kc-role').value) {
-    document.getElementById('kc-role').value = record.role || '';
-  }
-}
-function addKeyContact() {
-  const role = document.getElementById('kc-role').value.trim();
-  const name = document.getElementById('kc-name').value.trim();
-  if (!role || !name) { toast('Role and name required'); return; }
-  const p = currentProject;
-  if (!p.production.keyContacts) p.production.keyContacts = [];
-  p.production.keyContacts.push({
-    id: store.nextId.keyContacts++,
-    productionRole: role,
-    name,
-    phone: document.getElementById('kc-phone').value,
-    email: document.getElementById('kc-email').value,
-  });
-  closeModal(); save(); toast('Contact added'); render();
-}
-function removeKeyContact(id) {
-  showConfirm('Remove this key contact from production?', () => {
-    const p = currentProject;
-    p.production.keyContacts = p.production.keyContacts.filter(kc=>kc.id!==id);
-    save(); toast('Removed'); render();
-  }, { label: 'Remove' });
-}
 
 // ─── BRIEF TAB ────────────────────────────────────────────────────────────────
 function renderBriefTab(p) {
