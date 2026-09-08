@@ -307,7 +307,10 @@ if (!store.nextId.feedback) store.nextId.feedback = 1;
 if (!store.tasks) store.tasks = [];
 if (!store.nextId.gtasks) store.nextId.gtasks = 1;
 if (store.onboarding === undefined) store.onboarding = '';
-store.team.forEach(m => { if (m.isFreelancer === undefined) m.isFreelancer = false; });
+store.team.forEach(m => {
+  if (m.isFreelancer === undefined) m.isFreelancer = false;
+  (m.contracts || []).forEach(c => { if (!c.type) c.type = 'contract'; });
+});
 
 // ─── MIGRATION: Calendar example data ─────────────────────────────────────────
 if (!store._calExamplesAdded) {
@@ -2874,8 +2877,10 @@ function renderMemberPayments(m) {
 function renderMemberContracts(m) {
   const CONTRACT_STATUS = {'not-sent':'Not Sent','sent':'Sent','signed':'Signed / Returned'};
   const sorted = [...m.contracts].sort((a,b)=>b.id-a.id);
-  const signedCount = m.contracts.filter(c=>c.status==='signed').length;
-  const pendingCount = m.contracts.filter(c=>c.status==='sent').length;
+  const ndas = sorted.filter(c => c.type === 'nda');
+  const contracts = sorted.filter(c => c.type !== 'nda');
+  const signedCount = contracts.filter(c=>c.status==='signed').length;
+  const pendingCount = contracts.filter(c=>c.status==='sent').length;
 
   // Drive folder row
   const driveRow = `
@@ -2891,6 +2896,25 @@ function renderMemberContracts(m) {
       </button>
     </div>`;
 
+  // NDAs section
+  const ndasHtml = ndas.length === 0
+    ? `<div style="font-size:13px;color:var(--muted);padding:10px 0">No NDAs logged yet.</div>`
+    : `<div class="table-wrap"><table class="table">
+        <thead><tr><th>Name</th><th>Sent</th><th>Signed</th><th>Status</th><th>Admin Doc</th><th>Signed Copy</th><th></th></tr></thead>
+        <tbody>${ndas.map(c=>`<tr>
+          <td style="font-weight:700">${esc(c.name||'NDA')}</td>
+          <td style="color:var(--muted)">${c.sentDate?formatDate(c.sentDate):'—'}</td>
+          <td style="color:var(--muted)">${c.signedDate?formatDate(c.signedDate):'—'}</td>
+          <td><span class="status-badge badge-${c.status==='signed'?'signed':c.status==='sent'?'sent':'not-sent'}">${CONTRACT_STATUS[c.status]||c.status}</span></td>
+          <td>${c.adminUrl?`<a href="${c.adminUrl}" target="_blank" class="btn btn-ghost btn-sm">View ↗</a>`:'—'}</td>
+          <td>${c.freelancerUrl?`<a href="${c.freelancerUrl}" target="_blank" class="btn btn-ghost btn-sm">View ↗</a>`:`<span style="color:var(--muted);font-size:12px">Not uploaded</span>`}</td>
+          <td style="text-align:right;white-space:nowrap">
+            <button class="btn btn-ghost btn-sm" onclick="cycleContractStatus(${c.id})" title="Change status">↻</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteContract(${c.id})">✕</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+
   // Templates section
   const templatesHtml = store.contractTemplates.length===0
     ? `<div style="font-size:13px;color:var(--muted);padding:12px 0">No templates saved yet.</div>`
@@ -2904,12 +2928,12 @@ function renderMemberContracts(m) {
           <button class="btn btn-ghost btn-sm" onclick="deleteTemplate(${t.id})">✕</button>
         </div>`).join('');
 
-  // Contract engagements table
-  const contractsTable = sorted.length===0
+  // Project contracts table
+  const contractsTable = contracts.length===0
     ? `<div class="empty-state"><div class="empty-icon">📄</div><p>No contracts logged for ${m.name.split(' ')[0]} yet.</p></div>`
     : `<div class="table-wrap"><table class="table">
         <thead><tr><th>Project</th><th>Template</th><th>Sent</th><th>Signed / Returned</th><th>Status</th><th></th></tr></thead>
-        <tbody>${sorted.map(c=>{
+        <tbody>${contracts.map(c=>{
           const proj=store.projects.find(p=>p.id===c.projectId);
           const tmpl=store.contractTemplates.find(t=>t.id===c.templateId);
           return `<tr>
@@ -2932,6 +2956,9 @@ function renderMemberContracts(m) {
       <div class="crm-stat"><div class="crm-stat-label">Contracts Signed</div><div class="crm-stat-value" style="color:var(--green)">${signedCount}</div></div>
       <div class="crm-stat"><div class="crm-stat-label">Awaiting Signature</div><div class="crm-stat-value" style="color:var(--orange)">${pendingCount}</div></div>
     </div>
+
+    <div class="section-header"><div class="section-title">NDAs</div><button class="btn btn-primary btn-sm" onclick="openLogNDAModal()">+ Send NDA</button></div>
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:18px">${ndasHtml}</div>
 
     <div class="section-header"><div class="section-title">Contract Templates</div><button class="btn btn-ghost btn-sm" onclick="openAddTemplateModal()">+ Add Template</button></div>
     <div class="card" style="margin-bottom:18px">${templatesHtml}</div>
@@ -2996,6 +3023,34 @@ function logContract() {
   m.contracts.push({id:store.nextId.contracts++,projectId:parseInt(proj),templateId:parseInt(document.getElementById('c-template').value)||null,status:document.getElementById('c-status').value,sentDate:document.getElementById('c-sent').value,signedDate:document.getElementById('c-signed').value,notes:document.getElementById('c-notes').value});
   closeModal();save();toast('Contract logged');render();
 }
+function openLogNDAModal() {
+  openModal(`
+    <div class="modal-title">Send NDA</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>NDA Name</label><input id="nda-name" value="Non-Disclosure Agreement" placeholder="e.g. Non-Disclosure Agreement"></div>
+      <div class="form-group"><label>Status</label><select id="nda-status"><option value="not-sent">Not Sent</option><option value="sent" selected>Sent</option><option value="signed">Signed</option></select></div>
+      <div class="form-group"><label>Date Sent</label><input id="nda-sent" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="form-group full"><label>Document Link <span style="font-weight:400;color:var(--muted)">(Google Doc / Drive)</span></label><input id="nda-admin-url" placeholder="https://docs.google.com/..."></div>
+      <div class="form-group full"><label>Notes</label><input id="nda-notes" placeholder="Any notes..."></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNDA()">Save NDA</button></div>`);
+}
+function saveNDA() {
+  const name = document.getElementById('nda-name').value.trim() || 'NDA';
+  currentMember.contracts.push({
+    id: store.nextId.contracts++,
+    type: 'nda',
+    name,
+    status: document.getElementById('nda-status').value,
+    sentDate: document.getElementById('nda-sent').value,
+    signedDate: '',
+    adminUrl: document.getElementById('nda-admin-url').value.trim(),
+    freelancerUrl: '',
+    notes: document.getElementById('nda-notes').value.trim()
+  });
+  closeModal(); save(); toast('NDA saved'); render();
+}
+
 function cycleContractStatus(id) {
   const cycle=['not-sent','sent','signed'];
   const c=currentMember.contracts.find(x=>x.id===id);
@@ -4571,6 +4626,8 @@ function flNavigate(view) {
     body.innerHTML = renderFLAvailability();
   } else if (view === 'onboarding') {
     body.innerHTML = renderFLOnboarding();
+  } else if (view === 'documents') {
+    body.innerHTML = renderFLDocuments();
   }
 }
 
@@ -4964,6 +5021,73 @@ function flSaveOnboarding() {
   store.onboarding = document.getElementById('fl-onboard-content').value;
   closeModal(); save(); toast('Onboarding updated ✓');
   document.getElementById('fl-body').innerHTML = renderFLOnboarding();
+}
+
+function renderFLDocuments() {
+  const m = _flMember;
+  if (!m) return '';
+  const CONTRACT_STATUS = {'not-sent':'Not Sent','sent':'Sent','signed':'Signed'};
+  const ndas = (m.contracts || []).filter(c => c.type === 'nda').sort((a,b) => b.id - a.id);
+
+  if (ndas.length === 0) {
+    return `<div class="fl-section">${emptyState('📄', 'No documents have been sent to you yet.')}</div>`;
+  }
+
+  return `<div class="fl-section">
+    <div class="fl-section-label">Documents & NDAs</div>
+    ${ndas.map(nda => `
+      <div class="fl-card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:700;font-size:15px">${esc(nda.name||'NDA')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">
+              Sent: ${nda.sentDate ? formatDate(nda.sentDate) : '—'}${nda.signedDate ? ' · Signed: ' + formatDate(nda.signedDate) : ''}
+            </div>
+            ${nda.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(nda.notes)}</div>` : ''}
+          </div>
+          <span class="status-badge badge-${nda.status==='signed'?'signed':nda.status==='sent'?'sent':'not-sent'}">${CONTRACT_STATUS[nda.status]||nda.status}</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          ${nda.adminUrl ? `<a href="${nda.adminUrl}" target="_blank" class="btn btn-ghost btn-sm">View Document ↗</a>` : ''}
+          ${nda.freelancerUrl
+            ? `<a href="${nda.freelancerUrl}" target="_blank" class="btn btn-ghost btn-sm">View Signed Copy ↗</a>
+               <button class="btn btn-ghost btn-sm" onclick="openFLUploadSignedModal(${nda.id})">Replace</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="openFLUploadSignedModal(${nda.id})">Upload Signed Copy</button>`}
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function openFLUploadSignedModal(ndaId) {
+  openModal(`
+    <div class="modal-title">Upload Signed Copy</div>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 16px">Paste a link to your signed copy (Google Drive, Dropbox, WeTransfer, etc.)</p>
+    <div class="form-group full" style="margin-bottom:0">
+      <label>Document Link</label>
+      <input id="fl-signed-url" placeholder="https://drive.google.com/...">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFLSignedCopy(${ndaId})">Save</button>
+    </div>`);
+}
+
+function saveFLSignedCopy(ndaId) {
+  const url = document.getElementById('fl-signed-url').value.trim();
+  if (!url) { toast('Please paste a link'); return; }
+  const m = store.team.find(t => t.email?.toLowerCase() === currentUser?.email?.toLowerCase());
+  if (!m) return;
+  const nda = (m.contracts || []).find(c => c.id === ndaId);
+  if (!nda) return;
+  nda.freelancerUrl = url;
+  if (nda.status !== 'signed') {
+    nda.status = 'signed';
+    nda.signedDate = new Date().toISOString().split('T')[0];
+  }
+  save();
+  closeModal();
+  toast('Signed copy saved ✓');
+  document.getElementById('fl-body').innerHTML = renderFLDocuments();
 }
 
 async function flChangePassword() {
