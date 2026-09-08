@@ -610,6 +610,7 @@ store.team.forEach(m => {
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
 let currentView='tasks', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active', currentFinanceFilter='all';
 let currentMember=null, currentMemberTab='overview';
+let navHistory = []; // back-navigation stack
 let currentContact=null, currentContactTab='overview';
 let currentCompany=null;
 let convertingLeadId=null;
@@ -695,11 +696,7 @@ function navigateToContact(contactId) {
   if(person&&person.companyId) navigateToCompany(person.companyId);
   else navigate('contacts');
 }
-function navigate(view, projectId, memberId) {
-  if(view!=='tasks') tasksFilter='all';
-  currentView=view;
-  if(projectId!==undefined){currentProject=store.projects.find(p=>p.id===projectId);currentTab='brief';}
-  if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
+function _applyNavActiveStates(view) {
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
   const navMap={projects:1,tasks:2,calendar:3,team:4,contacts:5,'global-suppliers':6,finance:7,snapshot:8,leads:9,ideas:10,feedback:11};
@@ -712,6 +709,42 @@ function navigate(view, projectId, memberId) {
   else if(peopleViews.includes(view)) bnItems[3]?.classList.add('active');
   else if(growthViews.includes(view)) bnItems[4]?.classList.add('active');
   else bnItems[0]?.classList.add('active');
+}
+
+function navigate(view, projectId, memberId) {
+  // Push current state to back-history before navigating
+  if (currentView) {
+    navHistory.push({
+      view: currentView,
+      projectId: currentProject?.id,
+      memberId: currentMember?.id,
+      tab: currentTab,
+      memberTab: currentMemberTab,
+      tasksFilter,
+      tasksView
+    });
+    if (navHistory.length > 25) navHistory.shift();
+  }
+  if(view!=='tasks') tasksFilter='all';
+  currentView=view;
+  if(projectId!==undefined){currentProject=store.projects.find(p=>p.id===projectId);currentTab='brief';}
+  if(memberId!==undefined){currentMember=store.team.find(m=>m.id===memberId);currentMemberTab='overview';}
+  _applyNavActiveStates(view);
+  document.getElementById('main').scrollTo(0,0);
+  render();
+}
+
+function navigateBack() {
+  if (navHistory.length === 0) return;
+  const prev = navHistory.pop();
+  currentView     = prev.view;
+  currentTab      = prev.tab || 'brief';
+  currentMemberTab= prev.memberTab || 'overview';
+  tasksFilter     = prev.tasksFilter || 'all';
+  tasksView       = prev.tasksView || 'runway';
+  currentProject  = prev.projectId !== undefined ? (store.projects.find(p=>p.id===prev.projectId)||null) : null;
+  currentMember   = prev.memberId  !== undefined ? (store.team.find(m=>m.id===prev.memberId)||null)     : null;
+  _applyNavActiveStates(prev.view);
   document.getElementById('main').scrollTo(0,0);
   render();
 }
@@ -732,6 +765,13 @@ function render() {
   else if(currentView==='global-suppliers') m.innerHTML=renderGlobalVendors();
   else if(currentView==='finance') m.innerHTML=renderFinance();
   else if(currentView==='feedback') m.innerHTML=renderFeedback();
+  // Inject back button when history exists
+  if (navHistory.length > 0) {
+    const backEl = document.createElement('div');
+    backEl.style.cssText = 'padding:10px 24px 0;';
+    backEl.innerHTML = `<button onclick="navigateBack()" style="background:none;border:none;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;padding:0;font-family:inherit;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">← Back</button>`;
+    m.insertBefore(backEl, m.firstChild);
+  }
   // Bind callsheet autosave after render
   if(currentTab==='production') {
     const ta=document.getElementById('callsheet-notes');
@@ -4127,6 +4167,7 @@ function renderSearchResults(q){
 document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openSearch();}
   if(e.key==='Escape'){closeSearch();}
+  if(e.altKey&&e.key==='ArrowLeft'){e.preventDefault();navigateBack();}
 });
 
 // ─── QUICK CAPTURE ────────────────────────────────────────────────────────────
