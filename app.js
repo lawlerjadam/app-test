@@ -1929,7 +1929,7 @@ function renderIdeas() {
 
 // ─── TASKS ────────────────────────────────────────────────────────────────────
 let tasksFilter = 'all'; // 'all' | 'general' | project id (number)
-let tasksView = 'runway'; // 'kanban' | 'runway'
+let tasksView = 'runway'; // 'kanban' | 'runway' | 'mywork'
 const GT_STATUS = [{key:'todo',label:'To Do'},{key:'in-progress',label:'In Progress'},{key:'done',label:'Done'}];
 const GT_STATUS_COLOR = {'todo':'var(--muted)','in-progress':'var(--blue)','done':'var(--green)'};
 
@@ -2085,6 +2085,88 @@ function renderTasksRunway(tasks) {
   </div>`;
 }
 
+function renderTasksMyWork() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (!currentUserName) return emptyState('◆', 'Sign in to see your work.');
+
+  // Global tasks assigned to current user
+  const myGlobal = (store.tasks || [])
+    .filter(t => t.assignedTo === currentUserName)
+    .map(t => {
+      const proj = t.projectId ? store.projects.find(p => p.id === t.projectId) : null;
+      const diff = t.dueDate ? Math.round((new Date(t.dueDate+'T00:00:00') - today) / 86400000) : null;
+      return { ...t, _type: 'task', _proj: proj?.name || 'General', _diff: diff };
+    });
+
+  // Project milestones assigned to current user
+  const myMilestones = (store.projects || []).flatMap(p =>
+    (p.tasks || [])
+      .filter(m => m.assignedTo === currentUserName)
+      .map(m => {
+        const diff = m.dueDate ? Math.round((new Date(m.dueDate+'T00:00:00') - today) / 86400000) : null;
+        return { ...m, _type: 'milestone', _proj: p.name, _projId: p.id, _diff: diff };
+      })
+  );
+
+  const all = [...myGlobal, ...myMilestones];
+  const active = all.filter(t => t.status !== 'done')
+    .sort((a, b) => {
+      if (a._diff === null && b._diff === null) return 0;
+      if (a._diff === null) return 1;
+      if (b._diff === null) return -1;
+      return a._diff - b._diff;
+    });
+  const done = all.filter(t => t.status === 'done');
+
+  function urgCol(diff) {
+    if (diff === null) return { bar: 'var(--muted)', text: 'var(--muted)', bg: 'var(--surface)', label: 'No date' };
+    if (diff < 0)  return { bar: 'var(--red)',    text: '#A32D2D', bg: '#FCEBEB', label: 'Overdue' };
+    if (diff === 0) return { bar: 'var(--red)',   text: '#A32D2D', bg: '#FCEBEB', label: 'Today' };
+    if (diff <= 7) return { bar: 'var(--orange)', text: '#7A3510', bg: '#FEF3C7', label: diff + ' days' };
+    return           { bar: 'var(--green)',   text: '#0F6E56', bg: '#D1FAE5', label: diff + ' days' };
+  }
+
+  function row(t) {
+    const c = urgCol(t._diff);
+    const icon = t._type === 'milestone' ? '◆' : '○';
+    const onclick = t._type === 'milestone'
+      ? `navigate('project-detail',${t._projId})`
+      : `openEditGlobalTaskModal(${t.id})`;
+    return `<div class="runway-row" onclick="${onclick}">
+      <div class="runway-tminus" style="color:${c.bar};font-size:11px">
+        ${t._diff === null ? '—' : t._diff < 0 ? '<span style="font-size:10px;font-weight:700">OVER</span>' : 'T-'+t._diff}
+      </div>
+      <div class="runway-info">
+        <div class="runway-title">${icon} ${esc(t.title || t.name)}</div>
+        <div class="runway-meta">${esc(t._proj)} · ${t._type === 'milestone' ? 'Milestone' : (t.status||'').replace('-',' ')}</div>
+      </div>
+      <div class="runway-badge" style="background:${c.bg};color:${c.text};border:1px solid ${c.bg === 'var(--surface)' ? 'var(--border)' : 'transparent'}">${c.label}</div>
+    </div>`;
+  }
+
+  if (all.length === 0) return emptyState('◆', 'Nothing assigned to you yet.');
+
+  return `<div class="runway-board">
+    <div class="runway-section">
+      <div class="runway-section-head">Active (${active.length})</div>
+      ${active.length ? active.map(row).join('') : '<div class="runway-empty">All caught up.</div>'}
+    </div>
+    ${done.length ? `<div class="runway-section">
+      <div class="runway-section-head" style="color:var(--muted)">Done (${done.length})</div>
+      ${done.map(t => {
+        const onclick = t._type === 'milestone'
+          ? `navigate('project-detail',${t._projId})`
+          : `openEditGlobalTaskModal(${t.id})`;
+        return `<div class="runway-row" style="opacity:0.45" onclick="${onclick}">
+          <div class="runway-tminus" style="color:var(--muted)">✓</div>
+          <div class="runway-info"><div class="runway-title" style="text-decoration:line-through">${esc(t.title || t.name)}</div><div class="runway-meta">${esc(t._proj)}</div></div>
+          <div class="runway-badge" style="background:var(--surface);color:var(--muted)">done</div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+  </div>`;
+}
+
 function renderTasks() {
   const allTasks = store.tasks || [];
   const projects = store.projects;
@@ -2102,8 +2184,9 @@ function renderTasks() {
   const viewToggle = `<div style="display:flex;gap:6px">
     <button class="cal-view-btn${tasksView==='kanban'?' active':''}" onclick="tasksView='kanban';render()">Kanban</button>
     <button class="cal-view-btn${tasksView==='runway'?' active':''}" onclick="tasksView='runway';render()">Runway</button>
+    <button class="cal-view-btn${tasksView==='mywork'?' active':''}" onclick="tasksView='mywork';render()">My Work</button>
   </div>`;
-  const body = tasksView==='runway' ? renderTasksRunway(filtered) : renderTasksKanban(filtered, null);
+  const body = tasksView==='runway' ? renderTasksRunway(filtered) : tasksView==='mywork' ? renderTasksMyWork() : renderTasksKanban(filtered, null);
 
   return `
     <div class="topbar"><div><div class="page-title">Tasks</div><div class="page-sub">${allTasks.filter(t=>t.status!=='done').length} open · ${allTasks.filter(t=>t.status==='done').length} done</div></div>
@@ -4964,6 +5047,7 @@ async function adminLoadSOWsTab(memberId) {
               + '</div>'
               + '<span class="fl-sow-status ' + inv.status + '">' + inv.status + '</span>'
               + (inv.status === 'pending' ? '<button class="btn btn-primary btn-sm" onclick="adminApproveInvoice(\'' + inv.id + '\',\'' + (sow.project_id || '') + '\',' + (inv.gross_total || 0) + ',\'' + m.name + '\',' + memberId + ')">Approve & Pay</button>' : '')
+              + (inv.status === 'paid' && !inv.project_id ? '<button class="btn btn-ghost btn-sm" onclick="openReattributeInvoiceModal(\'' + inv.id + '\',\'' + (inv.invoice_number||'') + '\',\'' + m.name + '\',' + (inv.gross_total||0) + ',' + memberId + ')">Attribute to project →</button>' : '')
               + '</div>'
             ).join('') + '</div>'
           : '')
@@ -5040,6 +5124,66 @@ async function adminRespondCounter(sowId, status, memberId) {
   const { error } = await _sb.from('sows').update({ status, updated_at: new Date().toISOString() }).eq('id', sowId);
   if (error) { toast('Error: ' + error.message); return; }
   toast(status === 'agreed' ? 'Counter agreed ✓' : 'Counter declined');
+  adminLoadSOWsTab(memberId);
+}
+
+function openReattributeInvoiceModal(invoiceId, invoiceNumber, memberName, grossTotal, memberId) {
+  const projectOpts = store.projects
+    .filter(p => p.status !== 'completed')
+    .map(p => `<option value="${p.id}">${esc(p.name)}</option>`)
+    .join('');
+  openModal(`
+    <div class="modal-title">Attribute to Project</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:18px">
+      $${(+grossTotal).toLocaleString()} from ${esc(memberName)}${invoiceNumber ? ' (#' + invoiceNumber + ')' : ''} — paid but not yet linked to a project budget.
+    </p>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Project</label>
+        <select id="reattr-project">
+          <option value="">— Select project —</option>
+          ${projectOpts}
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReattributeInvoice('${invoiceId}','${invoiceNumber}','${memberName}',${grossTotal},${memberId})">Save</button>
+    </div>`);
+}
+
+async function saveReattributeInvoice(invoiceId, invoiceNumber, memberName, grossTotal, memberId) {
+  const sel = document.getElementById('reattr-project');
+  const projectId = sel?.value;
+  if (!projectId) { toast('Please select a project'); return; }
+  const proj = store.projects.find(p => String(p.id) === String(projectId));
+  if (!proj) return;
+  // Update Supabase record
+  const { error } = await _sb.from('freelancer_invoices')
+    .update({ project_id: projectId, project_name: proj.name })
+    .eq('id', invoiceId);
+  if (error) { toast('Error: ' + error.message); return; }
+  // Add to project invoices if not already there
+  if (!proj.invoices) proj.invoices = [];
+  if (!store.nextId.invoices) store.nextId.invoices = 1;
+  const already = proj.invoices.find(i => i.freelancerInvoiceId === invoiceId);
+  if (!already) {
+    proj.invoices.push({
+      id: store.nextId.invoices++,
+      freelancerInvoiceId: invoiceId,
+      supplier: memberName,
+      description: 'Freelancer Invoice ' + (invoiceNumber || ''),
+      category: 'Team',
+      amount: +grossTotal,
+      date: new Date().toISOString().split('T')[0],
+      status: 'paid',
+      type: 'freelancer',
+      notes: ''
+    });
+  }
+  save();
+  closeModal();
+  toast('Attributed to ' + proj.name + ' ✓');
   adminLoadSOWsTab(memberId);
 }
 
