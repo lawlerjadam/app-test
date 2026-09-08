@@ -3903,7 +3903,7 @@ async function openAccountPanel() {
     const rows = profiles.map(p => {
       const isSelf = p.id === currentUser?.id;
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0">${(p.name||p.email||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+        <div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0" title="${p.name||p.email||''}">${(p.name||p.email||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name||'—'}</div>
           <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.email||''}</div>
