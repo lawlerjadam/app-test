@@ -1216,7 +1216,7 @@ function addShootDay() {
   p.production.shootDays.push({id:store.nextId.shootDays++,date:d,location:document.getElementById('sd-location').value,callTime:document.getElementById('sd-call').value,wrapTime:document.getElementById('sd-wrap').value,notes:document.getElementById('sd-notes').value});
   closeModal();save();toast('Day added');render();
 }
-function removeShootDay(id){const p=currentProject;p.production.shootDays=p.production.shootDays.filter(d=>d.id!==id);save();toast('Removed');render();}
+function removeShootDay(id){showConfirm('Remove this shoot day?',()=>{const p=currentProject;p.production.shootDays=p.production.shootDays.filter(d=>d.id!==id);save();toast('Removed');render();},{label:'Remove'});}
 
 function openAddVendorModal() {
   const db = store.globalSuppliers||[];
@@ -1263,7 +1263,7 @@ function addVendor() {
   p.production.suppliers.push({id:store.nextId.suppliers++,globalSupplierId:s.id,company:s.company,contact:s.contactName||'',category:s.category,status,notes});
   closeModal();save();toast('Vendor added');render();
 }
-function removeVendor(id){const p=currentProject;p.production.suppliers=p.production.suppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
+function removeVendor(id){showConfirm('Remove this vendor from production?',()=>{const p=currentProject;p.production.suppliers=p.production.suppliers.filter(s=>s.id!==id);save();toast('Removed');render();},{label:'Remove'});}
 
 function openAddEquipmentModal() {
   const db=store.globalSuppliers||[];
@@ -1286,7 +1286,7 @@ function addEquipment() {
   p.production.equipment.push({id:store.nextId.equipment++,item,qty:parseInt(document.getElementById('eq-qty').value)||1,supplier:document.getElementById('eq-supplier').value,status:document.getElementById('eq-status').value});
   closeModal();save();toast('Item added');render();
 }
-function removeEquipment(id){const p=currentProject;p.production.equipment=p.production.equipment.filter(e=>e.id!==id);save();toast('Removed');render();}
+function removeEquipment(id){showConfirm('Remove this equipment?',()=>{const p=currentProject;p.production.equipment=p.production.equipment.filter(e=>e.id!==id);save();toast('Removed');render();},{label:'Remove'});}
 
 function openAddKeyContactModal() {
   const teamOpts = store.team.map(m=>`<option value="team:${m.id}">${m.name} — ${m.role}</option>`).join('');
@@ -1340,9 +1340,11 @@ function addKeyContact() {
   closeModal(); save(); toast('Contact added'); render();
 }
 function removeKeyContact(id) {
-  const p = currentProject;
-  p.production.keyContacts = p.production.keyContacts.filter(kc=>kc.id!==id);
-  save(); toast('Removed'); render();
+  showConfirm('Remove this key contact from production?', () => {
+    const p = currentProject;
+    p.production.keyContacts = p.production.keyContacts.filter(kc=>kc.id!==id);
+    save(); toast('Removed'); render();
+  }, { label: 'Remove' });
 }
 
 // ─── BRIEF TAB ────────────────────────────────────────────────────────────────
@@ -1623,8 +1625,10 @@ function toggleInvoicePaid(id) {
   save();render();
 }
 function deleteInvoice(id) {
-  currentProject.invoices=currentProject.invoices.filter(i=>i.id!==id);
-  save();toast('Removed');render();
+  showConfirm('Delete this invoice? This cannot be undone.', () => {
+    currentProject.invoices=currentProject.invoices.filter(i=>i.id!==id);
+    save();toast('Removed');render();
+  });
 }
 
 // ─── CALENDAR ─────────────────────────────────────────────────────────────────
@@ -2210,8 +2214,10 @@ function saveGlobalTask(id) {
 }
 
 function deleteGlobalTask(id) {
-  store.tasks = store.tasks.filter(t=>t.id!==id);
-  closeModal(); save(); toast('Task removed'); render();
+  showConfirm('Delete this task? This cannot be undone.', () => {
+    store.tasks = store.tasks.filter(t=>t.id!==id);
+    closeModal(); save(); toast('Task removed'); render();
+  });
 }
 
 function moveGlobalTask(id, status) {
@@ -2487,7 +2493,7 @@ function addTemplate() {
   store.contractTemplates.push({id:store.nextId.templates++,name:n,url:document.getElementById('t-url').value.trim(),description:document.getElementById('t-desc').value.trim()});
   closeModal();save();toast('Template added');render();
 }
-function deleteTemplate(id){store.contractTemplates=store.contractTemplates.filter(t=>t.id!==id);save();toast('Template removed');render();}
+function deleteTemplate(id){showConfirm('Delete this contract template?',()=>{store.contractTemplates=store.contractTemplates.filter(t=>t.id!==id);save();toast('Template removed');render();});}
 
 function openLogContractModal() {
   const m=currentMember;
@@ -2519,7 +2525,7 @@ function cycleContractStatus(id) {
   if(c.status==='signed'&&!c.signedDate)c.signedDate=new Date().toISOString().split('T')[0];
   save();toast('Status: '+c.status);render();
 }
-function deleteContract(id){currentMember.contracts=currentMember.contracts.filter(c=>c.id!==id);save();toast('Removed');render();}
+function deleteContract(id){showConfirm('Delete this contract record?',()=>{currentMember.contracts=currentMember.contracts.filter(c=>c.id!==id);save();toast('Removed');render();});}
 
 function openAddPaymentModal() {
   const projectOpts=store.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
@@ -2541,7 +2547,7 @@ function addPayment() {
   m.payments.push({id:store.nextId.payments++,description:d,projectId:projId,amount:parseFloat(document.getElementById('pay-amount').value)||0,date:document.getElementById('pay-date').value,status:document.getElementById('pay-status').value});
   closeModal();save();toast('Payment logged');render();
 }
-function deletePayment(id){currentMember.payments=currentMember.payments.filter(p=>p.id!==id);save();toast('Removed');render();}
+function deletePayment(id){showConfirm('Delete this payment record?',()=>{currentMember.payments=currentMember.payments.filter(p=>p.id!==id);save();toast('Removed');render();});}
 function cyclePaymentStatus(id) {
   const cycle=['pending','paid','overdue'];
   const p=currentMember.payments.find(x=>x.id===id);
@@ -2596,9 +2602,11 @@ function saveAvailabilityPeriod(memberId) {
 }
 
 function deleteAvailabilityPeriod(memberId, periodId) {
-  const m = store.team.find(t => t.id === memberId);
-  m.availabilityPeriods = m.availabilityPeriods.filter(p => p.id !== periodId);
-  save(); toast('Period removed'); render();
+  showConfirm('Remove this availability period?', () => {
+    const m = store.team.find(t => t.id === memberId);
+    m.availabilityPeriods = m.availabilityPeriods.filter(p => p.id !== periodId);
+    save(); toast('Period removed'); render();
+  }, { label: 'Remove' });
 }
 
 function openEditMemberCRMModal(id) {
@@ -2791,7 +2799,7 @@ function addTask() {
   p.tasks.push({id:store.nextId.tasks++,name:n,category:document.getElementById('t-cat').value,status:document.getElementById('t-status').value,startDate:document.getElementById('t-start').value,dueDate:document.getElementById('t-due').value,assignedTo:document.getElementById('t-assign').value});
   closeModal();save();toast('Task added');render();
 }
-function deleteTask(id){currentProject.tasks=currentProject.tasks.filter(t=>t.id!==id);save();toast('Removed');render();}
+function deleteTask(id){showConfirm('Delete this milestone?',()=>{currentProject.tasks=currentProject.tasks.filter(t=>t.id!==id);save();toast('Removed');render();});}
 function cycleTaskStatus(id){
   const cycle=['not-started','in-progress','done','blocked'];
   const t=currentProject.tasks.find(x=>x.id===id);
@@ -2877,7 +2885,7 @@ function openAddAssetModal(){
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addAsset()">Link Asset</button></div>`);
 }
 function addAsset(){const n=document.getElementById('a-name').value.trim();if(!n){toast('Name required');return;}if(!currentProject.assets)currentProject.assets={driveFolder:'',files:[]};currentProject.assets.files.push({id:store.nextId.assets++,name:n,type:document.getElementById('a-type').value,url:document.getElementById('a-url').value.trim(),addedDate:new Date().toISOString().split('T')[0]});closeModal();save();toast('Asset linked');render();}
-function deleteAsset(id){currentProject.assets.files=currentProject.assets.files.filter(f=>f.id!==id);save();toast('Removed');render();}
+function deleteAsset(id){showConfirm('Remove this asset link?',()=>{currentProject.assets.files=currentProject.assets.files.filter(f=>f.id!==id);save();toast('Removed');render();},{label:'Remove'});}
 
 // ─── GLOBAL SUPPLIERS ─────────────────────────────────────────────────────────
 const VENDOR_CATS=['Fabrication','AV / Tech','Catering','Staffing','Photography / Video','Transport','Print','Venue','Other'];
@@ -3048,7 +3056,7 @@ function openAddGlobalVendorModal(prefill){
 function addGlobalVendor(){const c=document.getElementById('gs-company').value.trim();if(!c){toast('Company required');return;}store.globalSuppliers.push({id:store.nextId.globalSuppliers++,company:c,category:document.getElementById('gs-cat').value,contactName:document.getElementById('gs-contact').value,contactPhone:document.getElementById('gs-phone').value,contactEmail:document.getElementById('gs-email').value,notes:document.getElementById('gs-notes').value});closeModal();save();toast('Vendor added');render();}
 function openEditGlobalVendorModal(id){openAddGlobalVendorModal(store.globalSuppliers.find(s=>s.id===id));}
 function saveGlobalVendor(id){const s=store.globalSuppliers.find(x=>x.id===id);s.company=document.getElementById('gs-company').value.trim()||s.company;s.category=document.getElementById('gs-cat').value;s.contactName=document.getElementById('gs-contact').value;s.contactPhone=document.getElementById('gs-phone').value;s.contactEmail=document.getElementById('gs-email').value;s.notes=document.getElementById('gs-notes').value;closeModal();save();toast('Saved');render();}
-function deleteGlobalVendor(id){store.globalSuppliers=store.globalSuppliers.filter(s=>s.id!==id);save();toast('Removed');render();}
+function deleteGlobalVendor(id){showConfirm('Delete this vendor? This cannot be undone.',()=>{store.globalSuppliers=store.globalSuppliers.filter(s=>s.id!==id);save();toast('Removed');render();});}
 
 // ─── CONTACTS / CLIENTS ───────────────────────────────────────────────────────
 function renderContactProfile() {
@@ -3187,8 +3195,10 @@ function cycleClientPaymentStatus(id) {
   save(); toast('Status: '+p.status); render();
 }
 function deleteClientPayment(id) {
-  currentCompany.payments = currentCompany.payments.filter(p=>p.id!==id);
-  save(); toast('Removed'); render();
+  showConfirm('Delete this payment record?', () => {
+    currentCompany.payments = currentCompany.payments.filter(p=>p.id!==id);
+    save(); toast('Removed'); render();
+  });
 }
 
 function renderContacts() {
@@ -3232,9 +3242,35 @@ document.getElementById('modal')?.addEventListener('mousedown', function(e){
 function closeModalOutside(e){if(e.target===document.getElementById('modal')&&_modalMousedownOnBackdrop)closeModal();}
 function statusOpts(sel){return LEAD_STATUSES.map(s=>`<option value="${s.key}" ${sel===s.key?'selected':''}>${s.label}</option>`).join('');}
 
+// ─── CONFIRM DIALOG ───────────────────────────────────────────────────────────
+let _confirmCb = null;
+function showConfirm(msg, onConfirm, { label = 'Delete', danger = true } = {}) {
+  _confirmCb = onConfirm;
+  openModal(`
+    <div class="modal-title">Are you sure?</div>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 24px">${msg}</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="${danger?'background:var(--red);border-color:var(--red);color:#fff':''}" onclick="_runConfirm()">${label}</button>
+    </div>`);
+}
+function _runConfirm() { const cb = _confirmCb; _confirmCb = null; closeModal(); if (cb) cb(); }
+
+// ─── HELPER FUNCTIONS ─────────────────────────────────────────────────────────
+function emptyState(icon, msg) {
+  return `<div class="empty-state"><div class="empty-icon">${icon}</div><p>${msg}</p></div>`;
+}
+function statusBadge(status, map) {
+  // map = { key: { label, color } } — falls back to plain pill
+  const s = map?.[status];
+  const label = s?.label || status || '—';
+  const color = s?.color || 'var(--muted)';
+  return `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${color}20;color:${color};white-space:nowrap">${label}</span>`;
+}
+
 function openNewIdeaModal(){const mn=store.team.map(m=>`<option>${m.name}</option>`).join('');openModal(`<div class="modal-title">✦ New Idea</div><div class="form-grid"><div class="form-group full"><label>Idea Title</label><input id="i-title" placeholder="Give it a name..."></div><div class="form-group"><label>Category</label><select id="i-cat"><option>Brand</option><option>Event</option><option>Space</option><option>Print</option><option>Digital</option><option>Product</option><option>Other</option></select></div><div class="form-group"><label>Submitted By</label><select id="i-by"><option value="">— Select —</option>${mn}<option value="Other">Other</option></select></div><div class="form-group full"><label>Description</label><textarea id="i-desc" placeholder="Describe the idea — no filter needed..."></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createIdea()">Add Idea</button></div>`);}
 function createIdea(){const t=document.getElementById('i-title').value.trim();if(!t){toast('Give the idea a title');return;}store.ideas.unshift({id:store.nextId.ideas++,title:t,category:document.getElementById('i-cat').value,description:document.getElementById('i-desc').value,submittedBy:document.getElementById('i-by').value||'Anonymous',date:new Date().toISOString().split('T')[0]});closeModal();toast('Idea added ✦');save();render();}
-function deleteIdea(id){store.ideas=store.ideas.filter(i=>i.id!==id);toast('Idea removed');save();render();}
+function deleteIdea(id){showConfirm('Delete this idea?',()=>{store.ideas=store.ideas.filter(i=>i.id!==id);toast('Idea removed');save();render();});}
 
 // ─── FEEDBACK ─────────────────────────────────────────────────────────────────
 function openFeedbackModal() {
@@ -3299,10 +3335,12 @@ function setFeedbackStatus(id, status) {
 }
 
 function deleteFeedback(id) {
-  store.feedback = store.feedback.filter(f => f.id !== id);
-  toast('Removed');
-  save();
-  render();
+  showConfirm('Delete this feedback item?', () => {
+    store.feedback = store.feedback.filter(f => f.id !== id);
+    toast('Removed');
+    save();
+    render();
+  });
 }
 
 function renderFeedback() {
@@ -3379,7 +3417,7 @@ function openNewLeadModal(){openModal(`<div class="modal-title">Add Lead</div><d
 function createLead(){const c=document.getElementById('l-company').value.trim();if(!c){toast('Company name required');return;}store.leads.push({id:store.nextId.leads++,company:c,contactName:document.getElementById('l-contact').value,contactRole:document.getElementById('l-role').value,contactEmail:document.getElementById('l-email').value,contactPhone:document.getElementById('l-phone').value,projectType:document.getElementById('l-type').value,estimatedValue:parseInt(document.getElementById('l-value').value)||0,status:document.getElementById('l-status').value,notes:document.getElementById('l-notes').value,nextAction:document.getElementById('l-action').value.trim(),nextActionDate:document.getElementById('l-action-date').value,convertedProjectId:null});closeModal();toast('Lead added');save();render();}
 function openEditLeadModal(id){const l=store.leads.find(x=>x.id===id);openModal(`<div class="modal-title">Edit Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" value="${l.company}"></div><div class="form-group"><label>Contact Name</label><input id="l-contact" value="${l.contactName||''}"></div><div class="form-group"><label>Contact Role / Title</label><input id="l-role" value="${l.contactRole||''}" placeholder="e.g. Brand Marketing Lead"></div><div class="form-group"><label>Contact Email</label><input id="l-email" value="${l.contactEmail||''}"></div><div class="form-group"><label>Contact Phone</label><input id="l-phone" value="${l.contactPhone||''}" placeholder="(416) 555-0000"></div><div class="form-group"><label>Project Type</label><select id="l-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" value="${l.estimatedValue||0}"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts(l.status)}</select></div><div class="form-group"><label>Next Action</label><input id="l-action" list="lead-actions-edit" value="${l.nextAction||''}" placeholder="e.g. Send Proposal"><datalist id="lead-actions-edit"><option>Send Proposal</option><option>Follow Up</option><option>Discovery Call</option><option>Pitch Presentation</option><option>Send Contract</option><option>Check In</option><option>Meeting</option></datalist></div><div class="form-group"><label>Action Date</label><input id="l-action-date" type="date" value="${l.nextActionDate||''}"></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes">${l.notes||''}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveLead(${id})">Save</button></div>`);}
 function saveLead(id){const l=store.leads.find(x=>x.id===id);l.company=document.getElementById('l-company').value.trim()||l.company;l.contactName=document.getElementById('l-contact').value;l.contactRole=document.getElementById('l-role').value;l.contactEmail=document.getElementById('l-email').value;l.contactPhone=document.getElementById('l-phone').value;l.projectType=document.getElementById('l-type').value;l.estimatedValue=parseInt(document.getElementById('l-value').value)||0;l.status=document.getElementById('l-status').value;l.notes=document.getElementById('l-notes').value;l.nextAction=document.getElementById('l-action').value.trim();l.nextActionDate=document.getElementById('l-action-date').value;closeModal();toast('Lead saved');save();render();}
-function deleteLead(id){store.leads=store.leads.filter(l=>l.id!==id);toast('Lead removed');save();render();}
+function deleteLead(id){showConfirm('Delete this lead? This cannot be undone.',()=>{store.leads=store.leads.filter(l=>l.id!==id);toast('Lead removed');save();render();});}
 
 function openConvertLeadModal(id) {
   convertingLeadId = id;
@@ -3519,33 +3557,33 @@ function openEditBriefModal(){const p=currentProject;openModal(`<div class="moda
 function saveBrief(){const p=currentProject;p.brief.overview=document.getElementById('b-overview').value;p.brief.objectives=document.getElementById('b-objectives').value;p.brief.deliverables=document.getElementById('b-deliverables').value;p.brief.timeline=document.getElementById('b-timeline').value;closeModal();toast('Brief saved');save();render();}
 function openAllocateModal(){const p=currentProject;const av=store.team.filter(m=>!p.teamIds.includes(m.id));openModal(`<div class="modal-title">Allocate Team Member</div>${av.length===0?'<p style="color:var(--muted)">All team members already assigned.</p>':`<div class="form-grid"><div class="form-group"><label>Team Member</label><select id="f-member">${av.map(m=>`<option value="${m.id}">${m.name} — ${m.role} ($${m.rate}/day)</option>`).join('')}</select></div><div class="form-group"><label>Days Allocated</label><input id="f-days" type="number" value="1" min="0"></div></div>`}<div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>${av.length>0?`<button class="btn btn-primary" onclick="allocateMember()">Add to Project</button>`:''}</div>`);}
 function allocateMember(){const mid=parseInt(document.getElementById('f-member').value),days=parseInt(document.getElementById('f-days').value)||0,p=currentProject;p.teamIds.push(mid);if(!p.teamAllocation)p.teamAllocation={};p.teamAllocation[mid]=days;closeModal();toast('Team member added');save();render();}
-function removeTeamMember(id){const p=currentProject;p.teamIds=p.teamIds.filter(t=>t!==id);if(p.teamAllocation)delete p.teamAllocation[id];toast('Removed');save();render();}
+function removeTeamMember(id){showConfirm('Remove this person from the project?',()=>{const p=currentProject;p.teamIds=p.teamIds.filter(t=>t!==id);if(p.teamAllocation)delete p.teamAllocation[id];toast('Removed');save();render();},{label:'Remove'});}
 function editBudgetLineForecast(idx){const p=currentProject;ensureBudgetLines(p);const line=p.budgetLines[idx];openModal(`<div class="modal-title">Set Forecast</div><div class="form-grid"><div class="form-group full"><label>Category</label><div style="font-size:16px;font-weight:700;color:var(--navy);padding:4px 0">${line.category}</div></div><div class="form-group full"><label>Forecast Amount ($)</label><input id="f-forecast" type="number" value="${line.forecast||0}" placeholder="0"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBudgetLineForecast(${idx})">Save</button></div>`);}
 function saveBudgetLineForecast(idx){currentProject.budgetLines[idx].forecast=parseFloat(document.getElementById('f-forecast').value)||0;closeModal();save();render();}
 function addBudgetLine(){openModal(`<div class="modal-title">Add Budget Line</div><div class="form-grid"><div class="form-group full"><label>Category Name</label><input id="f-cat" placeholder="e.g. Catering"></div><div class="form-group full"><label>Forecast Amount ($)</label><input id="f-forecast" type="number" placeholder="0"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewBudgetLine()">Add</button></div>`);}
 function saveNewBudgetLine(){const cat=document.getElementById('f-cat').value.trim();if(!cat){toast('Category name required');return;}const p=currentProject;ensureBudgetLines(p);const newId=Math.max(0,...p.budgetLines.map(l=>l.id))+1;p.budgetLines.push({id:newId,category:cat,forecast:parseFloat(document.getElementById('f-forecast').value)||0,actuals:0});closeModal();toast('Budget line added');save();render();}
-function removeBudgetLine(idx){currentProject.budgetLines.splice(idx,1);toast('Removed');save();render();}
+function removeBudgetLine(idx){showConfirm('Remove this budget line?',()=>{currentProject.budgetLines.splice(idx,1);toast('Removed');save();render();},{label:'Remove'});}
 function openAddExpenseModal(){openModal(`<div class="modal-title">Add Expense</div><div class="form-grid"><div class="form-group full"><label>Description</label><input id="f-desc" placeholder="e.g. Venue hire"></div><div class="form-group"><label>Category</label><select id="f-cat"><option>Venue</option><option>Production</option><option>Staffing</option><option>Tech</option><option>Design</option><option>Travel</option><option>Other</option></select></div><div class="form-group"><label>Amount ($)</label><input id="f-amount" type="number" placeholder="0"></div><div class="form-group"><label>Date</label><input id="f-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addExpense()">Add Expense</button></div>`);}
 function addExpense(){const a=parseFloat(document.getElementById('f-amount').value)||0,d=document.getElementById('f-desc').value.trim();if(!d){toast('Description required');return;}const p=currentProject;p.expenses.push({id:store.nextId.expenses++,description:d,category:document.getElementById('f-cat').value,amount:a,date:document.getElementById('f-date').value});p.spent=p.expenses.reduce((s,e)=>s+e.amount,0);closeModal();toast('Expense added');save();render();}
-function deleteExpense(id){const p=currentProject;p.expenses=p.expenses.filter(e=>e.id!==id);p.spent=p.expenses.reduce((s,e)=>s+e.amount,0);toast('Removed');save();render();}
+function deleteExpense(id){showConfirm('Delete this expense?',()=>{const p=currentProject;p.expenses=p.expenses.filter(e=>e.id!==id);p.spent=p.expenses.reduce((s,e)=>s+e.amount,0);toast('Removed');save();render();});}
 function openAddContactToProjectModal(){const p=currentProject,av=store.contacts.filter(c=>!p.contactIds.includes(c.id));openModal(`<div class="modal-title">Add Contact</div>${av.length===0?'<p style="color:var(--muted)">All contacts already linked.</p>':`<div class="form-group"><label>Select Person</label><select id="f-contact">${av.map(c=>{const co=c.companyId?store.companies.find(x=>x.id===c.companyId):null;return`<option value="${c.id}">${c.name}${co?' — '+co.name:''}${c.role?' · '+c.role:''}`;}).join('')}</select></div>`}<div style="margin-top:10px;font-size:12px;color:var(--muted)">Don't see them? <a onclick="closeModal();navigate('contacts')" style="color:var(--blue);cursor:pointer">Add to Clients first.</a></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>${av.length>0?`<button class="btn btn-primary" onclick="addContactToProject()">Add</button>`:''}</div>`);}
 function addContactToProject(){currentProject.contactIds.push(parseInt(document.getElementById('f-contact').value));closeModal();toast('Contact added');save();render();}
-function removeContact(id){currentProject.contactIds=currentProject.contactIds.filter(c=>c!==id);toast('Removed');save();render();}
+function removeContact(id){showConfirm('Remove this contact from the project?',()=>{currentProject.contactIds=currentProject.contactIds.filter(c=>c!==id);toast('Removed');save();render();},{label:'Remove'});}
 function openNewMemberModal(){openModal(`<div class="modal-title">Add Team Member</div><div class="form-grid"><div class="form-group"><label>Full Name</label><input id="f-name"></div><div class="form-group"><label>Role</label><input id="f-role" placeholder="e.g. Designer"></div><div class="form-group"><label>Email</label><input id="f-email" type="email"></div><div class="form-group"><label>Day Rate ($)</label><input id="f-rate" type="number" placeholder="0"></div><div class="form-group full"><label>Skills (comma separated)</label><input id="f-skills"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createMember()">Add Member</button></div>`);}
 function createMember(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Name required');return;}store.team.push({id:store.nextId.team++,name:n,role:document.getElementById('f-role').value||'Freelancer',email:document.getElementById('f-email').value,rate:parseInt(document.getElementById('f-rate').value)||0,skills:document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean),availability:'available',availableFrom:'',contractStatus:'not-sent',ir35:'not-assessed',paymentTerms:'30',payments:[],notes:''});closeModal();toast('Team member added');save();render();}
-function deleteMember(id){store.team=store.team.filter(m=>m.id!==id);toast('Removed');save();render();}
+function deleteMember(id){showConfirm('Remove this team member? Their payment and contract records will also be removed.',()=>{store.team=store.team.filter(m=>m.id!==id);toast('Removed');save();render();});}
 // ─── COMPANY CRUD ──────────────────────────────────────────────────────────────
 function openNewCompanyModal(){openModal(`<div class="modal-title">Add Client</div><div class="form-grid"><div class="form-group full"><label>Company Name</label><input id="f-coname" placeholder="e.g. RBC Royal Bank of Canada"></div><div class="form-group"><label>Industry</label><input id="f-industry" placeholder="e.g. Financial Services"></div><div class="form-group full"><label>Notes</label><textarea id="f-notes" placeholder="Any context..."></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createCompany()">Add Client</button></div>`);}
 function createCompany(){const n=document.getElementById('f-coname').value.trim();if(!n){toast('Company name required');return;}const co={id:store.nextId.companies++,name:n,industry:document.getElementById('f-industry').value,notes:document.getElementById('f-notes').value,payments:[]};store.companies.push(co);closeModal();toast('Client added');save();render();}
 function openEditCompanyModal(id){const co=store.companies.find(x=>x.id===id);if(!co)return;openModal(`<div class="modal-title">Edit Client</div><div class="form-grid"><div class="form-group full"><label>Company Name</label><input id="f-coname" value="${esc(co.name)}"></div><div class="form-group"><label>Industry</label><input id="f-industry" value="${esc(co.industry||'')}"></div><div class="form-group full"><label>Notes</label><textarea id="f-notes">${esc(co.notes||'')}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveCompany(${id})">Save</button></div>`);}
 function saveCompany(id){const co=store.companies.find(x=>x.id===id);if(!co)return;co.name=document.getElementById('f-coname').value.trim()||co.name;co.industry=document.getElementById('f-industry').value;co.notes=document.getElementById('f-notes').value;closeModal();toast('Saved');save();render();}
-function deleteCompany(id){if(!confirm('Remove this client? Their contacts and project links will be cleared.'))return;store.companies=store.companies.filter(c=>c.id!==id);store.contacts.forEach(c=>{if(c.companyId===id)c.companyId=null;});store.projects.forEach(p=>{if(p.clientId===id)p.clientId=null;});toast('Client removed');save();render();}
+function deleteCompany(id){showConfirm('Remove this client? Their contacts and project links will be cleared.',()=>{store.companies=store.companies.filter(c=>c.id!==id);store.contacts.forEach(c=>{if(c.companyId===id)c.companyId=null;});store.projects.forEach(p=>{if(p.clientId===id)p.clientId=null;});toast('Client removed');save();render();});}
 // ─── PERSON CRUD ───────────────────────────────────────────────────────────────
 function openAddPersonModal(companyId){openModal(`<div class="modal-title">Add Contact</div><div class="form-grid"><div class="form-group"><label>Full Name</label><input id="f-name"></div><div class="form-group"><label>Role / Title</label><input id="f-role"></div><div class="form-group"><label>Email</label><input id="f-email" type="email"></div><div class="form-group"><label>Phone</label><input id="f-phone"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createPerson(${companyId})">Add Contact</button></div>`);}
 function createPerson(companyId){const n=document.getElementById('f-name').value.trim();if(!n){toast('Name required');return;}store.contacts.push({id:store.nextId.contacts++,companyId,name:n,role:document.getElementById('f-role').value,email:document.getElementById('f-email').value,phone:document.getElementById('f-phone').value});closeModal();toast('Contact added');save();render();}
 function openEditPersonModal(id){const c=store.contacts.find(x=>x.id===id);if(!c)return;openModal(`<div class="modal-title">Edit Contact</div><div class="form-grid"><div class="form-group"><label>Full Name</label><input id="f-name" value="${esc(c.name)}"></div><div class="form-group"><label>Role / Title</label><input id="f-role" value="${esc(c.role||'')}"></div><div class="form-group"><label>Email</label><input id="f-email" value="${esc(c.email||'')}"></div><div class="form-group"><label>Phone</label><input id="f-phone" value="${esc(c.phone||'')}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="savePerson(${id})">Save</button></div>`);}
 function savePerson(id){const c=store.contacts.find(x=>x.id===id);if(!c)return;c.name=document.getElementById('f-name').value.trim()||c.name;c.role=document.getElementById('f-role').value;c.email=document.getElementById('f-email').value;c.phone=document.getElementById('f-phone').value;closeModal();toast('Saved');save();render();}
-function deletePerson(id){store.contacts=store.contacts.filter(c=>c.id!==id);store.projects.forEach(p=>{p.contactIds=(p.contactIds||[]).filter(c=>c!==id);});save();toast('Contact removed');render();}
+function deletePerson(id){showConfirm('Delete this contact? They will be removed from any linked projects.',()=>{store.contacts=store.contacts.filter(c=>c.id!==id);store.projects.forEach(p=>{p.contactIds=(p.contactIds||[]).filter(c=>c!==id);});save();toast('Contact removed');render();});}
 // Legacy aliases for compatibility
 function openNewContactModal(){openNewCompanyModal();}
 function openEditContactModal(id){openEditCompanyModal(id);}
@@ -3576,11 +3614,12 @@ function handleImport(e) {
     try {
       const data = JSON.parse(ev.target.result);
       if (!data.projects || !data.team) { toast('Unrecognised file — not restored'); return; }
-      if (!confirm('This will replace all current data with the backup. Continue?')) return;
-      store = data;
-      await save();
-      toast('Restored — reloading...');
-      setTimeout(() => location.reload(), 1200);
+      showConfirm('This will replace all current data with the backup. Continue?', async () => {
+        store = data;
+        await save();
+        toast('Restored — reloading...');
+        setTimeout(() => location.reload(), 1200);
+      }, { label: 'Restore', danger: true });
     } catch(err) {
       toast('Invalid backup file');
     }
@@ -3965,11 +4004,12 @@ async function updateUserRole(userId, role) {
 }
 
 async function revokeUserAccess(userId, name) {
-  if (!confirm(`Remove ${name}'s access? They will no longer be able to sign in. You can re-add them via Supabase Auth.`)) return;
-  const { error } = await _sb.from('profiles').delete().eq('id', userId);
-  if (error) { toast('Error removing user'); return; }
-  toast(`${name} removed ✓`);
-  openAccountPanel(); // Refresh the panel
+  showConfirm(`Remove ${name}'s access? They will no longer be able to sign in. You can re-add them via Supabase Auth.`, async () => {
+    const { error } = await _sb.from('profiles').delete().eq('id', userId);
+    if (error) { toast('Error removing user'); return; }
+    toast(`${name} removed ✓`);
+    openAccountPanel();
+  }, { label: 'Remove access' });
 }
 
 // Guard against Supabase firing SIGNED_IN twice on page load
