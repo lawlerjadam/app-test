@@ -4341,6 +4341,7 @@ async function afterLogin(session) {
   else document.body.classList.remove('viewer-mode');
   renderFinanceBadge();
   render();
+  startPolling();
 }
 
 async function login() {
@@ -5435,6 +5436,116 @@ async function adminApproveInvoice(invoiceId, projectId, grossTotal, memberName,
   renderFinanceBadge();
   adminLoadSOWsTab(memberId);
   if (currentView === 'project-detail' && currentProject?.id === proj?.id) render();
+}
+
+// ─── NOTIFICATIONS + POLLING ──────────────────────────────────────────────────
+let _notifications = [];
+let _pollSnapshot = null;
+let _pollInterval = null;
+
+function startPolling() {
+  if (_pollInterval) clearInterval(_pollInterval);
+  // Establish baseline on next tick (store is already loaded)
+  setTimeout(() => { _pollSnapshot = JSON.parse(JSON.stringify(store)); }, 500);
+  _pollInterval = setInterval(pollForChanges, 60000);
+}
+
+async function pollForChanges() {
+  if (!currentUser || !_pollSnapshot) return;
+  try {
+    const { data } = await _sb.rpc('load_org_data');
+    if (!data) return;
+
+    const snap = _pollSnapshot;
+    const newNotifs = [];
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // New global tasks assigned to current user
+    const snapTaskIds = new Set((snap.tasks || []).map(t => t.id));
+    (data.tasks || []).forEach(t => {
+      if (!snapTaskIds.has(t.id) && t.assignedTo && t.assignedTo === currentUserName) {
+        newNotifs.push({ id: Date.now() + Math.random(), msg: `Task assigned to you: "${t.title}"`, time: now });
+      }
+    });
+
+    // New project milestones assigned to current user
+    (data.projects || []).forEach(p => {
+      const snapProj = (snap.projects || []).find(sp => sp.id === p.id);
+      const snapMIds = new Set((snapProj?.tasks || []).map(m => m.id));
+      (p.tasks || []).forEach(m => {
+        if (!snapMIds.has(m.id) && m.assignedTo === currentUserName) {
+          newNotifs.push({ id: Date.now() + Math.random(), msg: `Milestone assigned: "${m.name}" · ${p.name}`, time: now });
+        }
+      });
+    });
+
+    // New feedback (admin only)
+    if (currentUserRole === 'admin') {
+      const snapFbIds = new Set((snap.feedback || []).map(f => f.id));
+      (data.feedback || []).forEach(f => {
+        if (!snapFbIds.has(f.id)) {
+          newNotifs.push({ id: Date.now() + Math.random(), msg: `New feedback: "${f.title || f.category || 'item'}"`, time: now });
+        }
+      });
+    }
+
+    if (newNotifs.length > 0) {
+      _notifications = [...newNotifs, ..._notifications].slice(0, 30);
+      updateBellBadge();
+    }
+
+    // Silently refresh store + re-render if anything changed
+    const hasChanged = JSON.stringify(data.tasks) !== JSON.stringify(snap.tasks)
+      || JSON.stringify(data.projects) !== JSON.stringify(snap.projects)
+      || JSON.stringify(data.leads) !== JSON.stringify(snap.leads);
+    if (hasChanged) {
+      // Preserve local migration flags
+      const flags = Object.fromEntries(Object.entries(store).filter(([k]) => k.startsWith('_')));
+      store = { ...data, ...flags };
+      render();
+    }
+
+    _pollSnapshot = JSON.parse(JSON.stringify(store));
+  } catch(e) { /* silent */ }
+}
+
+function updateBellBadge() {
+  const badge = document.getElementById('notif-bell-badge');
+  if (!badge) return;
+  const unread = _notifications.filter(n => !n.read).length;
+  if (unread > 0) {
+    badge.textContent = unread > 9 ? '9+' : unread;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function openNotificationsPanel() {
+  _notifications.forEach(n => n.read = true);
+  updateBellBadge();
+
+  const items = _notifications.length === 0
+    ? emptyState('🔔', 'All caught up — no new activity yet.')
+    : _notifications.map(n => `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:13px;color:var(--text);line-height:1.5">${n.msg}</div>
+        <div style="font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0">${n.time}</div>
+      </div>`).join('');
+
+  openModal(`
+    <div class="modal-title">Notifications</div>
+    <div style="max-height:420px;overflow-y:auto">${items}</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      ${_notifications.length > 0 ? `<button class="btn btn-ghost" onclick="_clearAllNotifications()">Clear all</button>` : ''}
+    </div>`);
+}
+
+function _clearAllNotifications() {
+  _notifications = [];
+  updateBellBadge();
+  closeModal();
 }
 
 // ─── FINANCE BADGE ────────────────────────────────────────────────────────────
