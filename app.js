@@ -1,6 +1,19 @@
 // ─── PROJECT COLOURS ─────────────────────────────────────────────────────────
 const PROJECT_COLORS = ['#E8C832','#D4A010','#C8881E','#B86030','#A04828','#8A3820','#F0D458','#D49820','#C87038','#9A5030','#7A3018','#F5E080'];
 
+// ─── PROJECT TEMPLATES ────────────────────────────────────────────────────────
+const PROJECT_TEMPLATES = ['FELT Original', 'FELT Film', 'FELT Pop-Up', 'FELT Other'];
+// All tabs enabled for all templates for now — per-template customisation to follow
+const PROJECT_TEMPLATE_TABS = {
+  'FELT Original': ['brief','timeline','production','assets','team','budget','invoices','contacts'],
+  'FELT Film':     ['brief','timeline','production','assets','team','budget','invoices','contacts'],
+  'FELT Pop-Up':   ['brief','timeline','production','assets','team','budget','invoices','contacts'],
+  'FELT Other':    ['brief','timeline','production','assets','team','budget','invoices','contacts'],
+};
+function getProjectTabs(template) {
+  return PROJECT_TEMPLATE_TABS[template] || PROJECT_TEMPLATE_TABS['FELT Other'];
+}
+
 // ─── FEELING OF THE DAY ───────────────────────────────────────────────────────
 const FEELINGS = [
   { word: 'Sonder', origin: 'The Dictionary of Obscure Sorrows', description: 'The realisation that each passerby has a life as vivid and complex as your own.' },
@@ -173,7 +186,7 @@ const defaultData = {
   _v3FreshExamples: true,
 
   projects:[
-    {id:1, name:'XAurora Launch', client:'XKova Brand Co.', clientId:1, status:'active', type:'Brand Activation', color:'#7C6FF0',
+    {id:1, name:'XAurora Launch', client:'XKova Brand Co.', clientId:1, status:'active', type:'FELT Original', template:'FELT Original', color:'#7C6FF0',
       startDate:'2026-09-22', endDate:'2026-11-14', budget:0, spent:0,
       brief:{
         overview:'Example project — edit or delete to get started. A 200-person product launch event for the XAurora beverage range at a downtown venue.',
@@ -310,6 +323,10 @@ if (store.onboarding === undefined) store.onboarding = '';
 store.team.forEach(m => {
   if (m.isFreelancer === undefined) m.isFreelancer = false;
   (m.contracts || []).forEach(c => { if (!c.type) c.type = 'contract'; });
+});
+// Ensure all projects have a template field
+store.projects.forEach(p => {
+  if (!p.template) p.template = 'FELT Other';
 });
 
 // ─── MIGRATION: Calendar example data ─────────────────────────────────────────
@@ -457,7 +474,7 @@ if (!store._v3FreshExamples) {
   const v3Inv3 = store.nextId.invoices++;
   store.projects.push({
     id: v3ProjId, name: 'XAurora Launch', client: 'XKova Brand Co.', clientId: v3CoId,
-    status: 'active', type: 'Brand Activation', color: '#7C6FF0',
+    status: 'active', type: 'FELT Original', template: 'FELT Original', color: '#7C6FF0',
     startDate: td(-14), endDate: td(56), budget: 0, spent: 0,
     brief:{
       overview:'Example project — edit or delete to get started. A 200-person product launch event for the XAurora beverage range at a downtown venue.',
@@ -1224,7 +1241,7 @@ function renderProjectCard(p) {
         <div class="budget-bar"><div class="budget-bar-fill ${pct>100?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
       </div>
       <div class="project-meta">
-        <div class="meta-item"><strong>${p.type}</strong>Type</div>
+        <div class="meta-item"><strong>${p.template||p.type||'—'}</strong>Template</div>
         <div class="meta-item"><strong>${formatDate(p.endDate)}</strong>Deadline</div>
         <div class="meta-item" style="margin-left:auto"><div class="team-avatars">${teamInitials}</div></div>
       </div>
@@ -1234,19 +1251,33 @@ function renderProjectCard(p) {
 // ─── PROJECT DETAIL ───────────────────────────────────────────────────────────
 function renderProjectDetail() {
   const p=currentProject; if(!p) return '';
+  const tmpl = p.template || p.type || 'FELT Other';
+  const enabledTabs = getProjectTabs(tmpl);
+  // Guard: if currentTab not enabled in this template, fall back to first enabled tab
+  const activeTab = enabledTabs.includes(currentTab) ? currentTab : enabledTabs[0] || 'brief';
+  if (activeTab !== currentTab) currentTab = activeTab;
+
+  const TAB_DEFS = [
+    { key: 'brief',      label: 'Brief' },
+    { key: 'timeline',   label: 'Timeline & Tasks', activeKeys: ['brief','timeline','tasks'] },
+    { key: 'production', label: 'Production' },
+    { key: 'assets',     label: 'Assets' },
+    { key: 'team',       label: 'Team' },
+    { key: 'budget',     label: 'Budget' },
+    { key: 'invoices',   label: 'Invoices' },
+    { key: 'contacts',   label: 'Clients' },
+  ];
+  const visibleTabs = TAB_DEFS.filter(t => enabledTabs.includes(t.key));
+  const tabsHtml = visibleTabs.map(t => {
+    const isActive = t.activeKeys ? t.activeKeys.includes(currentTab) : currentTab === t.key;
+    const switchKey = t.key === 'timeline' ? 'timeline' : t.key;
+    return `<div class="tab ${isActive?'active':''}" onclick="switchTab('${switchKey}')">${t.label}</div>`;
+  }).join('');
+
   return `
-    <div class="topbar"><div><div class="back-btn" onclick="navigate('projects')">← Projects</div><div class="page-title">${p.name}</div><div class="page-sub">${(()=>{const co=p.clientId?store.companies.find(c=>c.id===p.clientId):null;return co?`<span style="cursor:pointer;color:var(--navy);font-weight:600;text-decoration:underline;text-decoration-style:dotted" onclick="navigateToCompany(${co.id})" title="View client profile">${co.name}</span>`:(p.client||'—');})()}&thinsp;·&thinsp;<span class="status-badge badge-${p.status}">${p.status}</span>${p.leadId?` · <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="navigateToLead(${p.leadId})" title="View originating lead">◉ from lead</span>`:''}</div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openClientSummary()">Share</button><button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button></div></div>
+    <div class="topbar"><div><div class="back-btn" onclick="navigate('projects')">← Projects</div><div class="page-title">${p.name}</div><div class="page-sub">${(()=>{const co=p.clientId?store.companies.find(c=>c.id===p.clientId):null;return co?`<span style="cursor:pointer;color:var(--navy);font-weight:600;text-decoration:underline;text-decoration-style:dotted" onclick="navigateToCompany(${co.id})" title="View client profile">${co.name}</span>`:(p.client||'—');})()}&thinsp;·&thinsp;<span class="status-badge badge-${p.status}">${p.status}</span>&thinsp;·&thinsp;<span style="font-size:11px;color:var(--muted);font-weight:500">${tmpl}</span>${p.leadId?` · <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="navigateToLead(${p.leadId})" title="View originating lead">◉ from lead</span>`:''}</div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openClientSummary()">Share</button><button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button></div></div>
     <div class="content">
-      <div class="tabs">
-        <div class="tab ${currentTab==='brief'?'active':''}" onclick="switchTab('brief')">Brief</div>
-        <div class="tab ${currentTab==='timeline'||currentTab==='tasks'?'active':''}" onclick="switchTab('timeline')">Timeline & Tasks</div>
-        <div class="tab ${currentTab==='production'?'active':''}" onclick="switchTab('production')">Production</div>
-        <div class="tab ${currentTab==='assets'?'active':''}" onclick="switchTab('assets')">Assets</div>
-        <div class="tab ${currentTab==='team'?'active':''}" onclick="switchTab('team')">Team</div>
-        <div class="tab ${currentTab==='budget'?'active':''}" onclick="switchTab('budget')">Budget</div>
-        <div class="tab ${currentTab==='invoices'?'active':''}" onclick="switchTab('invoices')">Invoices</div>
-        <div class="tab ${currentTab==='contacts'?'active':''}" onclick="switchTab('contacts')">Clients</div>
-      </div>
+      <div class="tabs">${tabsHtml}</div>
       ${currentTab==='brief'?renderBriefTab(p):''}
       ${currentTab==='timeline'?renderTimelineTab(p)+renderProjectTasksTab(p):''}
       ${currentTab==='production'?renderProductionTab(p):''}
@@ -3995,7 +4026,7 @@ function openConvertLeadModal(id) {
     <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;color:var(--muted);margin-bottom:10px">Project</div>
     <div class="form-grid">
       <div class="form-group full"><label>Project Name</label><input id="cl-name" value="${esc(defaultName)}"></div>
-      <div class="form-group"><label>Type</label><select id="cl-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Template</label><select id="cl-type">${PROJECT_TEMPLATES.map(t=>`<option>${t}</option>`).join('')}</select></div>
       <div class="form-group"><label>Start Date</label><input id="cl-start" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
       <div class="form-group full"><label>Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="cl-color" value="${PROJECT_COLORS[0]}"></div>
     </div>
@@ -4077,7 +4108,7 @@ function convertLead() {
   const co = store.companies.find(c=>c.id===companyId);
   store.projects.push({
     id: newId, name, client: co?co.name:l.company, clientId: companyId,
-    type: document.getElementById('cl-type').value,
+    type: document.getElementById('cl-type').value, template: document.getElementById('cl-type').value,
     status: 'planning', color,
     startDate: document.getElementById('cl-start').value, endDate: '',
     budget: 0, spent: 0,
@@ -4096,10 +4127,10 @@ function convertLead() {
   navigate('project-detail', newId);
 }
 
-function openNewProjectModal(){const swatches=PROJECT_COLORS.map((c,i)=>`<div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="selectProjectColor('${c}')"></div>`).join('');const coOpts=`<option value="">— No client —</option>`+store.companies.map(co=>`<option value="${co.id}">${esc(co.name)}</option>`).join('');openModal(`<div class="modal-title">New Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" placeholder="e.g. Summer Pop-Up"></div><div class="form-group"><label>Client</label><select id="f-client-id">${coOpts}</select></div><div class="form-group"><label>Type</label><select id="f-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Creative Project</option><option>Event</option><option>Other</option></select></div><div class="form-group"><label>Status</label><select id="f-status"><option value="planning">Planning</option><option value="active">Active</option><option value="pitched">Pitched</option><option value="completed">Completed</option></select></div><div class="form-group"><label>Budget ($)</label><input id="f-budget" type="number" placeholder="0"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date"></div><div class="form-group full"><label>Project Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="f-color" value="${PROJECT_COLORS[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create Project</button></div>`);}
-function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}const clientId=parseInt(document.getElementById('f-client-id').value)||null;const co=clientId?store.companies.find(c=>c.id===clientId):null;store.projects.push({id:store.nextId.projects++,name:n,client:co?co.name:'—',clientId,type:document.getElementById('f-type').value,status:document.getElementById('f-status').value,color:document.getElementById('f-color').value||PROJECT_COLORS[0],budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff(),production:emptyProduction(),tasks:[],assets:{driveFolder:'',files:[]},invoices:[]});closeModal();toast('Project created');save();render();}
-function openEditProjectModal(){const p=currentProject;const swatches=PROJECT_COLORS.map(c=>`<div class="color-swatch ${p.color===c?'selected':''}" style="background:${c}" onclick="selectProjectColor('${c}')"></div>`).join('');const coOpts=`<option value="">— No client —</option>`+store.companies.map(co=>`<option value="${co.id}" ${p.clientId===co.id?'selected':''}>${esc(co.name)}</option>`).join('');openModal(`<div class="modal-title">Edit Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" value="${p.name}"></div><div class="form-group"><label>Client</label><select id="f-client-id">${coOpts}</select></div><div class="form-group"><label>Type</label><select id="f-type">${['Brand Activation','Pop-Up','Branding','Creative Project','Event','Other'].map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Status</label><select id="f-status">${['planning','active','pitched','completed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="form-group"><label>Budget ($)</label><input id="f-budget" type="number" value="${p.budget}"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date" value="${p.startDate}"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date" value="${p.endDate}"></div><div class="form-group full"><label>Project Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="f-color" value="${p.color||PROJECT_COLORS[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Save</button></div>`);}
-function saveProject(){const p=currentProject;p.name=document.getElementById('f-name').value.trim()||p.name;const clientId=parseInt(document.getElementById('f-client-id').value)||null;const co=clientId?store.companies.find(c=>c.id===clientId):null;p.clientId=clientId;p.client=co?co.name:(p.client||'—');p.type=document.getElementById('f-type').value;p.status=document.getElementById('f-status').value;p.color=document.getElementById('f-color').value||p.color;p.budget=parseInt(document.getElementById('f-budget').value)||0;p.startDate=document.getElementById('f-start').value;p.endDate=document.getElementById('f-end').value;closeModal();toast('Project saved');save();render();}
+function openNewProjectModal(){const swatches=PROJECT_COLORS.map((c,i)=>`<div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="selectProjectColor('${c}')"></div>`).join('');const coOpts=`<option value="">— No client —</option>`+store.companies.map(co=>`<option value="${co.id}">${esc(co.name)}</option>`).join('');openModal(`<div class="modal-title">New Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" placeholder="e.g. Summer Pop-Up"></div><div class="form-group"><label>Client</label><select id="f-client-id">${coOpts}</select></div><div class="form-group"><label>Template</label><select id="f-template">${PROJECT_TEMPLATES.map(t=>`<option>${t}</option>`).join('')}</select></div><div class="form-group"><label>Status</label><select id="f-status"><option value="planning">Planning</option><option value="active">Active</option><option value="pitched">Pitched</option><option value="completed">Completed</option></select></div><div class="form-group"><label>Budget ($)</label><input id="f-budget" type="number" placeholder="0"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date"></div><div class="form-group full"><label>Project Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="f-color" value="${PROJECT_COLORS[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create Project</button></div>`);}
+function createProject(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Project name required');return;}const clientId=parseInt(document.getElementById('f-client-id').value)||null;const co=clientId?store.companies.find(c=>c.id===clientId):null;const tmpl=document.getElementById('f-template').value||'FELT Other';store.projects.push({id:store.nextId.projects++,name:n,client:co?co.name:'—',clientId,type:tmpl,template:tmpl,status:document.getElementById('f-status').value,color:document.getElementById('f-color').value||PROJECT_COLORS[0],budget:parseInt(document.getElementById('f-budget').value)||0,spent:0,startDate:document.getElementById('f-start').value,endDate:document.getElementById('f-end').value,brief:{overview:'',objectives:'',deliverables:'',timeline:''},teamIds:[],contactIds:[],expenses:[],teamAllocation:{},signoff:emptySignoff(),production:emptyProduction(),tasks:[],assets:{driveFolder:'',files:[]},invoices:[]});closeModal();toast('Project created');save();render();}
+function openEditProjectModal(){const p=currentProject;const swatches=PROJECT_COLORS.map(c=>`<div class="color-swatch ${p.color===c?'selected':''}" style="background:${c}" onclick="selectProjectColor('${c}')"></div>`).join('');const coOpts=`<option value="">— No client —</option>`+store.companies.map(co=>`<option value="${co.id}" ${p.clientId===co.id?'selected':''}>${esc(co.name)}</option>`).join('');openModal(`<div class="modal-title">Edit Project</div><div class="form-grid"><div class="form-group full"><label>Project Name</label><input id="f-name" value="${p.name}"></div><div class="form-group"><label>Client</label><select id="f-client-id">${coOpts}</select></div><div class="form-group"><label>Template</label><select id="f-template">${PROJECT_TEMPLATES.map(t=>`<option ${(p.template||p.type)===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Status</label><select id="f-status">${['planning','active','pitched','completed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="form-group"><label>Budget ($)</label><input id="f-budget" type="number" value="${p.budget}"></div><div class="form-group"></div><div class="form-group"><label>Start Date</label><input id="f-start" type="date" value="${p.startDate}"></div><div class="form-group"><label>End Date</label><input id="f-end" type="date" value="${p.endDate}"></div><div class="form-group full"><label>Project Colour</label><div class="color-swatches">${swatches}</div><input type="hidden" id="f-color" value="${p.color||PROJECT_COLORS[0]}"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Save</button></div>`);}
+function saveProject(){const p=currentProject;p.name=document.getElementById('f-name').value.trim()||p.name;const clientId=parseInt(document.getElementById('f-client-id').value)||null;const co=clientId?store.companies.find(c=>c.id===clientId):null;p.clientId=clientId;p.client=co?co.name:(p.client||'—');const tmpl=document.getElementById('f-template').value||'FELT Other';p.type=tmpl;p.template=tmpl;p.status=document.getElementById('f-status').value;p.color=document.getElementById('f-color').value||p.color;p.budget=parseInt(document.getElementById('f-budget').value)||0;p.startDate=document.getElementById('f-start').value;p.endDate=document.getElementById('f-end').value;closeModal();toast('Project saved');save();render();}
 function selectProjectColor(c){document.getElementById('f-color').value=c;document.querySelectorAll('.color-swatch').forEach(el=>el.classList.remove('selected'));document.querySelectorAll('.color-swatch').forEach(el=>{if(el.style.background===c)el.classList.add('selected');});}
 function openEditBriefModal(){const p=currentProject;openModal(`<div class="modal-title">Edit Brief</div><div class="form-grid"><div class="form-group full"><label>Overview</label><textarea id="b-overview">${p.brief.overview}</textarea></div><div class="form-group full"><label>Objectives</label><textarea id="b-objectives">${p.brief.objectives}</textarea></div><div class="form-group full"><label>Deliverables</label><textarea id="b-deliverables">${p.brief.deliverables}</textarea></div><div class="form-group full"><label>Timeline Notes</label><textarea id="b-timeline">${p.brief.timeline}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBrief()">Save Brief</button></div>`);}
 function saveBrief(){const p=currentProject;p.brief.overview=document.getElementById('b-overview').value;p.brief.objectives=document.getElementById('b-objectives').value;p.brief.deliverables=document.getElementById('b-deliverables').value;p.brief.timeline=document.getElementById('b-timeline').value;closeModal();toast('Brief saved');save();render();}
