@@ -272,6 +272,50 @@ const defaultData = {
 const SUPABASE_URL = 'https://qyxbjtbipdpevzecbhkd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_uH-o_KQ6Cv0jeut76bgXRA_bvePXaEM';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const STORAGE_BUCKET = 'felt-files';
+
+// ─── STORAGE HELPERS ──────────────────────────────────────────────────────────
+async function uploadToStorage(file, folder) {
+  const ext = file.name.split('.').pop();
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { data, error } = await _sb.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data: urlData } = _sb.storage.from(STORAGE_BUCKET).getPublicUrl(data.path);
+  return urlData.publicUrl;
+}
+
+// Called by file inputs in modals — uploads file and populates the corresponding URL input
+async function handleStorageUpload(fileInputId, urlInputId, folder) {
+  const fileInput = document.getElementById(fileInputId);
+  const file = fileInput?.files?.[0];
+  if (!file) return;
+  const statusEl = document.getElementById(fileInputId + '-status');
+  if (statusEl) { statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--muted)'; }
+  try {
+    const url = await uploadToStorage(file, folder);
+    const urlInput = document.getElementById(urlInputId);
+    if (urlInput) urlInput.value = url;
+    if (statusEl) { statusEl.textContent = `✓ ${file.name}`; statusEl.style.color = 'var(--green)'; }
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = 'Upload failed — try again'; statusEl.style.color = '#e44'; }
+    console.error('Storage upload error:', e);
+  }
+}
+
+// Generates a consistent file-upload + URL-fallback field for modals
+function storageUploadField(fileInputId, urlInputId, folder, label, existingUrl='') {
+  return `<div class="form-group full">
+    <label>${label}</label>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;font-weight:600">
+        ↑ Upload File
+        <input type="file" id="${fileInputId}" style="display:none" onchange="handleStorageUpload('${fileInputId}','${urlInputId}','${folder}')">
+      </label>
+      <span id="${fileInputId}-status" style="font-size:12px;color:var(--muted)">or paste a link below</span>
+    </div>
+    <input id="${urlInputId}" placeholder="https://…" value="${existingUrl}" style="width:100%">
+  </div>`;
+}
 
 let currentUser = null;
 let currentUserRole = 'member';
@@ -2899,6 +2943,7 @@ function openLogContractModal() {
       <div class="form-group"><label>Status</label><select id="c-status"><option value="not-sent">Not Sent</option><option value="sent" selected>Sent</option><option value="signed">Signed / Returned</option></select></div>
       <div class="form-group"><label>Date Sent</label><input id="c-sent" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
       <div class="form-group"><label>Date Signed / Returned</label><input id="c-signed" type="date"></div>
+      ${storageUploadField('c-doc-file','c-doc-url','contracts','Contract Document')}
       <div class="form-group full"><label>Notes</label><input id="c-notes" placeholder="Any notes..."></div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="logContract()">Log Contract</button></div>`);
@@ -2906,7 +2951,7 @@ function openLogContractModal() {
 function logContract() {
   const proj=document.getElementById('c-project').value;if(!proj){toast('Select a project');return;}
   const m=currentMember;
-  m.contracts.push({id:store.nextId.contracts++,projectId:parseInt(proj),templateId:parseInt(document.getElementById('c-template').value)||null,status:document.getElementById('c-status').value,sentDate:document.getElementById('c-sent').value,signedDate:document.getElementById('c-signed').value,notes:document.getElementById('c-notes').value});
+  m.contracts.push({id:store.nextId.contracts++,type:'contract',projectId:parseInt(proj),templateId:parseInt(document.getElementById('c-template').value)||null,status:document.getElementById('c-status').value,sentDate:document.getElementById('c-sent').value,signedDate:document.getElementById('c-signed').value,contractUrl:document.getElementById('c-doc-url')?.value.trim()||'',notes:document.getElementById('c-notes').value});
   closeModal();save();toast('Contract logged');render();
 }
 function openLogNDAModal() {
@@ -2916,7 +2961,7 @@ function openLogNDAModal() {
       <div class="form-group full"><label>NDA Name</label><input id="nda-name" value="Non-Disclosure Agreement" placeholder="e.g. Non-Disclosure Agreement"></div>
       <div class="form-group"><label>Status</label><select id="nda-status"><option value="not-sent">Not Sent</option><option value="sent" selected>Sent</option><option value="signed">Signed</option></select></div>
       <div class="form-group"><label>Date Sent</label><input id="nda-sent" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
-      <div class="form-group full"><label>Document Link <span style="font-weight:400;color:var(--muted)">(Google Doc / Drive)</span></label><input id="nda-admin-url" placeholder="https://docs.google.com/..."></div>
+      ${storageUploadField('nda-file','nda-admin-url','ndas','NDA Document')}
       <div class="form-group full"><label>Notes</label><input id="nda-notes" placeholder="Any notes..."></div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNDA()">Save NDA</button></div>`);
@@ -3294,14 +3339,15 @@ function openEditAssetsFolderModal() {
 }
 function saveAssetsFolder(){if(!currentProject.assets)currentProject.assets={driveFolder:'',files:[]};currentProject.assets.driveFolder=document.getElementById('af-url').value.trim();closeModal();save();toast('Folder saved');render();}
 function openAddAssetModal(){
+  const folder = `assets/project-${currentProject?.id||'0'}`;
   openModal(`
-    <div class="modal-title">Link Asset</div>
+    <div class="modal-title">Add Asset</div>
     <div class="form-grid">
       <div class="form-group full"><label>Asset Name</label><input id="a-name" placeholder="e.g. Creative Brief v2"></div>
       <div class="form-group"><label>Type</label><select id="a-type">${ASSET_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
-      <div class="form-group full"><label>Link (Google Doc, Dropbox, etc.)</label><input id="a-url" placeholder="https://..."></div>
+      ${storageUploadField('a-file','a-url',folder,'File')}
     </div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addAsset()">Link Asset</button></div>`);
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addAsset()">Add Asset</button></div>`);
 }
 function addAsset(){const n=document.getElementById('a-name').value.trim();if(!n){toast('Name required');return;}if(!currentProject.assets)currentProject.assets={driveFolder:'',files:[]};currentProject.assets.files.push({id:store.nextId.assets++,name:n,type:document.getElementById('a-type').value,url:document.getElementById('a-url').value.trim(),addedDate:new Date().toISOString().split('T')[0]});closeModal();save();toast('Asset linked');render();}
 function deleteAsset(id){showConfirm('Remove this asset link?',()=>{currentProject.assets.files=currentProject.assets.files.filter(f=>f.id!==id);save();toast('Removed');render();},{label:'Remove'});}
@@ -4951,10 +4997,8 @@ function renderFLDocuments() {
 function openFLUploadSignedModal(ndaId) {
   openModal(`
     <div class="modal-title">Upload Signed Copy</div>
-    <p style="color:var(--muted);font-size:13px;margin:0 0 16px">Paste a link to your signed copy (Google Drive, Dropbox, WeTransfer, etc.)</p>
-    <div class="form-group full" style="margin-bottom:0">
-      <label>Document Link</label>
-      <input id="fl-signed-url" placeholder="https://drive.google.com/...">
+    <div class="form-grid">
+      ${storageUploadField('fl-signed-file','fl-signed-url','signed','Signed Document')}
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
