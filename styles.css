@@ -285,7 +285,13 @@
   .lead-name { font-size: 14px; font-weight: 700; }
   .lead-detail { font-size: 12px; color: var(--muted); margin-top: 1px; }
   .lead-notes { font-size: 13px; color: var(--text); margin-top: 5px; line-height: 1.45; }
-  .lead-actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
+  .lead-actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+  .lead-action-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .lead-action-row:last-child { border-bottom: none; }
+  .lead-action-row.la-done { opacity: 0.45; }
+  .la-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; }
+  .la-meta { display: flex; gap: 8px; align-items: center; margin-top: 3px; flex-wrap: wrap; }
+  .la-type-chip { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 20px; background: var(--accent-light); color: var(--accent-dark); }
 
   /* ── SIGN-OFF ─────────────────────────────────────────── */
   .signoff-header { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }

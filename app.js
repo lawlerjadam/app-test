@@ -362,6 +362,14 @@ if (!store._memberPaymentsAdded) {
   save();
 }
 
+// ─── MIGRATION: Lead actions ──────────────────────────────────────────────────
+if (!store._leadActionsAdded) {
+  store.leads.forEach(l => { if (!l.actions) l.actions = []; });
+  if (!store.nextId.leadActions) store.nextId.leadActions = 1;
+  store._leadActionsAdded = true;
+  save();
+}
+
 // ─── MIGRATION: Companies model ───────────────────────────────────────────────
 if (!store.companies) {
   store.companies = [];
@@ -2228,6 +2236,147 @@ function moveGlobalTask(id, status) {
 
 // ─── LEADS ────────────────────────────────────────────────────────────────────
 const LEAD_STATUSES=[{key:'not-contacted',label:'Not Contacted'},{key:'reached-out',label:'Reached Out'},{key:'in-conversation',label:'In Conversation'},{key:'proposal-sent',label:'Proposal Sent'},{key:'won',label:'Won'},{key:'lost',label:'Lost'}];
+const LEAD_ACTION_TYPES = ['Meeting', 'Call', 'Site Visit', 'Pitch', 'Task'];
+const LEAD_ACTION_ICON  = { Meeting:'📅', Call:'📞', 'Site Visit':'📍', Pitch:'🎯', Task:'✓' };
+
+function openLeadDetailModal(id) {
+  const l = store.leads.find(x => x.id === id);
+  if (!l) return;
+  const statusInfo = LEAD_STATUSES.find(s => s.key === l.status);
+  const converted  = l.convertedProjectId ? store.projects.find(p => p.id === l.convertedProjectId) : null;
+  const today      = new Date().toISOString().split('T')[0];
+  const actions    = (l.actions || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const open       = actions.filter(a => !a.done);
+  const done       = actions.filter(a => a.done);
+
+  const actionRow = a => {
+    const overdue = a.date && !a.done && a.date < today;
+    return `<div class="lead-action-row${a.done ? ' la-done' : ''}">
+      <input type="checkbox" ${a.done ? 'checked' : ''} onchange="toggleLeadAction(${id},${a.id},this.checked)" style="margin:0;width:15px;height:15px;flex-shrink:0;cursor:pointer;accent-color:var(--green)">
+      <div style="flex:1;min-width:0">
+        <div class="la-name">${LEAD_ACTION_ICON[a.type] || '•'} ${a.name}</div>
+        <div class="la-meta">
+          <span class="la-type-chip">${a.type}</span>
+          ${a.date ? `<span style="color:${overdue ? 'var(--red)' : 'var(--muted)'};font-size:11px">${formatDate(a.date)}</span>` : ''}
+          ${a.notes ? `<span style="color:var(--muted);font-size:11px">${a.notes}</span>` : ''}
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditLeadActionModal(${id},${a.id})" style="flex-shrink:0">Edit</button>
+      <button class="btn btn-ghost btn-sm" onclick="deleteLeadAction(${id},${a.id})" style="flex-shrink:0;color:var(--red)">✕</button>
+    </div>`;
+  };
+
+  const actionsHtml = `
+    <div style="margin-top:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em">Actions${open.length ? ` · ${open.length} open` : ''}</div>
+        <button class="btn btn-ghost btn-sm" onclick="openAddLeadActionModal(${id})">+ Add</button>
+      </div>
+      ${open.length === 0 && done.length === 0
+        ? `<div style="color:var(--muted);font-size:13px;padding:10px 0">No actions yet — add a meeting, call or task.</div>`
+        : [...open, ...done].map(actionRow).join('')}
+    </div>`;
+
+  openModal(`
+    <div class="modal-title">${l.company}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="status-badge badge-${l.status}">${statusInfo?.label || l.status}</span>
+      ${l.projectType ? `<span style="font-size:12px;color:var(--muted)">${l.projectType}</span>` : ''}
+      ${l.estimatedValue ? `<span style="font-size:13px;font-weight:700;color:var(--blue);margin-left:auto">$${l.estimatedValue.toLocaleString()}</span>` : ''}
+    </div>
+    ${l.contactName ? `<div style="font-size:13px;color:var(--muted);margin-bottom:4px">◎ ${l.contactName}${l.contactRole ? ' · ' + l.contactRole : ''}${l.contactEmail ? ' · ' + l.contactEmail : ''}</div>` : ''}
+    ${l.notes ? `<div style="font-size:13px;color:var(--text);margin-bottom:4px;line-height:1.5">${l.notes}</div>` : ''}
+    ${converted ? `<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:8px;cursor:pointer" onclick="closeModal();navigate('project-detail',${converted.id})">→ Converted: ${converted.name}</div>` : ''}
+    ${actionsHtml}
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <button class="btn btn-ghost" onclick="closeModal();openEditLeadModal(${id})">Edit Lead</button>
+    </div>`);
+}
+
+function openAddLeadActionModal(leadId) {
+  const memberOpts = store.team.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  openModal(`
+    <div class="modal-title">Add Action</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Action</label><input id="la-name" placeholder="e.g. Send proposal, Site visit"></div>
+      <div class="form-group"><label>Type</label><select id="la-type">${LEAD_ACTION_TYPES.map(t => `<option>${t}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Due Date</label><input id="la-date" type="date"></div>
+      <div class="form-group full"><label>Notes (optional)</label><textarea id="la-notes" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLeadAction(${leadId})">Add Action</button>
+    </div>`);
+}
+
+function saveLeadAction(leadId) {
+  const name = document.getElementById('la-name').value.trim();
+  if (!name) { toast('Action name required'); return; }
+  const l = store.leads.find(x => x.id === leadId);
+  if (!l) return;
+  if (!l.actions) l.actions = [];
+  if (!store.nextId.leadActions) store.nextId.leadActions = 1;
+  l.actions.push({
+    id:    store.nextId.leadActions++,
+    name,
+    type:  document.getElementById('la-type').value,
+    date:  document.getElementById('la-date').value || null,
+    notes: document.getElementById('la-notes').value.trim(),
+    done:  false
+  });
+  save(); toast('Action added');
+  openLeadDetailModal(leadId);
+}
+
+function openEditLeadActionModal(leadId, actionId) {
+  const l = store.leads.find(x => x.id === leadId);
+  const a = (l?.actions || []).find(x => x.id === actionId);
+  if (!a) return;
+  openModal(`
+    <div class="modal-title">Edit Action</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Action</label><input id="la-name" value="${a.name}"></div>
+      <div class="form-group"><label>Type</label><select id="la-type">${LEAD_ACTION_TYPES.map(t => `<option ${t === a.type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Due Date</label><input id="la-date" type="date" value="${a.date || ''}"></div>
+      <div class="form-group full"><label>Notes (optional)</label><textarea id="la-notes" style="min-height:60px">${a.notes || ''}</textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="openLeadDetailModal(${leadId})">← Back</button>
+      <button class="btn btn-primary" onclick="updateLeadAction(${leadId},${actionId})">Save</button>
+    </div>`);
+}
+
+function updateLeadAction(leadId, actionId) {
+  const l = store.leads.find(x => x.id === leadId);
+  const a = (l?.actions || []).find(x => x.id === actionId);
+  if (!a) return;
+  a.name  = document.getElementById('la-name').value.trim() || a.name;
+  a.type  = document.getElementById('la-type').value;
+  a.date  = document.getElementById('la-date').value || null;
+  a.notes = document.getElementById('la-notes').value.trim();
+  save(); toast('Action saved');
+  openLeadDetailModal(leadId);
+}
+
+function toggleLeadAction(leadId, actionId, done) {
+  const l = store.leads.find(x => x.id === leadId);
+  const a = (l?.actions || []).find(x => x.id === actionId);
+  if (!a) return;
+  a.done = done;
+  save(); toast(done ? 'Done ✓' : 'Reopened');
+  openLeadDetailModal(leadId);
+}
+
+function deleteLeadAction(leadId, actionId) {
+  showConfirm('Remove this action?', () => {
+    const l = store.leads.find(x => x.id === leadId);
+    if (!l) return;
+    l.actions = (l.actions || []).filter(a => a.id !== actionId);
+    save(); toast('Removed');
+    openLeadDetailModal(leadId);
+  }, { label: 'Remove' });
+}
 function renderLeads() {
   const ap=LEAD_STATUSES.filter(s=>!['won','lost'].includes(s.key)).map(s=>({...s,leads:store.leads.filter(l=>l.status===s.key),value:store.leads.filter(l=>l.status===s.key).reduce((sum,l)=>sum+(l.estimatedValue||0),0)}));
   const tv=store.leads.filter(l=>!['won','lost'].includes(l.status)).reduce((s,l)=>s+(l.estimatedValue||0),0);
@@ -2238,7 +2387,34 @@ function renderLeads() {
       <div class="section-header"><div class="section-title">All Leads</div></div>
       <div class="card">
         ${store.leads.length===0?`<div class="empty-state"><div class="empty-icon">◉</div><p>No leads yet.</p></div>`:''}
-        ${store.leads.map(l=>{const converted=l.convertedProjectId?store.projects.find(p=>p.id===l.convertedProjectId):null;const convertedCompany=converted&&converted.clientId?store.companies.find(c=>c.id===converted.clientId):store.companies.find(c=>c.name.toLowerCase()===l.company.toLowerCase());const isHighlighted=l.id===highlightLeadId;return`<div class="lead-row" id="lead-row-${l.id}" style="${isHighlighted?'background:var(--accent-light);border-radius:10px;transition:background 1.5s':''}"><div class="lead-avatar">${initials(l.company)}</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="lead-name">${l.company}</div><div class="status-badge badge-${converted?'converted':l.status}">${converted?'Converted':LEAD_STATUSES.find(s=>s.key===l.status)?.label||l.status}</div></div><div class="lead-detail">${l.contactName}${l.contactRole?' · '+l.contactRole:''}${l.contactEmail?' · '+l.contactEmail:''}${l.contactPhone?' · '+l.contactPhone:''} · ${l.projectType}</div>${l.estimatedValue?`<div class="lead-detail" style="color:var(--blue);font-weight:700">Est. $${l.estimatedValue.toLocaleString()}</div>`:''}${converted?`<div class="lead-detail" style="color:var(--green);font-weight:600;cursor:pointer" onclick="navigate('project-detail',${converted.id})">→ ${converted.name}</div>`:''}${convertedCompany?`<div class="lead-detail" style="color:var(--muted);cursor:pointer" onclick="navigateToCompany(${convertedCompany.id})">◇ Client: ${convertedCompany.name}</div>`:''}${l.notes?`<div class="lead-notes">${l.notes}</div>`:''}${l.nextAction?'<div class="lead-detail" style="color:var(--blue)">◉ '+l.nextAction+(l.nextActionDate?' · '+formatDate(l.nextActionDate):'')+'</div>':''}</div><div class="lead-actions">${!converted&&l.status==='won'?`<button class="btn btn-primary btn-sm" onclick="openConvertLeadModal(${l.id})">Convert →</button>`:''}${!converted?`<button class="btn btn-ghost btn-sm" onclick="openEditLeadModal(${l.id})">Edit</button>`:''}<button class="btn btn-ghost btn-sm" onclick="deleteLead(${l.id})">✕</button></div></div>`}).join('')}
+        ${store.leads.map(l=>{
+          const converted=l.convertedProjectId?store.projects.find(p=>p.id===l.convertedProjectId):null;
+          const convertedCompany=converted&&converted.clientId?store.companies.find(c=>c.id===converted.clientId):store.companies.find(c=>c.name.toLowerCase()===l.company.toLowerCase());
+          const isHighlighted=l.id===highlightLeadId;
+          const openActions=(l.actions||[]).filter(a=>!a.done);
+          const today=new Date().toISOString().split('T')[0];
+          const overdueActions=openActions.filter(a=>a.date&&a.date<today);
+          const nextAction=openActions.sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999'))[0];
+          return`<div class="lead-row" id="lead-row-${l.id}" style="cursor:pointer;${isHighlighted?'background:var(--accent-light);border-radius:10px;transition:background 1.5s':''}" onclick="openLeadDetailModal(${l.id})">
+            <div class="lead-avatar">${initials(l.company)}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <div class="lead-name">${l.company}</div>
+                <div class="status-badge badge-${converted?'converted':l.status}">${converted?'Converted':LEAD_STATUSES.find(s=>s.key===l.status)?.label||l.status}</div>
+                ${overdueActions.length?`<span style="font-size:11px;font-weight:700;color:var(--red)">⚠ ${overdueActions.length} overdue</span>`:''}
+              </div>
+              <div class="lead-detail">${l.contactName}${l.contactRole?' · '+l.contactRole:''}${l.projectType?' · '+l.projectType:''}</div>
+              ${l.estimatedValue?`<div class="lead-detail" style="color:var(--blue);font-weight:700">Est. $${l.estimatedValue.toLocaleString()}</div>`:''}
+              ${nextAction?`<div class="lead-detail" style="color:var(--muted)">◉ Next: ${LEAD_ACTION_ICON[nextAction.type]||'•'} ${nextAction.name}${nextAction.date?' · '+formatDate(nextAction.date):''}</div>`:(l.nextAction?`<div class="lead-detail" style="color:var(--blue)">◉ ${l.nextAction}${l.nextActionDate?' · '+formatDate(l.nextActionDate):''}</div>`:'')}
+              ${converted?`<div class="lead-detail" style="color:var(--green);font-weight:600">→ ${converted.name}</div>`:''}
+            </div>
+            <div class="lead-actions" onclick="event.stopPropagation()">
+              ${openActions.length?`<span style="font-size:11px;font-weight:600;color:var(--muted);padding:3px 7px;background:var(--bg);border-radius:20px">${openActions.length} action${openActions.length!==1?'s':''}</span>`:''}
+              ${!converted&&l.status==='won'?`<button class="btn btn-primary btn-sm" onclick="openConvertLeadModal(${l.id})">Convert →</button>`:''}
+              <button class="btn btn-ghost btn-sm" onclick="deleteLead(${l.id})">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
 }
