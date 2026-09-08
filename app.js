@@ -3306,16 +3306,6 @@ const ASSET_TYPES=['Document','Deck / Presentation','Moodboard','Brand Guideline
 function renderAssetsTab(p) {
   const assets=p.assets||{driveFolder:'',files:[]};
   return `
-    <div class="section-header"><div class="section-title">Assets</div></div>
-    <div class="crm-stat" style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div>
-        <div class="crm-stat-label">Google Drive Folder</div>
-        ${assets.driveFolder
-          ? `<a href="${assets.driveFolder}" target="_blank" style="color:var(--blue);font-weight:700;font-size:14px">Open project assets folder ↗</a>`
-          : `<div style="font-size:13px;color:var(--muted)">Link a Drive folder to store files, images and deliverables.</div>`}
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="openEditAssetsFolderModal()">${assets.driveFolder?'Change':'Set Folder'}</button>
-    </div>
     <div class="section-header"><div class="section-title">Linked Assets</div><button class="btn btn-primary btn-sm" onclick="openAddAssetModal()">+ Link Asset</button></div>
     <div class="card" style="padding:0;overflow:hidden">
       ${assets.files.length===0?`<div class="empty-state"><div class="empty-icon">📎</div><p>No assets linked yet. Add links to key files — decks, moodboards, guidelines.</p></div>`:`<div class="table-wrap"><table class="table">
