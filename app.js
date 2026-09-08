@@ -5,10 +5,10 @@ const PROJECT_COLORS = ['#E8C832','#D4A010','#C8881E','#B86030','#A04828','#8A38
 const PROJECT_TEMPLATES = ['FELT Original', 'FELT Film', 'FELT Pop-Up', 'FELT Other'];
 // All tabs enabled for all templates for now — per-template customisation to follow
 const PROJECT_TEMPLATE_TABS = {
-  'FELT Original': ['brief','timeline','production','assets','team','budget','invoices','contacts'],
-  'FELT Film':     ['brief','timeline','production','assets','team','budget','invoices','contacts'],
-  'FELT Pop-Up':   ['brief','timeline','production','assets','team','budget','invoices','contacts'],
-  'FELT Other':    ['brief','timeline','production','assets','team','budget','invoices','contacts'],
+  'FELT Original': ['brief','timeline','production','assets','team','budget','invoices','contacts','signoff'],
+  'FELT Film':     ['brief','timeline','production','assets','team','budget','invoices','contacts','signoff'],
+  'FELT Pop-Up':   ['brief','timeline','production','assets','team','budget','invoices','contacts','signoff'],
+  'FELT Other':    ['brief','timeline','production','assets','team','budget','invoices','contacts','signoff'],
 };
 function getProjectTabs(template) {
   return PROJECT_TEMPLATE_TABS[template] || PROJECT_TEMPLATE_TABS['FELT Other'];
@@ -628,7 +628,7 @@ store.team.forEach(m => {
 } // end runMigrations()
 
 // ─── ROUTING ──────────────────────────────────────────────────────────────────
-let currentView='tasks', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentDashFilter='active', currentFinanceFilter='all';
+let currentView='tasks', currentProject=null, currentTab='brief', currentProjectsFilter='active', currentFinanceFilter='all';
 let currentMember=null, currentMemberTab='overview';
 let navHistory = []; // back-navigation stack
 let currentContact=null, currentContactTab='overview';
@@ -1004,157 +1004,8 @@ function renderSnapshot() {
     </div>`;
 }
 
-// ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function setDashFilter(f){currentDashFilter=f;render();}
+// ─── FINANCE FILTER ───────────────────────────────────────────────────────────
 function setFinanceFilter(f){currentFinanceFilter=f;render();}
-function renderDashboard() {
-  const today = new Date(); today.setHours(0,0,0,0);
-  const todayStr = today.toISOString().slice(0,10);
-  const in30 = new Date(today); in30.setDate(in30.getDate()+5);
-  const in30Str = in30.toISOString().slice(0,10);
-
-  // ── Priorities ──────────────────────────────────────────────────────────────
-  const overduePayments = [];
-  store.companies.forEach(co => {
-    (co.payments||[]).forEach(pay => {
-      if(pay.status==='pending' && pay.date && pay.date < todayStr) {
-        const proj = store.projects.find(p=>p.id===pay.projectId);
-        overduePayments.push({...pay, companyName:co.name, projectName:proj?.name||''});
-      }
-    });
-  });
-
-  const todayTasks = [];
-  store.projects.forEach(p => {
-    if(p.status==='completed') return;
-    (p.tasks||[]).forEach(t => {
-      if(t.dueDate===todayStr && t.status!=='done') todayTasks.push({...t, projectName:p.name, projectId:p.id});
-    });
-  });
-  (store.tasks||[]).forEach(t => {
-    if(t.dueDate===todayStr && t.status!=='done') {
-      const proj = t.projectId ? store.projects.find(p=>p.id===t.projectId) : null;
-      todayTasks.push({...t, name:t.title, projectName:proj?proj.name:'General', projectId:t.projectId||null});
-    }
-  });
-
-  const todayProdDays = [];
-  store.projects.forEach(p => {
-    (p.production?.shootDays||[]).forEach(sd => {
-      if(sd.date===todayStr) todayProdDays.push({...sd, projectName:p.name, projectId:p.id});
-    });
-  });
-
-  const hasPriorities = overduePayments.length || todayTasks.length || todayProdDays.length;
-
-  // ── Coming Up (next 5 days) ──────────────────────────────────────────────
-  const upcoming = [];
-  store.projects.forEach(p => {
-    if(p.status==='completed') return;
-    if(p.endDate && p.endDate > todayStr && p.endDate <= in30Str)
-      upcoming.push({date:p.endDate, label:`${p.name} deadline`, type:'deadline', projectId:p.id});
-  });
-  store.companies.forEach(co => {
-    (co.payments||[]).forEach(pay => {
-      if(pay.status==='pending' && pay.date && pay.date > todayStr && pay.date <= in30Str) {
-        const proj = store.projects.find(p=>p.id===pay.projectId);
-        upcoming.push({date:pay.date, label:`${co.name} — ${pay.description}`, type:'payment', amount:pay.amount, projectId:proj?.id});
-      }
-    });
-  });
-  upcoming.sort((a,b)=>a.date.localeCompare(b.date));
-
-  const activeProjects = store.projects.filter(p=>p.status==='active'||p.status==='planning').slice(0,4);
-
-  const AVAIL_DOT = {available:'#16A34A', busy:'#D97706', away:'#9CA3AF', unavailable:'#DC2626'};
-  const AVAIL_LBL = {available:'Available', busy:'Busy', away:'Away', unavailable:'Unavailable'};
-  const hr = new Date().getHours();
-  const greeting = hr<12?'morning':hr<17?'afternoon':'evening';
-
-  return `
-    <div class="topbar"><div><div class="page-title">How ya feelin'?</div><div class="page-sub">${new Date().toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="storage-badge">● Saved</div><div style="font-size:10px;color:var(--muted);opacity:0.4">v4</div></div>
-    <div class="content">
-
-      <div style="margin-bottom:28px">
-        <div class="section-title" style="margin-bottom:12px">Priorities</div>
-        ${hasPriorities ? `
-          ${overduePayments.map(pay=>`
-            <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(180,90,50,0.07);border:1px solid rgba(180,90,50,0.2);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('finance')">
-              <span style="font-size:15px">💰</span>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:600;color:var(--text)">${pay.companyName} — ${pay.description}</div>
-                <div style="font-size:11px;color:#9A5030;margin-top:2px">${pay.projectName} · Overdue since ${formatDate(pay.date)}</div>
-              </div>
-              <div style="font-size:13px;font-weight:700;color:#9A5030;flex-shrink:0">$${(pay.amount||0).toLocaleString()}</div>
-            </div>`).join('')}
-          ${todayProdDays.map(sd=>`
-            <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.18);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('project-detail',${sd.projectId})">
-              <span style="font-size:15px">◉</span>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:600;color:var(--text)">${sd.location||'Production Day'} — ${sd.projectName}</div>
-                ${sd.callTime?`<div style="font-size:11px;color:var(--muted);margin-top:2px">Call time ${sd.callTime}${sd.wrapTime?' · Wrap '+sd.wrapTime:''}</div>`:''}
-              </div>
-              <div style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(249,115,22,0.15);color:#EA580C;font-weight:600;flex-shrink:0">Today</div>
-            </div>`).join('')}
-          ${todayTasks.map(t=>`
-            <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.14);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="navigate('project-detail',${t.projectId})">
-              <span style="font-size:15px">◆</span>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:600;color:var(--text)">${t.name}</div>
-                <div style="font-size:11px;color:var(--muted);margin-top:2px">${t.projectName}${t.assignedTo?' · '+t.assignedTo:''}</div>
-              </div>
-              <div class="status-badge badge-${t.status}" style="flex-shrink:0">${t.status.replace('-',' ')}</div>
-            </div>`).join('')}
-        ` : `
-          <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(22,163,74,0.07);border:1px solid rgba(22,163,74,0.18);border-radius:8px">
-            <span style="font-size:16px">✓</span>
-            <div style="font-size:13px;color:var(--text)">Nothing urgent today — you're on top of it.</div>
-          </div>`}
-      </div>
-
-      ${upcoming.length ? `
-      <div style="margin-bottom:28px">
-        <div class="section-title" style="margin-bottom:12px">Coming Up <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">next 5 days</span></div>
-        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
-          ${upcoming.map((item,i)=>`
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;${i>0?'border-top:1px solid var(--border)':''}${item.projectId?';cursor:pointer':''}" ${item.projectId?`onclick="${item.leadId?"navigate('leads')":"navigate('project-detail',"+item.projectId+")"}"`:''}>
-              <div style="font-size:11px;font-weight:600;color:var(--muted);min-width:58px;flex-shrink:0">${formatDate(item.date)}</div>
-              <div style="flex:1;font-size:13px;color:var(--text)">${item.label}</div>
-              ${item.amount?`<div style="font-size:12px;font-weight:700;color:#16A34A;flex-shrink:0">$${item.amount.toLocaleString()}</div>`:''}
-              <div style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:${item.type==='payment'?'rgba(22,163,74,0.1)':'rgba(37,99,235,0.1)'};color:${item.type==='payment'?'#16A34A':'var(--blue)'};flex-shrink:0;text-transform:uppercase;letter-spacing:0.4px">${item.type}</div>
-            </div>`).join('')}
-        </div>
-      </div>` : ''}
-
-      <div style="margin-bottom:28px">
-        <div class="section-title" style="margin-bottom:12px">Today's Team</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px">
-          ${store.team.map(m=>{
-            const avail=getMemberAvailability(m);
-            return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer" onclick="navigate('team-profile',undefined,${m.id})">
-              <div class="team-avatar-sm" style="flex-shrink:0">${initials(m.name)}</div>
-              <div style="min-width:0">
-                <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name.split(' ')[0]}</div>
-                <div style="display:flex;align-items:center;gap:4px;margin-top:2px">
-                  <span style="width:6px;height:6px;border-radius:50%;background:${AVAIL_DOT[avail]||'var(--muted)'};flex-shrink:0"></span>
-                  <span style="font-size:10px;color:var(--muted)">${AVAIL_LBL[avail]||avail}</span>
-                </div>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-
-      <div style="margin-bottom:28px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div class="section-title">Active Projects</div>
-          <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View all →</button>
-        </div>
-        <div class="projects-grid">${activeProjects.map(p=>renderProjectCard(p)).join('')}${activeProjects.length===0?`<div style="color:var(--muted);font-size:14px;padding:20px 0">No active projects.</div>`:''}</div>
-      </div>
-
-    </div>`;
-}
 
 // ─── PROJECTS ─────────────────────────────────────────────────────────────────
 function setProjectsFilter(f) { currentProjectsFilter = f; render(); }
@@ -1259,13 +1110,14 @@ function renderProjectDetail() {
 
   const TAB_DEFS = [
     { key: 'brief',      label: 'Brief' },
-    { key: 'timeline',   label: 'Timeline & Tasks', activeKeys: ['brief','timeline','tasks'] },
+    { key: 'timeline',   label: 'Timeline & Tasks', activeKeys: ['timeline'] },
     { key: 'production', label: 'Production' },
     { key: 'assets',     label: 'Assets' },
     { key: 'team',       label: 'Team' },
     { key: 'budget',     label: 'Budget' },
     { key: 'invoices',   label: 'Invoices' },
     { key: 'contacts',   label: 'Clients' },
+    { key: 'signoff',    label: 'Sign-Off' },
   ];
   const visibleTabs = TAB_DEFS.filter(t => enabledTabs.includes(t.key));
   const tabsHtml = visibleTabs.map(t => {
@@ -1286,6 +1138,7 @@ function renderProjectDetail() {
       ${currentTab==='budget'?renderBudgetTab(p):''}
       ${currentTab==='invoices'?renderInvoicesTab(p):''}
       ${currentTab==='contacts'?renderContactsTab(p):''}
+      ${currentTab==='signoff'?renderSignoffTab(p):''}
     </div>`;
 }
 
@@ -1339,7 +1192,7 @@ function openSignoffModal(stepId) {
   openModal(`
     <div class="modal-title">Sign Off: ${step.label}</div>
     <div class="form-grid">
-      <div class="form-group full"><label>Signed off by</label><select id="so-name"><option value="">— Select —</option>${memberNames}<option value="Adam">Adam</option><option value="Other">Other</option></select></div>
+      <div class="form-group full"><label>Signed off by</label><select id="so-name"><option value="">— Select —</option>${memberNames}<option value="Other">Other</option></select></div>
       <div class="form-group full" id="so-other-wrap" style="display:none"><label>Name</label><input id="so-other" placeholder="Enter name"></div>
       <div class="form-group full"><label>Date</label><input id="so-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
     </div>
@@ -1854,7 +1707,8 @@ function openAddInvoiceModal() {
   const catOptions = BUDGET_CATS.map(c=>`<option>${c}</option>`).join('');
   openModal(`<div class="modal-title">Add Invoice</div><div class="form-grid">
     <div class="form-group full"><label>Vendor / Contractor</label><select id="inv-supplier"><option value="">— Select vendor —</option>${vendorOpts}</select>
-      <div style="margin-top:6px;font-size:12px;color:var(--muted)">Not listed? <a href="#" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100);return false;" style="color:var(--blue)">Add to vendor database first →</a></div>
+      ${db.length ? '' : '<input id="inv-supplier-manual" placeholder="Type vendor name" style="margin-top:6px;width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">'}
+      <div style="margin-top:6px;font-size:12px;color:var(--muted)">Not in list? <a href="#" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100);return false;" style="color:var(--blue)">Add to vendor database →</a></div>
     </div>
     <div class="form-group full"><label>Description</label><input id="inv-desc" placeholder="e.g. Stage 1 build, Final delivery, Deposit..."></div>
     <div class="form-group"><label>Budget Category</label><select id="inv-cat">${catOptions}</select></div>
@@ -1865,8 +1719,9 @@ function openAddInvoiceModal() {
   </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addInvoice()">Add Invoice</button></div>`);
 }
 function addInvoice() {
-  const supplier=document.getElementById('inv-supplier').value.trim();
-  if(!supplier){toast('Select a vendor');return;}
+  const manualEl=document.getElementById('inv-supplier-manual');
+  const supplier=document.getElementById('inv-supplier').value.trim()||(manualEl?manualEl.value.trim():'');
+  if(!supplier){toast('Enter a vendor name');return;}
   const amount=parseFloat(document.getElementById('inv-amount').value)||0;
   if(!amount){toast('Amount required');return;}
   const p=currentProject;
@@ -2485,7 +2340,7 @@ function renderTasksKanban(tasks, projectId) {
 }
 
 function openGlobalTaskModal(projectId, status) {
-  const memberNames = [...new Set([...store.team.map(m=>m.name),'Adam','Ruthie'])];
+  const memberNames = [...new Set(store.team.map(m=>m.name))];
   const memberOpts = memberNames.map(n=>`<option value="${n}">${n}</option>`).join('');
   const projectOpts = store.projects.map(p=>`<option value="${p.id}" ${projectId===p.id?'selected':''}>${p.name}</option>`).join('');
   const statusSel = (status||'todo');
@@ -2522,7 +2377,7 @@ function createGlobalTask() {
 
 function openEditGlobalTaskModal(id) {
   const t = store.tasks.find(x=>x.id===id); if (!t) return;
-  const memberNames = [...new Set([...store.team.map(m=>m.name),'Adam','Ruthie'])];
+  const memberNames = [...new Set(store.team.map(m=>m.name))];
   const memberOpts = memberNames.map(n=>`<option value="${n}" ${t.assignedTo===n?'selected':''}>${n}</option>`).join('');
   const projectOpts = store.projects.map(p=>`<option value="${p.id}" ${t.projectId===p.id?'selected':''}>${p.name}</option>`).join('');
   openModal(`
@@ -3344,7 +3199,7 @@ function renderTimelineTab(p) {
 
 function openAddTaskModal() {
   const p=currentProject;
-  const memberOpts=[...store.team.filter(m=>p.teamIds.includes(m.id)).map(m=>`<option>${m.name}</option>`), '<option>Adam</option>'].join('');
+  const memberOpts=store.team.filter(m=>p.teamIds.includes(m.id)).map(m=>`<option>${m.name}</option>`).join('');
   openModal(`
     <div class="modal-title">Add Task / Milestone</div>
     <div class="form-grid">
@@ -3373,7 +3228,7 @@ function cycleTaskStatus(id){
 function openEditTaskModal(id){
   const p=currentProject;
   const t=p.tasks.find(x=>x.id===id); if(!t) return;
-  const memberOpts=[...store.team.filter(m=>p.teamIds.includes(m.id)).map(m=>`<option ${t.assignedTo===m.name?'selected':''}>${m.name}</option>`),'<option>Adam</option>'].join('');
+  const memberOpts=store.team.filter(m=>p.teamIds.includes(m.id)).map(m=>`<option ${t.assignedTo===m.name?'selected':''}>${m.name}</option>`).join('');
   openModal(`
     <div class="modal-title">Edit Milestone</div>
     <div class="form-grid">
@@ -4274,7 +4129,7 @@ function closeQC(){
 }
 function openQuickTaskModal(){
   const projectOpts=store.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  const memberNames=[...new Set([...store.team.map(m=>m.name),'Adam','Ruthie'])];
+  const memberNames=[...new Set(store.team.map(m=>m.name))];
   openModal(`
     <div class="modal-title">◆ Add Task</div>
     <div class="form-grid">
@@ -4301,7 +4156,7 @@ function openQuickExpenseModal(){
     <div class="form-grid">
       <div class="form-group full"><label>Project</label><select id="qe-project"><option value="">— Select project —</option>${projectOpts}</select></div>
       <div class="form-group full"><label>Description</label><input id="qe-desc" placeholder="e.g. Venue hire"></div>
-      <div class="form-group"><label>Category</label><select id="qe-cat"><option>Venue</option><option>Production</option><option>Staffing</option><option>Tech</option><option>Design</option><option>Travel</option><option>Other</option></select></div>
+      <div class="form-group"><label>Category</label><select id="qe-cat">${BUDGET_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="form-group"><label>Amount ($)</label><input id="qe-amount" type="number" placeholder="0"></div>
       <div class="form-group"><label>Date</label><input id="qe-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
     </div>
@@ -4328,7 +4183,8 @@ function openQuickInvoiceModal(){
     <div class="form-grid">
       <div class="form-group full"><label>Project</label><select id="qi-project"><option value="">— Select project —</option>${projectOpts}</select></div>
       <div class="form-group full"><label>Vendor / Contractor</label><select id="qi-supplier"><option value="">— Select vendor —</option>${vendorOpts}</select>
-        <div style="margin-top:6px;font-size:12px;color:var(--muted)">Not listed? <a href="#" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100);return false;" style="color:var(--blue)">Add to vendor database first →</a></div>
+        ${db.length ? '' : '<input id="qi-supplier-manual" placeholder="Type vendor name" style="margin-top:6px;width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">'}
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">Not in list? <a href="#" onclick="closeModal();navigate('global-suppliers');setTimeout(openAddGlobalVendorModal,100);return false;" style="color:var(--blue)">Add to vendor database →</a></div>
       </div>
       <div class="form-group full"><label>Description</label><input id="qi-desc" placeholder="e.g. Stage 1 build, Final delivery, Deposit..."></div>
       <div class="form-group"><label>Budget Category</label><select id="qi-cat">${catOptions}</select></div>
@@ -4341,8 +4197,9 @@ function openQuickInvoiceModal(){
 function quickAddInvoice(){
   const projId=parseInt(document.getElementById('qi-project').value);
   if(!projId){toast('Select a project');return;}
-  const supplier=document.getElementById('qi-supplier').value.trim();
-  if(!supplier){toast('Select a vendor');return;}
+  const qiManualEl=document.getElementById('qi-supplier-manual');
+  const supplier=document.getElementById('qi-supplier').value.trim()||(qiManualEl?qiManualEl.value.trim():'');
+  if(!supplier){toast('Enter a vendor name');return;}
   const p=store.projects.find(x=>x.id===projId);
   if(!p.invoices)p.invoices=[];
   p.invoices.push({
@@ -5051,7 +4908,9 @@ function flEditOnboardingModal() {
 function flSaveOnboarding() {
   store.onboarding = document.getElementById('fl-onboard-content').value;
   closeModal(); save(); toast('Onboarding updated ✓');
-  document.getElementById('fl-body').innerHTML = renderFLOnboarding();
+  const flBody = document.getElementById('fl-body');
+  if (flBody && flBody.offsetParent !== null) flBody.innerHTML = renderFLOnboarding();
+  render();
 }
 
 function renderFLDocuments() {
