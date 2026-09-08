@@ -4357,7 +4357,7 @@ function renderSettings() {
   return `
     <div class="topbar"><div><div class="page-title">Settings</div></div></div>
     <div class="content">
-      <div class="tab-bar" style="margin-bottom:24px">${tabNav}</div>
+      <div style="display:flex;gap:6px;margin-bottom:20px">${tabNav}</div>
       ${content}
     </div>`;
 }
