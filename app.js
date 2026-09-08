@@ -1124,21 +1124,15 @@ function getProjectHealth(p) {
 }
 
 function renderProjectCard(p) {
-  const {forecast,actuals}=getBudgetTotals(p);
-  const pct=forecast>0?Math.round(actuals/forecast*100):0;
   const teamInitials=p.teamIds.slice(0,3).map(id=>{const m=store.team.find(t=>t.id===id);return m?`<div class="team-avatar-sm">${initials(m.name)}</div>`:''}).join('');
   const health=getProjectHealth(p);
+  const deadline=p.endDate?`<span style="font-size:12px;color:var(--muted)">${formatDate(p.endDate)}</span>`:'';
   return `
     <div class="project-card status-${p.status}" style="--project-color:${p.color||'#2563EB'}" onclick="navigate('project-detail',${p.id})">
       <div class="project-header"><div style="min-width:0"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${health?`<div title="${health.label}" style="width:9px;height:9px;border-radius:50%;background:${health.color};flex-shrink:0;box-shadow:0 0 0 2px ${health.color}30"></div>`:''}<div class="status-badge badge-${p.status}">${p.status}</div></div></div>
-      <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Budget</span><span>$${actuals.toLocaleString()} / $${forecast.toLocaleString()}</span></div>
-        <div class="budget-bar"><div class="budget-bar-fill ${pct>100?'over':''}" style="width:${Math.min(pct,100)}%"></div></div>
-      </div>
-      <div class="project-meta">
-        <div class="meta-item"><strong>${p.template||p.type||'—'}</strong>Template</div>
-        <div class="meta-item"><strong>${formatDate(p.endDate)}</strong>Deadline</div>
-        <div class="meta-item" style="margin-left:auto"><div class="team-avatars">${teamInitials}</div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+        ${deadline}
+        <div class="team-avatars" style="margin-left:auto">${teamInitials}</div>
       </div>
     </div>`;
 }
