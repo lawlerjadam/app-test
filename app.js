@@ -2283,8 +2283,10 @@ function renderTasks() {
   const body = tasksView==='runway' ? renderTasksRunway(filtered) : tasksView==='mywork' ? renderTasksMyWork() : renderTasksKanban(filtered, null);
 
   return `
-    <div class="topbar"><div><div class="page-title">Tasks</div><div class="page-sub">${allTasks.filter(t=>t.status!=='done').length} open · ${allTasks.filter(t=>t.status==='done').length} done</div></div>
-    <div style="display:flex;align-items:center;gap:10px">${viewToggle}<button class="btn btn-primary" onclick="openGlobalTaskModal()">+ Add Task</button></div></div>
+    <div class="topbar" style="flex-wrap:wrap;gap:10px">
+      <div><div class="page-title">Tasks</div><div class="page-sub">${allTasks.filter(t=>t.status!=='done').length} open · ${allTasks.filter(t=>t.status==='done').length} done</div></div>
+      <div class="tasks-topbar-controls">${viewToggle}<button class="btn btn-primary" style="margin-left:auto" onclick="openGlobalTaskModal()">+ Add Task</button></div>
+    </div>
     <div class="content">
       ${renderUpcomingStrip()}
       <div class="kanban-filter">${pillsHtml}</div>

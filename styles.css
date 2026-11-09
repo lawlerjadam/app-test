@@ -63,6 +63,7 @@
 
   .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
   .topbar { background: var(--bg); padding: 22px 28px 0; display: flex; align-items: flex-start; justify-content: space-between; position: sticky; top: 0; z-index: 10; gap: 12px; }
+  .tasks-topbar-controls { display: flex; align-items: center; gap: 10px; }
   .page-title { font-family: 'Instrument Serif', serif; font-size: 24px; font-weight: 400; letter-spacing: -0.3px; }
   .page-title-greeting { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; font-size: 24px; letter-spacing: -0.3px; color: var(--navy); }
   .page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
@@ -545,6 +546,7 @@
     .bottom-nav { display: flex; }
     .main { position: fixed; top: calc(var(--mobile-header-h) + env(safe-area-inset-top, 0px)); bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
     .topbar { padding: 16px 16px 0; position: relative; top: auto; }
+    .tasks-topbar-controls { width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .page-title { font-size: 18px; }
     .content { padding: 14px 16px 30px; }
     .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
