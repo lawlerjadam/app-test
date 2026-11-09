@@ -370,6 +370,15 @@ async function save() {
   }
 }
 
+// Dev helper — run window.resetToDefaultData() in the browser console to wipe and reload fresh example data
+window.resetToDefaultData = async function() {
+  if (!currentUser) { console.error('Not logged in'); return; }
+  store = JSON.parse(JSON.stringify(defaultData));
+  await save();
+  render();
+  console.log('✅ Store reset to default data and saved to Supabase');
+};
+
 // ─── MIGRATIONS ───────────────────────────────────────────────────────────────
 function runMigrations() {
 // Ensure nextId has all keys
