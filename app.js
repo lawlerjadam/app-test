@@ -186,86 +186,110 @@ const defaultData = {
   _v3FreshExamples: true,
 
   projects:[
-    {id:1, name:'XAurora Launch', client:'XKova Brand Co.', clientId:1, status:'active', type:'FELT Original', template:'FELT Original', color:'#7C6FF0',
-      startDate:'2026-09-22', endDate:'2026-11-14', budget:0, spent:0,
+    {id:1, name:'Solstice NYE Gala', client:'Meridian Hotels Group', clientId:1, status:'active', type:'FELT Original', template:'FELT Original', color:'#9B90E8',
+      startDate:'2026-11-03', endDate:'2027-01-09', budget:0, spent:0,
       brief:{
-        overview:'Example project — edit or delete to get started. A 200-person product launch event for the XAurora beverage range at a downtown venue.',
-        objectives:'Introduce XAurora to key press and trade buyers. Drive 500+ social impressions on launch night. Secure 3 retail listing conversations.',
-        deliverables:'Event concept & design, venue dressing, AV + content, catering, guest management, press kit.',
-        timeline:'Pre-production: weeks 1–3. Build: week 4. Event night: Oct 30. Wrap & reporting: week 5.'
+        overview:'A 300-person New Year\'s Eve gala for Meridian Hotels Group at their flagship London property. FELT is leading full creative direction, production, and delivery — from concept through to post-event wrap. The event marks Meridian\'s 25th anniversary and is the centrepiece of their winter brand campaign.',
+        objectives:'Create an immersive, memorable NYE experience befitting a 25th anniversary milestone. Drive press coverage and social content across Meridian channels. Deepen relationships with 50 key trade and VIP guests. Deliver flawlessly against a fixed budget and hard midnight deadline.',
+        deliverables:'Full event concept & creative direction, venue transformation (lighting, floral, set design), AV & content production (countdown film, live stream), catering for 300 guests, talent booking, guest management, on-site production team, post-event report.',
+        timeline:'Pre-production: 3 Nov – 5 Dec. Final supplier lock: 8 Dec. Venue build: 29–30 Dec. Event night: 31 Dec. Wrap & reporting: 2–9 Jan.'
       },
-      teamIds:[1], contactIds:[1], teamAllocation:{1:80}, expenses:[],
+      teamIds:[1,2], contactIds:[1], teamAllocation:{1:100,2:80}, expenses:[],
       budgetLines:[
-        {id:1,category:'Venue & Permits',forecast:18000,actuals:0},
-        {id:2,category:'Fabrication & Décor',forecast:22000,actuals:0},
-        {id:3,category:'AV + Content',forecast:16000,actuals:0},
-        {id:4,category:'Catering',forecast:12000,actuals:0},
-        {id:5,category:'Team & Freelancers',forecast:9500,actuals:0},
-        {id:6,category:'Print & Collateral',forecast:3500,actuals:0},
-        {id:7,category:'Contingency',forecast:4000,actuals:0}
+        {id:1,category:'Venue & Permits',forecast:28000,actuals:26500},
+        {id:2,category:'Fabrication & Set Design',forecast:34000,actuals:0},
+        {id:3,category:'AV + Content Production',forecast:22000,actuals:21500},
+        {id:4,category:'Catering',forecast:27000,actuals:0},
+        {id:5,category:'Talent & Entertainment',forecast:12000,actuals:12000},
+        {id:6,category:'Team & Freelancers',forecast:14500,actuals:9750},
+        {id:7,category:'Print & Collateral',forecast:4500,actuals:1200},
+        {id:8,category:'Contingency',forecast:8000,actuals:0}
       ],
       invoices:[
-        {id:1,supplier:'XEventForge',description:'Set build & venue dressing',category:'Fabrication & Décor',amount:20800,date:'2026-10-01',status:'paid',notes:'50% deposit on signing, balance on completion.'},
-        {id:2,supplier:'XLumina AV',description:'AV equipment & crew',category:'AV + Content',amount:14400,date:'2026-10-28',status:'pending',notes:''},
-        {id:3,supplier:'XHarbour Catering',description:'Catering — 200 guests',category:'Catering',amount:10800,date:'2026-11-01',status:'pending',notes:''}
+        {id:1,supplier:'Grand Meridian London',description:'Venue hire — 31 Dec, full day access from 8am',category:'Venue & Permits',amount:26500,date:'2026-11-10',status:'paid',notes:'50% deposit paid on signing. Balance due 1 Dec.'},
+        {id:2,supplier:'Vibe AV',description:'Full AV package — LED wall, lighting rig, PA, crew',category:'AV + Content Production',amount:21500,date:'2026-12-01',status:'paid',notes:''},
+        {id:3,supplier:'Lux Events',description:'Set design, floral installation & fabrication',category:'Fabrication & Set Design',amount:34000,date:'2026-12-15',status:'pending',notes:'Build days 29–30 Dec. Balance on completion.'},
+        {id:4,supplier:'The Catering Collective',description:'NYE dinner & drinks — 300 guests',category:'Catering',amount:27000,date:'2026-12-31',status:'pending',notes:'Menu signed off 12 Dec.'},
+        {id:5,supplier:'Nova Management',description:'DJ & live sax — NYE set 10pm–1am',category:'Talent & Entertainment',amount:12000,date:'2026-12-01',status:'paid',notes:''}
       ],
-      signoff:emptySignoff(),
+      signoff:{signedOff:false,signedOffBy:'',signedOffDate:'',clientName:'',notes:''},
       production:{
-        shootDays:[],
-        suppliers:[
-          {id:1,globalSupplierId:1,company:'XEventForge',contact:'XDan Reyes',category:'Fabrication & Décor',status:'confirmed',notes:'Venue dressing and full set build.'},
-          {id:2,globalSupplierId:2,company:'XLumina AV',contact:'XSuki Park',category:'AV + Content',status:'confirmed',notes:'Full AV package including LED screen.'}
+        shootDays:[
+          {id:1,type:'Build Day',date:'2026-12-29',callTime:'08:00',location:'Grand Meridian London, Ballroom',notes:'Set build and install. Lux Events on site from 8am, AV from 10am.'},
+          {id:2,type:'Tech & Dress',date:'2026-12-30',callTime:'09:00',location:'Grand Meridian London, Ballroom',notes:'Full tech run, lighting programming, countdown film test.'},
+          {id:3,type:'Event Night',date:'2026-12-31',callTime:'14:00',location:'Grand Meridian London, Ballroom',notes:'Doors open 7pm. Dinner 8pm. Countdown midnight. EON 1am.'}
         ],
-        equipment:[],keyContacts:[],callSheetNotes:''
+        suppliers:[
+          {id:1,globalSupplierId:1,company:'Lux Events',contact:'Dan Reyes',category:'Fabrication & Set Design',status:'confirmed',notes:'Full set build and floral. On site 29–30 Dec.'},
+          {id:2,globalSupplierId:2,company:'Vibe AV',contact:'Suki Park',category:'AV + Content',status:'confirmed',notes:'LED wall, lighting rig, PA and countdown stream.'},
+          {id:3,globalSupplierId:3,company:'The Catering Collective',contact:'Maria Santos',category:'Catering',status:'confirmed',notes:'300-cover dinner. Canapes from 7pm, seated 8pm.'}
+        ],
+        equipment:[],keyContacts:[],callSheetNotes:'All crew to arrive via goods entrance on Vine Street. Site contact: Priya Nair.'
       },
       tasks:[
-        {id:201,name:'X Brief & concept approved',category:'Creative',startDate:'',dueDate:'2026-09-24',status:'done',assignedTo:'XRiley Morgan'},
-        {id:202,name:'X Venue confirmed & contracted',category:'Production',startDate:'',dueDate:'2026-09-29',status:'done',assignedTo:'XRiley Morgan'},
-        {id:203,name:'X All vendors briefed & confirmed',category:'Production',startDate:'',dueDate:'2026-10-13',status:'in-progress',assignedTo:'XRiley Morgan'},
-        {id:204,name:'X Guest list & invitations sent',category:'Client',startDate:'',dueDate:'2026-10-18',status:'not-started',assignedTo:'XRiley Morgan'},
-        {id:205,name:'X Event night & wrap',category:'Production',startDate:'',dueDate:'2026-10-30',status:'not-started',assignedTo:'XRiley Morgan'}
+        {id:201,name:'Brief signed off by client',category:'Client',startDate:'',dueDate:'2026-11-07',status:'done',assignedTo:'Priya Nair'},
+        {id:202,name:'Creative concept presented & approved',category:'Creative',startDate:'',dueDate:'2026-11-14',status:'done',assignedTo:'Marcus Reid'},
+        {id:203,name:'Venue contract signed',category:'Production',startDate:'',dueDate:'2026-11-10',status:'done',assignedTo:'Priya Nair'},
+        {id:204,name:'All key suppliers confirmed & contracted',category:'Production',startDate:'',dueDate:'2026-11-28',status:'done',assignedTo:'Priya Nair'},
+        {id:205,name:'Guest list (300) finalised with client',category:'Client',startDate:'',dueDate:'2026-12-05',status:'done',assignedTo:'Priya Nair'},
+        {id:206,name:'Invitations sent & RSVPs tracked',category:'Client',startDate:'',dueDate:'2026-12-08',status:'in-progress',assignedTo:'Priya Nair'},
+        {id:207,name:'Menu tasting & sign-off with caterer',category:'Production',startDate:'',dueDate:'2026-12-12',status:'not-started',assignedTo:'Marcus Reid'},
+        {id:208,name:'Countdown film delivered by AV team',category:'Creative',startDate:'',dueDate:'2026-12-19',status:'not-started',assignedTo:'Marcus Reid'},
+        {id:209,name:'Final production schedule distributed',category:'Production',startDate:'',dueDate:'2026-12-22',status:'not-started',assignedTo:'Priya Nair'},
+        {id:210,name:'Build days — venue install (29–30 Dec)',category:'Production',startDate:'2026-12-29',dueDate:'2026-12-30',status:'not-started',assignedTo:'Priya Nair'},
+        {id:211,name:'Event night — on-site production',category:'Production',startDate:'',dueDate:'2026-12-31',status:'not-started',assignedTo:'Priya Nair'},
+        {id:212,name:'Post-event report to client',category:'Client',startDate:'',dueDate:'2027-01-07',status:'not-started',assignedTo:'Marcus Reid'},
+        {id:213,name:'Final budget reconciliation',category:'Finance',startDate:'',dueDate:'2027-01-09',status:'not-started',assignedTo:''}
       ],
       assets:{driveFolder:'',files:[]}
     }
   ],
   leads:[
-    {id:1,company:'XHarbour Coffee Co.',contactName:'XAlex Torres',contactEmail:'xalex@example.com',projectType:'Brand Experience',estimatedValue:35000,status:'meeting-booked',notes:'Example lead — edit or delete to get started.',contactRole:'Head of Marketing',contactPhone:'',convertedProjectId:null,actions:[
-      {id:1,name:'Intro call — confirmed interest in Q1 brand event',type:'Call',date:'2026-09-05',notes:'Budget range $30–40K. Wants 150-person format.',done:true}
+    {id:1,company:'Southbank Spirits',contactName:'Leo Clarke',contactEmail:'leo@southbankspirits.co.uk',projectType:'Brand Launch',estimatedValue:55000,status:'proposal-sent',notes:'Independent gin brand looking for a 150-person trade launch in Jan. Very brand-conscious, want something editorial.',contactRole:'Founder',contactPhone:'+44 7700 900142',convertedProjectId:null,actions:[
+      {id:1,name:'Intro call — strong fit, brief confirmed',type:'Call',date:'2026-11-05',notes:'Budget £50–60K. Jan window, flexible on exact date. Wants editorial feel, not typical launch party.',done:true},
+      {id:2,name:'Send proposal',type:'Email',date:'2026-11-18',notes:'Sent full proposal with two concept directions.',done:true}
     ]}
   ],
   team:[
-    {id:1,name:'XRiley Morgan',role:'Project Manager',email:'xriley@example.com',rate:650,skills:['Project Management','Event Production','Vendor Coordination','Scheduling'],availability:'booked',availableFrom:'2026-11-17',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Example freelancer — edit or delete to get started.',isFreelancer:true,payments:[
-      {id:1,description:'X Project management — pre-production (2 weeks)',projectId:1,amount:6500,date:'2026-09-29',status:'paid'},
-      {id:2,description:'X Project management — production & event week',projectId:1,amount:3250,date:'2026-11-01',status:'pending'}
+    {id:1,name:'Marcus Reid',role:'Creative Director',email:'marcus@felt.co',rate:850,skills:['Creative Direction','Art Direction','Brand Strategy','Content'],availability:'booked',availableFrom:'2027-01-10',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Lead creative on Solstice. Available for new projects from Jan 10.',isFreelancer:true,payments:[
+      {id:1,description:'Creative direction — concept & pre-production',projectId:1,amount:5950,date:'2026-11-14',status:'paid'},
+      {id:2,description:'Creative direction — production & delivery',projectId:1,amount:3850,date:'2027-01-05',status:'pending'}
+    ],driveFolder:'',contracts:[]},
+    {id:2,name:'Priya Nair',role:'Senior Producer',email:'priya@felt.co',rate:700,skills:['Event Production','Vendor Management','Budgeting','Logistics'],availability:'booked',availableFrom:'2027-01-12',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Lead producer on Solstice. Handling all supplier and logistics.',isFreelancer:true,payments:[
+      {id:3,description:'Production — pre-production & planning',projectId:1,amount:5600,date:'2026-11-28',status:'paid'},
+      {id:4,description:'Production — build, event & wrap',projectId:1,amount:4200,date:'2027-01-05',status:'pending'}
     ],driveFolder:'',contracts:[]}
   ],
   companies:[
-    {id:1,name:'XKova Brand Co.',industry:'Consumer Goods',notes:'Example client — edit or delete to get started.',payments:[
-      {id:1,description:'X Project deposit — 40%',projectId:1,amount:34000,date:'2026-09-15',status:'paid'},
-      {id:2,description:'X Progress payment — 30%',projectId:1,amount:25500,date:'2026-10-14',status:'pending'}
+    {id:1,name:'Meridian Hotels Group',industry:'Hospitality',notes:'Long-term client. 25th anniversary year. Key contact is Sophie Chen.',payments:[
+      {id:1,description:'Project deposit — 40%',projectId:1,amount:60000,date:'2026-11-10',status:'paid'},
+      {id:2,description:'Progress payment — 35%',projectId:1,amount:52500,date:'2026-12-01',status:'paid'},
+      {id:3,description:'Final balance — 25%',projectId:1,amount:37500,date:'2027-01-05',status:'pending'}
     ]}
   ],
   contacts:[
-    {id:1,companyId:1,name:'XJamie Lee',email:'xjamie@example.com',phone:'(416) 555-0210',role:'Brand Marketing Manager'}
+    {id:1,companyId:1,name:'Sophie Chen',email:'sophie.chen@meridianhotels.com',phone:'+44 7911 123456',role:'Head of Brand & Events'}
   ],
   ideas:[
-    {id:1,title:'XPop-Up Dinner Series',category:'Event',description:'Example idea — a branded intimate dinner series in unexpected spaces. Edit or delete to get started.',submittedBy:'XRiley Morgan',date:'2026-09-06'}
+    {id:1,title:'Rooftop Summer Series',category:'Event',description:'A branded rooftop event series across 3 cities — evening format, 100 guests per night, editorial photography throughout. Potential for a returning client format.',submittedBy:'Marcus Reid',date:'2026-11-20'},
+    {id:2,title:'Artist Residency Collab',category:'Campaign',description:'Partner with an emerging artist for a 3-month residency tied to a brand campaign. Live documentation, limited edition prints as event collateral.',submittedBy:'Priya Nair',date:'2026-11-25'}
   ],
   contractTemplates:[
     {id:1,name:'Standard Freelancer Agreement',url:'',description:'Day-rate freelancers, independent contractor'}
   ],
   globalSuppliers:[
-    {id:1,company:'XEventForge',category:'Fabrication',contactName:'XDan Reyes',contactEmail:'xdan@example.ca',contactPhone:'(416) 555-0301',website:'',notes:'Example vendor — edit or delete to get started.'},
-    {id:2,company:'XLumina AV',category:'AV + Content Tech',contactName:'XSuki Park',contactEmail:'xsuki@example.ca',contactPhone:'(416) 555-0302',website:'',notes:'Example vendor — edit or delete to get started.'}
+    {id:1,company:'Lux Events',category:'Fabrication',contactName:'Dan Reyes',contactEmail:'dan@luxevents.co.uk',contactPhone:'+44 7700 900301',website:'luxevents.co.uk',notes:'Go-to for large-scale fabrication and set builds. Excellent on complex installs.'},
+    {id:2,company:'Vibe AV',category:'AV + Content Tech',contactName:'Suki Park',contactEmail:'suki@vibeav.co.uk',contactPhone:'+44 7700 900302',website:'vibeav.co.uk',notes:'Full AV production. Strong on LED and live streaming. Good rates for multi-day hires.'},
+    {id:3,company:'The Catering Collective',category:'Catering',contactName:'Maria Santos',contactEmail:'maria@cateringcollective.co.uk',contactPhone:'+44 7700 900303',website:'',notes:'Premium event catering. Flexible menus, strong dietary options. Used on 4 projects.'}
   ],
   feedback:[],
   tasks:[
-    {id:1,title:'X Confirm final guest numbers with client',category:'Client',status:'in-progress',dueDate:'2026-10-12',assignedTo:'XRiley Morgan',projectId:1,notes:''},
-    {id:2,title:'X Review and approve AV tech rider',category:'Production',status:'todo',dueDate:'2026-10-14',assignedTo:'XRiley Morgan',projectId:1,notes:''},
-    {id:3,title:'X Send post-event report to client',category:'Client',status:'todo',dueDate:'2026-11-06',assignedTo:'XRiley Morgan',projectId:1,notes:''},
-    {id:4,title:'X Reconcile final budget actuals',category:'Finance',status:'todo',dueDate:'2026-11-08',assignedTo:'',projectId:1,notes:''}
+    {id:1,title:'Confirm final headcount with Sophie — cap at 300',category:'Client',status:'in-progress',dueDate:'2026-12-05',assignedTo:'Priya Nair',projectId:1,notes:''},
+    {id:2,title:'Review and approve countdown film cut',category:'Creative',status:'todo',dueDate:'2026-12-19',assignedTo:'Marcus Reid',projectId:1,notes:''},
+    {id:3,title:'Distribute final run-of-show to all crew',category:'Production',status:'todo',dueDate:'2026-12-22',assignedTo:'Priya Nair',projectId:1,notes:''},
+    {id:4,title:'Chase Southbank Spirits proposal response',category:'Client',status:'todo',dueDate:'2026-11-25',assignedTo:'',projectId:null,notes:''}
   ],
-  nextId:{projects:2,team:2,companies:2,contacts:2,leads:2,expenses:1,ideas:2,shootDays:1,suppliers:3,equipment:1,payments:3,keyContacts:1,contracts:1,templates:2,tasks:206,assets:1,globalSuppliers:3,invoices:4,clientPayments:3,feedback:1,gtasks:5,leadActions:2}
+  nextId:{projects:2,team:3,companies:2,contacts:2,leads:2,expenses:1,ideas:3,shootDays:4,suppliers:4,equipment:1,payments:5,keyContacts:1,contracts:1,templates:2,tasks:214,assets:1,globalSuppliers:4,invoices:6,clientPayments:4,feedback:1,gtasks:5,leadActions:3}
 };
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
