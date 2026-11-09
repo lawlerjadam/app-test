@@ -24,27 +24,27 @@
 <aside class="sidebar">
   <div class="sidebar-logo" onclick="openFeelingOfDay()" style="cursor:pointer" title="Feeling of the day"><img src="/felt-logo.png" alt="FELT" style="width:100px;display:block"></div>
   <div class="nav-section" style="padding-bottom:4px">
-    <div class="nav-item" onclick="openSearch()" style="margin-bottom:8px;background:rgba(255,255,255,0.06)"><span class="icon">⌕</span> Search <span style="margin-left:auto;font-size:10px;opacity:0.5;font-weight:400">⌘K</span></div>
+    <div class="nav-item" onclick="openSearch()" style="margin-bottom:8px;background:rgba(255,255,255,0.06)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="2.5"/><line x1="9.5" y1="9.5" x2="14" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Search <span style="margin-left:auto;font-size:10px;opacity:0.5;font-weight:400">⌘K</span></div>
     <div class="nav-label">Work</div>
-    <div class="nav-item" onclick="navigate('projects')"><span class="icon">▦</span> Projects</div>
-    <div class="nav-item" onclick="navigate('tasks')"><span class="icon">◆</span> Tasks</div>
-    <div class="nav-item" onclick="navigate('calendar')"><span class="icon">◫</span> Calendar</div>
+    <div class="nav-item" onclick="navigate('projects')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><rect x="1" y="1" width="6.5" height="6.5" rx="2"/><rect x="8.5" y="1" width="6.5" height="6.5" rx="2"/><rect x="1" y="8.5" width="6.5" height="6.5" rx="2"/><rect x="8.5" y="8.5" width="6.5" height="6.5" rx="2"/></svg> Projects</div>
+    <div class="nav-item" onclick="navigate('tasks')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><rect x="1" y="1.5" width="14" height="4" rx="2"/><rect x="1" y="6.5" width="10" height="4" rx="2"/><rect x="1" y="11.5" width="12" height="4" rx="2"/></svg> Tasks</div>
+    <div class="nav-item" onclick="navigate('calendar')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><rect x="1" y="2" width="14" height="12" rx="2.5" opacity="0.3"/><rect x="1" y="2" width="14" height="5.5" rx="2.5"/><rect x="1" y="6" width="14" height="1.5"/><circle cx="4.5" cy="12" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="11.5" cy="12" r="1.5"/></svg> Calendar</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">People</div>
-    <div class="nav-item" onclick="navigate('team')"><span class="icon">◎</span> Team</div>
-    <div class="nav-item" onclick="navigate('contacts')"><span class="icon">◇</span> Clients</div>
-    <div class="nav-item" onclick="navigate('global-suppliers')"><span class="icon">◧</span> Vendors</div>
+    <div class="nav-item" onclick="navigate('team')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><circle cx="4" cy="7" r="3.5"/><circle cx="12" cy="7" r="3.5"/><circle cx="8" cy="4" r="3.5"/></svg> Team</div>
+    <div class="nav-item" onclick="navigate('contacts')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><circle cx="8" cy="5" r="3.5"/><path d="M1 15c0-3.5 3.1-5.5 7-5.5s7 2 7 5.5H1z"/></svg> Clients</div>
+    <div class="nav-item" onclick="navigate('global-suppliers')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><rect x="2" y="6" width="12" height="9" rx="2"/><path d="M5 6V4.5a3 3 0 0 1 6 0V6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/><rect x="5.5" y="9" width="5" height="2.5" rx="1.25"/></svg> Vendors</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">Money</div>
-    <div class="nav-item" onclick="navigate('finance')"><span class="icon">◱</span> Finance<span id="finance-badge" class="nav-badge hidden"></span></div>
-    <div class="nav-item" onclick="navigate('snapshot')"><span class="icon">◑</span> Snapshot</div>
+    <div class="nav-item" onclick="navigate('finance')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><rect x="1" y="10" width="4" height="5" rx="1.5"/><rect x="6" y="6" width="4" height="9" rx="1.5"/><rect x="11" y="1.5" width="4" height="13.5" rx="1.5"/></svg> Finance<span id="finance-badge" class="nav-badge hidden"></span></div>
+    <div class="nav-item" onclick="navigate('snapshot')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><circle cx="8" cy="8" r="7" opacity="0.25"/><path d="M8 8L8 1A7 7 0 0 1 14.06 11.5Z"/><circle cx="8" cy="8" r="2.5"/></svg> Snapshot</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">Growth</div>
-    <div class="nav-item" onclick="navigate('leads')"><span class="icon">◉</span> Leads</div>
-    <div class="nav-item" onclick="navigate('ideas')"><span class="icon">✦</span> Ideas Park</div>
+    <div class="nav-item" onclick="navigate('leads')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><path d="M1 2h14l-5.2 6.5v5.5l-3.6-2V8.5L1 2z"/></svg> Leads</div>
+    <div class="nav-item" onclick="navigate('ideas')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><path d="M8 1L9.2 6.8 15 8l-5.8 1.2L8 15l-1.2-5.8L1 8l5.8-1.2z"/></svg> Ideas Park</div>
     <div class="nav-item" id="ff-sidebar-btn" onclick="openFutureFeels()" title="Future Feels" style="opacity:0.4;padding-left:14px" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'"><span class="icon" style="display:flex;align-items:center"></span></div>
   </div>
   <div class="sidebar-footer">
