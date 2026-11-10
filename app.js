@@ -4351,7 +4351,7 @@ async function afterLogin(session) {
   // Check if this user is a freelancer
   const myEmail = currentUser.email?.toLowerCase();
   const myMember = store.team.find(m => m.email?.toLowerCase() === myEmail);
-  if (myMember?.isFreelancer && currentUserRole !== 'admin') {
+  if (myMember?.isFreelancer) {
     showFreelancerPortal(myMember);
     return;
   }
@@ -4451,9 +4451,9 @@ async function loadSettingsUsers() {
   }).join('');
   el.innerHTML=`
     ${rows}
-    <div style="margin-top:16px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px">
-      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Invite a team member</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Add new users via the Supabase dashboard — they'll be set to Member by default.</div>
+    <div style="margin-top:16px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Add a new admin</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">1. Invite them via Supabase Auth (they'll arrive as Member by default)<br>2. Once they've logged in, they'll appear in this list<br>3. Change their role to <strong>Admin</strong> using the dropdown above<br><br>⚠ Never mark an admin as <em>Is Freelancer</em> in their Team profile — freelancers always see the portal only, regardless of role.</div>
       <button class="btn btn-ghost btn-sm" onclick="window.open('https://supabase.com/dashboard/project/qyxbjtbipdpevzecbhkd/auth/users','_blank')">Open Supabase Auth →</button>
     </div>`;
 }
