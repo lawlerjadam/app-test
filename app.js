@@ -4438,8 +4438,8 @@ async function loadSettingsUsers() {
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
       <div class="avatar" style="width:32px;height:32px;font-size:11px;flex-shrink:0">${(p.name||p.email||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name||'—'}</div>
-        <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.email||''}</div>
+        <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.email||'—'}</div>
+        ${p.name?`<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>`:''}
       </div>
       <select onchange="updateUserRole('${p.id}',this.value)" style="font-size:12px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-family:inherit;cursor:pointer" ${isSelf?'disabled title="Cannot change your own role"':''}>
         <option value="admin" ${p.role==='admin'?'selected':''}>Admin</option>
