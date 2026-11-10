@@ -4441,7 +4441,7 @@ async function loadSettingsUsers() {
         <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.email||'—'}</div>
         ${p.name?`<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>`:''}
       </div>
-      <select onchange="updateUserRole('${p.id}',this.value)" style="font-size:12px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-family:inherit;cursor:pointer" ${isSelf?'disabled title="Cannot change your own role"':''}>
+      <select onchange="updateUserRole('${p.id}',this.value)" style="width:100px;flex-shrink:0;font-size:12px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-family:inherit;cursor:pointer" ${isSelf?'disabled title="Cannot change your own role"':''}>
         <option value="admin" ${p.role==='admin'?'selected':''}>Admin</option>
         <option value="member" ${p.role==='member'?'selected':''}>Member</option>
         <option value="viewer" ${p.role==='viewer'?'selected':''}>Viewer</option>
