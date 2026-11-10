@@ -715,7 +715,7 @@ let convertingLeadId=null;
 let highlightLeadId=null;
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let calMobileWeekOffset=0;
-let calView='horizon'; // 'horizon' | 'month'
+let calView='month';
 
 let mobileNavTray=null;
 const MOBILE_TRAY_SECTIONS={
@@ -2001,11 +2001,7 @@ function renderCalendar() {
 
   return `
     <div class="topbar">
-      <div><div class="page-title">Calendar</div><div class="page-sub">8-week horizon · today pinned top-left</div></div>
-      <div class="cal-view-toggle">
-        <button class="cal-view-btn${calView==='horizon'?' active':''}" onclick="calSetView('horizon')">Horizon</button>
-        <button class="cal-view-btn${calView==='month'?' active':''}" onclick="calSetView('month')">Month</button>
-      </div>
+      <div><div class="page-title">Calendar</div><div class="page-sub">${monthNames[calMonth]} ${calYear}</div></div>
     </div>
     <div class="content">
       ${finalMobileView}
@@ -2013,7 +2009,7 @@ function renderCalendar() {
         <div class="hz-drain-strip">${drainHtml}</div>
         <div class="section-header" style="margin-bottom:12px"><div class="section-title">On the docket</div><div style="font-size:12px;color:var(--muted)">Next 5 days</div></div>
         <div class="cal-list" style="margin-bottom:24px">${docketHtml}</div>
-        ${calView==='horizon' ? horizonHtml : monthGridHtml}
+        ${monthGridHtml}
         <div class="section-header" style="margin-top:24px"><div class="section-title">All Projects</div></div>
         <div class="cal-list">${allProjectsHtml}</div>
       </div>
