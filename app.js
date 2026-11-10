@@ -251,7 +251,7 @@ const defaultData = {
     ]}
   ],
   team:[
-    {id:1,name:'Marcus Reid',role:'Creative Director',email:'marcus@felt.co',rate:850,skills:['Creative Direction','Art Direction','Brand Strategy','Content'],availability:'booked',availableFrom:'2027-01-10',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Lead creative on Solstice. Available for new projects from Jan 10.',isFreelancer:true,payments:[
+    {id:1,name:'Marcus Reid',role:'Creative Director',email:'adam@aligned-design.co',rate:850,skills:['Creative Direction','Art Direction','Brand Strategy','Content'],availability:'booked',availableFrom:'2027-01-10',contractStatus:'signed',ir35:'outside',paymentTerms:'14',notes:'Lead creative on Solstice. Available for new projects from Jan 10.',isFreelancer:true,payments:[
       {id:1,description:'Creative direction — concept & pre-production',projectId:1,amount:5950,date:'2026-11-14',status:'paid'},
       {id:2,description:'Creative direction — production & delivery',projectId:1,amount:3850,date:'2027-01-05',status:'pending'}
     ],driveFolder:'',contracts:[]},
