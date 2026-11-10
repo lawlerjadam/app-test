@@ -219,6 +219,24 @@
   .fl-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin: 28px 0 10px; }
   .fl-section-label:first-child { margin-top: 0; }
   .fl-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; }
+
+  /* ── Onboarding checklist ── */
+  .ob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ob-col-head { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .ob-col-badge { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; }
+  .felt-badge { background: var(--felt-olive); color: #fff; }
+  .you-badge { background: var(--accent); color: #fff; }
+  .ob-col-card { padding: 8px 16px; }
+  .ob-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); transition: opacity 0.2s; }
+  .ob-row:last-child { border-bottom: none; }
+  .ob-row.ob-done .ob-label { text-decoration: line-through; color: var(--muted); }
+  .ob-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: var(--accent); }
+  .ob-check.checked { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .ob-check.ob-check-felt.checked { background: var(--felt-olive); border-color: var(--felt-olive); color: #fff; }
+  .ob-row:hover .ob-check:not(.checked):not(.ob-check-felt) { border-color: var(--accent); }
+  .ob-label { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .ob-edit-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .ob-edit-input { flex: 1; padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-size: 13px; font-family: inherit; background: var(--bg); color: var(--text); }
   .fl-card-title { font-size: 15px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
   .fl-card-sub { font-size: 12px; color: var(--muted); }
   .fl-sow-status { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
@@ -563,6 +581,7 @@
     .upcoming-strip { grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
     .upcoming-card { padding: 14px 14px; }
     .kanban-board { grid-template-columns: 1fr; }
+    .ob-grid { grid-template-columns: 1fr; }
     .kanban-filter { gap: 5px; }
     .kanban-filter-pill { font-size: 11px; padding: 4px 10px; }
     .form-grid { grid-template-columns: 1fr; }

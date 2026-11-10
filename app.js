@@ -397,6 +397,31 @@ if (!store.nextId.feedback) store.nextId.feedback = 1;
 if (!store.tasks) store.tasks = [];
 if (!store.nextId.gtasks) store.nextId.gtasks = 1;
 if (store.onboarding === undefined) store.onboarding = '';
+// Onboarding checklist migration
+if (!store.onboardingChecklist) {
+  store.onboardingChecklist = {
+    felt: [
+      { id: 'f1', label: 'Contract sent' },
+      { id: 'f2', label: 'Welcome email sent' },
+      { id: 'f3', label: 'Added to project in app' },
+      { id: 'f4', label: 'IR35 status confirmed' },
+      { id: 'f5', label: 'Onboarding call booked' },
+      { id: 'f6', label: 'Added to Slack / comms channel' }
+    ],
+    freelancer: [
+      { id: 'fl1', label: 'Contract signed & returned' },
+      { id: 'fl2', label: 'Read the Working with FELT guide' },
+      { id: 'fl3', label: 'Confirmed day rate & payment terms' },
+      { id: 'fl4', label: 'Submitted bank / payment details' },
+      { id: 'fl5', label: 'Onboarding call confirmed' },
+      { id: 'fl6', label: 'Set up in comms channel' }
+    ]
+  };
+}
+// Ensure each team member has onboardingProgress
+store.team.forEach(m => {
+  if (!m.onboardingProgress) m.onboardingProgress = { felt: [], freelancer: [] };
+});
 store.team.forEach(m => {
   if (m.isFreelancer === undefined) m.isFreelancer = false;
   (m.contracts || []).forEach(c => { if (!c.type) c.type = 'contract'; });
@@ -2679,11 +2704,13 @@ function renderTeamProfile() {
       </div>
       <div class="tabs">
         <div class="tab ${currentMemberTab==='overview'?'active':''}" onclick="currentMemberTab='overview';render()">Overview</div>
+        <div class="tab ${currentMemberTab==='onboarding'?'active':''}" onclick="currentMemberTab='onboarding';render()">Onboarding</div>
         <div class="tab ${currentMemberTab==='contracts'?'active':''}" onclick="currentMemberTab='contracts';render()">Contracts</div>
         <div class="tab ${currentMemberTab==='payments'?'active':''}" onclick="currentMemberTab='payments';render()">Payments</div>
         ${m.isFreelancer?`<div class="tab ${currentMemberTab==='sows'?'active':''}" onclick="currentMemberTab='sows';render()">SOWs & Invoices</div>`:''}
       </div>
       ${currentMemberTab==='overview'?renderMemberOverview(m):''}
+      ${currentMemberTab==='onboarding'?renderMemberOnboarding(m):''}
       ${currentMemberTab==='contracts'?renderMemberContracts(m):''}
       ${currentMemberTab==='payments'?renderMemberPayments(m):''}
       ${currentMemberTab==='sows'?renderMemberSOWsAdmin(m):''}
@@ -2727,6 +2754,66 @@ function renderMemberOverview(m) {
     <div class="section-header"><div class="section-title">Active Projects</div></div>
     <div class="card" style="margin-bottom:18px">${projects.length===0?`<div class="empty-state" style="padding:20px"><p>Not on any projects.</p></div>`:projects.map(p=>`<div class="contact-row" style="cursor:pointer" onclick="navigate('project-detail',${p.id})"><div style="width:10px;height:10px;border-radius:50%;background:${p.status==='active'?'var(--green)':p.status==='planning'?'var(--accent)':'var(--muted)'};flex-shrink:0"></div><div><div class="contact-name">${p.name}</div><div class="contact-detail">${p.client} · <span class="status-badge badge-${p.status}">${p.status}</span></div></div><div style="margin-left:auto;font-size:12px;font-weight:700;color:var(--muted)">${(p.teamAllocation&&p.teamAllocation[m.id])||0} days</div></div>`).join('')}</div>
     ${m.notes?`<div class="section-header"><div class="section-title">Notes</div></div><div class="brief-content"><div class="brief-section-content">${m.notes}</div></div>`:''}`;
+}
+
+function renderMemberOnboarding(m) {
+  const checklist = store.onboardingChecklist || { felt: [], freelancer: [] };
+  if (!m.onboardingProgress) m.onboardingProgress = { felt: [], freelancer: [] };
+  const progress = m.onboardingProgress;
+  const feltDone = checklist.felt.filter(i => progress.felt.includes(i.id)).length;
+  const flDone   = checklist.freelancer.filter(i => progress.freelancer.includes(i.id)).length;
+  const total = checklist.felt.length + checklist.freelancer.length;
+  const done  = feltDone + flDone;
+  const pct   = total > 0 ? Math.round(done / total * 100) : 0;
+
+  const makeRows = (items, side, adminSide) => items.map(item => {
+    const checked = progress[side].includes(item.id);
+    const clickable = adminSide; // admin can tick the FELT side; freelancer ticks their own side via portal
+    return `<div class="ob-row ${checked ? 'ob-done' : ''}" ${clickable ? `onclick="adminToggleOnboard(${m.id},'${side}','${item.id}')" style="cursor:pointer"` : ''}>
+      <div class="ob-check ${side === 'felt' ? 'ob-check-felt' : ''} ${checked ? 'checked' : ''}">
+        ${checked ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
+      </div>
+      <span class="ob-label">${item.label}</span>
+      ${!clickable ? `<span style="font-size:10px;color:var(--muted);margin-left:auto">${checked ? 'Done ✓' : 'Pending'}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  return `<div class="content-inner" style="padding:20px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="flex:1;margin-right:16px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px">${pct === 100 ? '🎉 Onboarding complete!' : `${done} of ${total} steps complete`}</div>
+        <div style="background:var(--border);border-radius:99px;height:7px;overflow:hidden">
+          <div style="width:${pct}%;background:var(--accent);height:100%;border-radius:99px;transition:width 0.4s"></div>
+        </div>
+      </div>
+      <div style="font-size:24px;font-weight:700;color:var(--accent)">${pct}%</div>
+    </div>
+    <div class="ob-grid" style="margin-bottom:20px">
+      <div>
+        <div class="ob-col-head"><span class="ob-col-badge felt-badge">FELT</span> Our checklist <span style="color:var(--muted);font-size:11px">${feltDone}/${checklist.felt.length}</span></div>
+        <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:8px 16px">
+          ${makeRows(checklist.felt, 'felt', true) || '<div style="color:var(--muted);font-size:13px;padding:12px 0;text-align:center">No items. <a href="#" onclick="flEditOnboardingModal();return false">Edit checklist</a></div>'}
+        </div>
+      </div>
+      <div>
+        <div class="ob-col-head"><span class="ob-col-badge you-badge">Freelancer</span> Their checklist <span style="color:var(--muted);font-size:11px">${flDone}/${checklist.freelancer.length}</span></div>
+        <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:8px 16px">
+          ${makeRows(checklist.freelancer, 'freelancer', false) || '<div style="color:var(--muted);font-size:13px;padding:12px 0;text-align:center">No items. <a href="#" onclick="flEditOnboardingModal();return false">Edit checklist</a></div>'}
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="flEditOnboardingModal()">Edit checklist template</button>
+  </div>`;
+}
+
+function adminToggleOnboard(memberId, side, itemId) {
+  const member = store.team.find(m => m.id === memberId);
+  if (!member) return;
+  if (!member.onboardingProgress) member.onboardingProgress = { felt: [], freelancer: [] };
+  const arr = member.onboardingProgress[side];
+  const idx = arr.indexOf(itemId);
+  if (idx === -1) arr.push(itemId); else arr.splice(idx, 1);
+  save(); render();
 }
 
 function renderMemberPayments(m) {
@@ -3953,7 +4040,7 @@ function openAddContactToProjectModal(){const p=currentProject,av=store.contacts
 function addContactToProject(){currentProject.contactIds.push(parseInt(document.getElementById('f-contact').value));closeModal();toast('Contact added');save();render();}
 function removeContact(id){showConfirm('Remove this contact from the project?',()=>{currentProject.contactIds=currentProject.contactIds.filter(c=>c!==id);toast('Removed');save();render();},{label:'Remove'});}
 function openNewMemberModal(){openModal(`<div class="modal-title">Add Team Member</div><div class="form-grid"><div class="form-group"><label>Full Name</label><input id="f-name"></div><div class="form-group"><label>Role</label><input id="f-role" placeholder="e.g. Designer"></div><div class="form-group"><label>Email</label><input id="f-email" type="email"></div><div class="form-group"><label>Day Rate ($)</label><input id="f-rate" type="number" placeholder="0"></div><div class="form-group full"><label>Skills (comma separated)</label><input id="f-skills"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createMember()">Add Member</button></div>`);}
-function createMember(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Name required');return;}store.team.push({id:store.nextId.team++,name:n,role:document.getElementById('f-role').value||'Freelancer',email:document.getElementById('f-email').value,rate:parseInt(document.getElementById('f-rate').value)||0,skills:document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean),availability:'available',availableFrom:'',contractStatus:'not-sent',ir35:'not-assessed',paymentTerms:'30',payments:[],notes:''});closeModal();toast('Team member added');save();render();}
+function createMember(){const n=document.getElementById('f-name').value.trim();if(!n){toast('Name required');return;}store.team.push({id:store.nextId.team++,name:n,role:document.getElementById('f-role').value||'Freelancer',email:document.getElementById('f-email').value,rate:parseInt(document.getElementById('f-rate').value)||0,skills:document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean),availability:'available',availableFrom:'',contractStatus:'not-sent',ir35:'not-assessed',paymentTerms:'30',payments:[],notes:'',onboardingProgress:{felt:[],freelancer:[]}});closeModal();toast('Team member added');save();render();}
 function deleteMember(id){showConfirm('Remove this team member? Their payment and contract records will also be removed.',()=>{store.team=store.team.filter(m=>m.id!==id);toast('Removed');save();render();});}
 // ─── COMPANY CRUD ──────────────────────────────────────────────────────────────
 function openNewCompanyModal(){openModal(`<div class="modal-title">Add Client</div><div class="form-grid"><div class="form-group full"><label>Company Name</label><input id="f-coname" placeholder="e.g. RBC Royal Bank of Canada"></div><div class="form-group"><label>Industry</label><input id="f-industry" placeholder="e.g. Financial Services"></div><div class="form-group full"><label>Notes</label><textarea id="f-notes" placeholder="Any context..."></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createCompany()">Add Client</button></div>`);}
@@ -4950,29 +5037,145 @@ function flSaveAvailabilityPeriod() {
 }
 
 function renderFLOnboarding() {
-  const content = store.onboarding || '';
-  return '<div class="fl-section-label">Welcome</div>'
-    + '<div class="fl-card">'
-    + (content
-      ? '<div style="font-size:14px;line-height:1.75;white-space:pre-wrap">' + content + '</div>'
-      : '<div style="color:var(--muted);font-size:13px;padding:12px 0;text-align:center">Onboarding content coming soon. Check back here for important info about working with us.</div>')
-    + '</div>'
-    ;
+  const m = _flMember;
+  if (!m) return '';
+  const checklist = store.onboardingChecklist || { felt: [], freelancer: [] };
+  const progress = m.onboardingProgress || { felt: [], freelancer: [] };
+  const feltDone = checklist.felt.filter(i => progress.felt.includes(i.id)).length;
+  const flDone = checklist.freelancer.filter(i => progress.freelancer.includes(i.id)).length;
+  const total = checklist.felt.length + checklist.freelancer.length;
+  const done = feltDone + flDone;
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+
+  const feltRows = checklist.felt.map(item => {
+    const checked = progress.felt.includes(item.id);
+    return `<div class="ob-row ${checked ? 'ob-done' : ''}">
+      <div class="ob-check ob-check-felt ${checked ? 'checked' : ''}" style="pointer-events:none">
+        ${checked ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
+      </div>
+      <span class="ob-label">${item.label}</span>
+    </div>`;
+  }).join('');
+
+  const flRows = checklist.freelancer.map(item => {
+    const checked = progress.freelancer.includes(item.id);
+    return `<div class="ob-row ${checked ? 'ob-done' : ''}" onclick="flToggleOnboardItem('${item.id}')" style="cursor:pointer">
+      <div class="ob-check ${checked ? 'checked' : ''}">
+        ${checked ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
+      </div>
+      <span class="ob-label">${item.label}</span>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="fl-section-label">Welcome to FELT</div>
+    <div class="fl-card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">${pct === 100 ? '🎉 You\'re all set!' : `${done} of ${total} steps complete`}</div>
+          <div style="background:var(--border);border-radius:99px;height:6px;overflow:hidden">
+            <div style="width:${pct}%;background:var(--accent);height:100%;border-radius:99px;transition:width 0.4s"></div>
+          </div>
+        </div>
+        <div style="font-size:22px;font-weight:700;color:var(--accent)">${pct}%</div>
+      </div>
+    </div>
+    <div class="ob-grid">
+      <div>
+        <div class="ob-col-head"><span class="ob-col-badge felt-badge">FELT</span> Our checklist <span style="color:var(--muted);font-size:11px">${feltDone}/${checklist.felt.length}</span></div>
+        <div class="fl-card ob-col-card">${feltRows || '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px 0">No items yet.</div>'}</div>
+      </div>
+      <div>
+        <div class="ob-col-head"><span class="ob-col-badge you-badge">You</span> Your checklist <span style="color:var(--muted);font-size:11px">${flDone}/${checklist.freelancer.length}</span></div>
+        <div class="fl-card ob-col-card">${flRows || '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px 0">No items yet.</div>'}</div>
+      </div>
+    </div>
+    ${store.onboarding ? `<div class="fl-section-label" style="margin-top:20px">Notes from FELT</div><div class="fl-card"><div style="font-size:14px;line-height:1.75;white-space:pre-wrap">${store.onboarding}</div></div>` : ''}
+  `;
+}
+
+function flToggleOnboardItem(itemId) {
+  const m = _flMember;
+  if (!m) return;
+  const member = store.team.find(t => t.id === m.id);
+  if (!member) return;
+  if (!member.onboardingProgress) member.onboardingProgress = { felt: [], freelancer: [] };
+  const arr = member.onboardingProgress.freelancer;
+  const idx = arr.indexOf(itemId);
+  if (idx === -1) arr.push(itemId); else arr.splice(idx, 1);
+  _flMember.onboardingProgress = member.onboardingProgress;
+  save();
+  document.getElementById('fl-body').innerHTML = renderFLOnboarding();
 }
 
 function flEditOnboardingModal() {
-  openModal('<div class="modal-title">Edit Onboarding Content</div>'
-    + '<div class="form-group"><label>Content (shown to all freelancers on their Onboarding tab)</label>'
-    + '<textarea id="fl-onboard-content" rows="12" placeholder="Write your welcome message, house rules, how to submit invoices, who to contact…">' + (store.onboarding || '') + '</textarea></div>'
-    + '<div class="modal-footer">'
-    + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
-    + '<button class="btn btn-primary" onclick="flSaveOnboarding()">Save</button>'
-    + '</div>');
+  const checklist = store.onboardingChecklist || { felt: [], freelancer: [] };
+  const feltItems = checklist.felt.map((item, i) =>
+    `<div class="ob-edit-row" id="ob-felt-${i}">
+      <input class="ob-edit-input" value="${item.label.replace(/"/g,'&quot;')}" data-side="felt" data-idx="${i}">
+      <button class="btn btn-ghost btn-sm" onclick="obRemoveItem('felt',${i})" style="color:var(--red);padding:4px 8px">✕</button>
+    </div>`).join('');
+  const flItems = checklist.freelancer.map((item, i) =>
+    `<div class="ob-edit-row" id="ob-fl-${i}">
+      <input class="ob-edit-input" value="${item.label.replace(/"/g,'&quot;')}" data-side="freelancer" data-idx="${i}">
+      <button class="btn btn-ghost btn-sm" onclick="obRemoveItem('freelancer',${i})" style="color:var(--red);padding:4px 8px">✕</button>
+    </div>`).join('');
+
+  openModal(`<div class="modal-title">Edit Onboarding Checklist</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">FELT Checklist</div>
+        <div id="ob-felt-list">${feltItems}</div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="obAddItem('felt')">+ Add item</button>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Freelancer Checklist</div>
+        <div id="ob-fl-list">${flItems}</div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="obAddItem('freelancer')">+ Add item</button>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Welcome note (optional — shown below checklist)</div>
+      <textarea id="fl-onboard-content" rows="4" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical" placeholder="A short welcome message, house rules, who to contact…">${store.onboarding || ''}</textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="flSaveOnboarding()">Save</button>
+    </div>`);
+}
+
+function obAddItem(side) {
+  const listId = side === 'felt' ? 'ob-felt-list' : 'ob-fl-list';
+  const list = document.getElementById(listId);
+  const idx = list.querySelectorAll('.ob-edit-row').length;
+  const row = document.createElement('div');
+  row.className = 'ob-edit-row';
+  row.innerHTML = `<input class="ob-edit-input" placeholder="New checklist item" data-side="${side}" data-idx="${idx}">
+    <button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()" style="color:var(--red);padding:4px 8px">✕</button>`;
+  list.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function obRemoveItem(side, idx) {
+  const listId = side === 'felt' ? 'ob-felt-list' : 'ob-fl-list';
+  const rows = document.getElementById(listId).querySelectorAll('.ob-edit-row');
+  if (rows[idx]) rows[idx].remove();
 }
 
 function flSaveOnboarding() {
+  // Collect felt items
+  const feltInputs = document.querySelectorAll('#ob-felt-list .ob-edit-input');
+  const flInputs   = document.querySelectorAll('#ob-fl-list .ob-edit-input');
+  const makeItems = (inputs, prefix) => Array.from(inputs)
+    .map(inp => inp.value.trim()).filter(Boolean)
+    .map((label, i) => ({ id: `${prefix}${Date.now()}_${i}`, label }));
+
+  store.onboardingChecklist = {
+    felt: makeItems(feltInputs, 'f'),
+    freelancer: makeItems(flInputs, 'fl')
+  };
   store.onboarding = document.getElementById('fl-onboard-content').value;
-  closeModal(); save(); toast('Onboarding updated ✓');
+  closeModal(); save(); toast('Onboarding checklist saved ✓');
   const flBody = document.getElementById('fl-body');
   if (flBody && flBody.offsetParent !== null) flBody.innerHTML = renderFLOnboarding();
   render();
