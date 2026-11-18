@@ -438,6 +438,7 @@ if (!store.nextId.proposals) store.nextId.proposals = 1;
 (store.proposals||[]).forEach(pr => {
   if (pr.startDate === undefined) pr.startDate = '';
   if (pr.endDate === undefined) pr.endDate = '';
+  if (pr.clientId === undefined) pr.clientId = null;
 });
 // Blocked periods (capacity blocks) migration
 if (!store.blockedPeriods) store.blockedPeriods = [];
@@ -3094,13 +3095,30 @@ function openProposalBuilder(proposalId) {
 
 function openNewProposalModal(leadId) {
   const lead = leadId ? store.leads?.find(l=>l.id===leadId) : null;
-  const defaultClient = lead ? (lead.company||'') : '';
-  const defaultTitle  = lead ? `Proposal — ${lead.company}` : '';
+  const defaultTitle = lead ? `Proposal — ${lead.company}` : '';
+  // If coming from a lead, show the client locked to that lead's company
+  const clientHtml = lead
+    ? `<div class="form-group full"><label>Client</label><div style="font-size:14px;font-weight:600;padding:8px 0;color:var(--text)">${lead.company} <span style="font-size:12px;color:var(--muted);font-weight:400">— linked to lead</span></div></div>`
+    : `<div class="form-group full">
+        <label>Client</label>
+        <select id="np-company-select" class="form-input" onchange="npToggleNewCompany()" style="margin-bottom:8px">
+          <option value="">— Select existing client —</option>
+          ${(store.companies||[]).sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}
+          <option value="__new__">＋ New company...</option>
+        </select>
+        <div id="np-new-company-wrap" style="display:none">
+          <input id="np-new-company" class="form-input" placeholder="Company name" style="margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;cursor:pointer">
+            <input type="checkbox" id="np-make-lead" checked style="width:15px;height:15px;accent-color:var(--navy)">
+            Also add to Leads pipeline
+          </label>
+        </div>
+      </div>`;
   openModal(`
     <div class="modal-title">New Proposal</div>
     <div class="form-grid">
       <div class="form-group full"><label>Title</label><input id="np-title" class="form-input" placeholder="Proposal — Client Name" value="${defaultTitle}"></div>
-      <div class="form-group full"><label>Client name</label><input id="np-client" class="form-input" placeholder="e.g. Meridian Hotels Group" value="${defaultClient}"></div>
+      ${clientHtml}
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -3108,32 +3126,73 @@ function openNewProposalModal(leadId) {
     </div>`);
 }
 
+function npToggleNewCompany() {
+  const val = document.getElementById('np-company-select')?.value;
+  const wrap = document.getElementById('np-new-company-wrap');
+  if (wrap) wrap.style.display = val === '__new__' ? '' : 'none';
+}
+
 function createProposal(leadId) {
-  const title  = document.getElementById('np-title')?.value.trim();
-  const client = document.getElementById('np-client')?.value.trim();
-  if (!client) { toast('Client name required'); return; }
+  const title = document.getElementById('np-title')?.value.trim();
+  let clientName = '', clientId = null, resolvedLeadId = leadId || null;
+
+  if (leadId) {
+    // Coming from a lead — use lead's company
+    const lead = store.leads?.find(l=>l.id===leadId);
+    clientName = lead?.company || '';
+    // Try to match to a company record
+    const co = clientName ? (store.companies||[]).find(c=>c.name===clientName) : null;
+    clientId = co?.id || null;
+  } else {
+    const sel = document.getElementById('np-company-select')?.value;
+    if (!sel) { toast('Please select a client'); return; }
+    if (sel === '__new__') {
+      const newName = document.getElementById('np-new-company')?.value.trim();
+      if (!newName) { toast('Company name required'); return; }
+      // Create the company
+      if (!store.nextId.companies) store.nextId.companies = 1;
+      const newCo = { id: store.nextId.companies++, name: newName, industry: '', notes: '', payments: [] };
+      store.companies.push(newCo);
+      clientName = newName;
+      clientId = newCo.id;
+      // Optionally create a lead
+      const makeLead = document.getElementById('np-make-lead')?.checked;
+      if (makeLead) {
+        if (!store.nextId.leads) store.nextId.leads = 1;
+        const newLead = {
+          id: store.nextId.leads++, company: newName, contactName: '', contactEmail: '',
+          contactRole: '', contactPhone: '', projectType: '', estimatedValue: 0,
+          status: 'proposal-sent', notes: '', convertedProjectId: null,
+          nextAction: '', nextActionDate: '', actions: []
+        };
+        store.leads.push(newLead);
+        resolvedLeadId = newLead.id;
+      }
+    } else {
+      const co = (store.companies||[]).find(c=>c.id===parseInt(sel));
+      if (!co) { toast('Client not found'); return; }
+      clientName = co.name;
+      clientId = co.id;
+    }
+  }
+
+  if (!clientName) { toast('Client name required'); return; }
   if (!store.proposals) store.proposals = [];
   if (!store.nextId.proposals) store.nextId.proposals = 1;
   const pr = {
     id: store.nextId.proposals++,
-    title: title || `Proposal — ${client}`,
-    clientName: client,
-    leadId: leadId || null,
+    title: title || `Proposal — ${clientName}`,
+    clientName,
+    clientId,
+    leadId: resolvedLeadId,
     status: 'draft',
     createdAt: new Date().toISOString().split('T')[0],
-    validUntil: '',
-    startDate: '',
-    endDate: '',
-    intro: '',
-    tierId: 'creative-direction',
-    packageCost: 0,
-    selectedAddons: [],
-    customLines: [],
+    validUntil: '', startDate: '', endDate: '',
+    intro: '', tierId: 'creative-direction', packageCost: 0,
+    selectedAddons: [], customLines: [],
     paymentTerms: '50% deposit on signing, balance 30 days prior to event.',
     nextSteps: 'Please review and let us know if you would like to proceed — we would love to work together.',
-    pastWork: [],
-    shareUrl: null,
-    sentAt: null
+    pastWork: [], shareUrl: null, sentAt: null
   };
   store.proposals.push(pr);
   save();
