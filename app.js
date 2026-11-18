@@ -439,6 +439,11 @@ if (!store.nextId.proposals) store.nextId.proposals = 1;
   if (pr.startDate === undefined) pr.startDate = '';
   if (pr.endDate === undefined) pr.endDate = '';
   if (pr.clientId === undefined) pr.clientId = null;
+  if (pr.rejectedAt === undefined) pr.rejectedAt = null;
+});
+// Leads createdAt migration
+(store.leads||[]).forEach(l => {
+  if (l.createdAt === undefined) l.createdAt = new Date().toISOString().split('T')[0];
 });
 // Blocked periods (capacity blocks) migration
 if (!store.blockedPeriods) store.blockedPeriods = [];
@@ -2611,6 +2616,7 @@ function openLeadDetailModal(id) {
     <div class="modal-title">${l.company}</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
       <span class="status-badge badge-${l.status}">${statusInfo?.label || l.status}</span>
+      ${isLeadStale(l)?`<span style="font-size:11px;font-weight:700;color:#7a5000;background:#fff3cd;border-radius:20px;padding:2px 7px">Stale</span>`:''}
       ${l.projectType ? `<span style="font-size:12px;color:var(--muted)">${l.projectType}</span>` : ''}
       ${l.estimatedValue ? `<span style="font-size:13px;font-weight:700;color:var(--blue);margin-left:auto">$${l.estimatedValue.toLocaleString()}</span>` : ''}
     </div>
@@ -2679,6 +2685,7 @@ function saveLeadAction(leadId) {
     notes: document.getElementById('la-notes').value.trim(),
     done:  false
   });
+  l.createdAt = new Date().toISOString().split('T')[0]; // reset stale clock on new activity
   save(); toast('Action added');
   openLeadDetailModal(leadId);
 }
@@ -2770,26 +2777,41 @@ function renderServices() {
   }).join('');
 
   const proposals = store.proposals || [];
-  const proposalsHtml = proposals.length === 0
+  const activeProposals = proposals.filter(pr => pr.status !== 'rejected');
+  const archivedProposals = proposals.filter(pr => pr.status === 'rejected');
+  const showArchived = !!window._showArchivedProposals;
+  const visibleProposals = showArchived ? proposals : activeProposals;
+
+  const statusColors = {draft:'var(--muted)',sent:'var(--blue)',accepted:'var(--green)',declined:'var(--red)',rejected:'var(--muted)'};
+  const renderProposalRow = (pr, isArchived) => {
+    const linked = pr.leadId ? store.leads?.find(l=>l.id===pr.leadId) : null;
+    const total = (pr.packageCost||0) + (pr.selectedAddons||[]).reduce((s,a)=>s+(a.cost||0),0) + (pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
+    const stale = isProposalStale(pr);
+    const staleDays = stale ? daysAgo(pr.sentAt) : 0;
+    return `<div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);cursor:pointer;${isArchived?'opacity:0.55':''}" onclick="${isArchived?'':'openProposalBuilder('+pr.id+')'}">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <span style="font-size:14px;font-weight:600;color:var(--text)">${pr.title||'Untitled Proposal'}</span>
+          ${stale?`<span style="font-size:11px;font-weight:700;color:#7a5000;background:#fff3cd;border-radius:20px;padding:2px 7px">Stale · ${staleDays}d</span>`:''}
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${pr.clientName||''}${linked?' · Lead: '+linked.company:''}${pr.createdAt?' · '+formatDate(pr.createdAt):''}</div>
+      </div>
+      ${total>0?`<div style="font-size:13px;font-weight:700;color:var(--text);flex-shrink:0">$${total.toLocaleString()}</div>`:''}
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${statusColors[pr.status]||'var(--muted)'};flex-shrink:0">${pr.status}</div>
+      ${!isArchived?`<div style="flex-shrink:0">${capacityDot(pr)}</div>`:''}
+      ${pr.shareUrl&&!isArchived?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyProposalLink(${pr.id})">Copy link</button>`:''}
+      ${pr.status==='sent'?`<button class="btn btn-ghost btn-sm" style="color:var(--green);font-weight:700;flex-shrink:0" onclick="event.stopPropagation();acceptProposal(${pr.id})">✓ Accept</button>`:''}
+      ${pr.status==='accepted'&&pr.acceptedProjectId?`<button class="btn btn-ghost btn-sm" style="color:var(--blue);flex-shrink:0" onclick="event.stopPropagation();navigate('project-detail',${pr.acceptedProjectId})">→ Project</button>`:''}
+      ${isArchived
+        ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();restoreProposal(${pr.id})">Restore</button><button class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" onclick="event.stopPropagation();quickDeleteProposal(${pr.id})">✕</button>`
+        : (pr.status!=='accepted'?`<button class="btn btn-ghost btn-sm" style="color:var(--muted);flex-shrink:0" onclick="event.stopPropagation();rejectProposal(${pr.id})">Archive</button>`:'')
+      }
+    </div>`;
+  };
+
+  const proposalsHtml = activeProposals.length === 0 && !showArchived
     ? `<div class="empty-state" style="padding:30px 0"><div class="empty-icon">◈</div><p>No proposals yet. Create one to get started.</p></div>`
-    : proposals.slice().reverse().map(pr => {
-        const statusColors = {draft:'var(--muted)',sent:'var(--blue)',accepted:'var(--green)',declined:'var(--red)'};
-        const linked = pr.leadId ? store.leads?.find(l=>l.id===pr.leadId) : null;
-        const total = (pr.packageCost||0) + (pr.selectedAddons||[]).reduce((s,a)=>s+(a.cost||0),0) + (pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
-        return `<div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openProposalBuilder(${pr.id})">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:600;color:var(--text)">${pr.title||'Untitled Proposal'}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">${pr.clientName||''}${linked?' · Lead: '+linked.company:''}${pr.createdAt?' · '+formatDate(pr.createdAt):''}</div>
-          </div>
-          ${total>0?`<div style="font-size:13px;font-weight:700;color:var(--text);flex-shrink:0">$${total.toLocaleString()}</div>`:''}
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${statusColors[pr.status]||'var(--muted)'};flex-shrink:0">${pr.status}</div>
-          <div style="flex-shrink:0">${capacityDot(pr)}</div>
-          ${pr.shareUrl?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyProposalLink(${pr.id})">Copy link</button>`:''}
-          ${pr.status==='sent'?`<button class="btn btn-ghost btn-sm" style="color:var(--green);font-weight:700;flex-shrink:0" onclick="event.stopPropagation();acceptProposal(${pr.id})">✓ Accept</button>`:''}
-          ${pr.status==='accepted'&&pr.acceptedProjectId?`<button class="btn btn-ghost btn-sm" style="color:var(--blue);flex-shrink:0" onclick="event.stopPropagation();navigate('project-detail',${pr.acceptedProjectId})">→ Project</button>`:''}
-          <button class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" onclick="event.stopPropagation();quickDeleteProposal(${pr.id})">✕</button>
-        </div>`;
-      }).join('');
+    : visibleProposals.slice().reverse().map(pr => renderProposalRow(pr, pr.status==='rejected')).join('');
 
   return `
     <div class="topbar">
@@ -2803,7 +2825,10 @@ function renderServices() {
       </div>
     </div>
     <div class="content">
-      <div class="section-header"><div class="section-title">Proposals</div><div class="section-sub">${proposals.length} proposal${proposals.length!==1?'s':''}</div></div>
+      <div class="section-header">
+        <div><div class="section-title">Proposals</div><div class="section-sub">${activeProposals.length} active${archivedProposals.length?` · ${archivedProposals.length} archived`:''}</div></div>
+        ${archivedProposals.length?`<button class="btn btn-ghost btn-sm" onclick="toggleArchivedProposals()">${showArchived?'Hide archived':'Show archived ('+archivedProposals.length+')'}</button>`:''}
+      </div>
       <div class="card" style="padding:0 22px">${proposalsHtml}</div>
       ${isAdmin ? `<div class="section-header" style="margin-top:24px">
         <div><div class="section-title">Capacity Blocks</div><div class="section-sub">${(store.blockedPeriods||[]).length} blocked period${(store.blockedPeriods||[]).length!==1?'s':''}</div></div>
@@ -3506,6 +3531,52 @@ function confirmDeleteProposal(id) {
   });
 }
 
+// ─── STALE / ARCHIVE HELPERS ──────────────────────────────────────────────────
+function daysAgo(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  return Math.floor((Date.now() - d) / 86400000);
+}
+
+function isProposalStale(pr) {
+  if (pr.status !== 'sent') return false;
+  const days = daysAgo(pr.sentAt);
+  return days !== null && days > 14;
+}
+
+function isLeadStale(l) {
+  if (['won','lost'].includes(l.status)) return false;
+  if (l.convertedProjectId) return false;
+  const actions = l.actions || [];
+  const dates = [l.createdAt, l.nextActionDate, ...actions.map(a => a.date)].filter(Boolean);
+  const latest = dates.sort().slice(-1)[0];
+  const days = daysAgo(latest);
+  return days !== null && days > 14;
+}
+
+function rejectProposal(id) {
+  const pr = (store.proposals||[]).find(p=>p.id===id);
+  if (!pr) return;
+  showConfirm(`Archive "${pr.title||'this proposal'}"? It will be hidden from the pipeline.`, () => {
+    pr.status = 'rejected';
+    pr.rejectedAt = new Date().toISOString().split('T')[0];
+    save(); render(); toast('Proposal archived');
+  }, { label: 'Archive' });
+}
+
+function restoreProposal(id) {
+  const pr = (store.proposals||[]).find(p=>p.id===id);
+  if (!pr) return;
+  pr.status = 'draft';
+  pr.rejectedAt = null;
+  save(); render(); toast('Proposal restored to drafts');
+}
+
+function toggleArchivedProposals() {
+  window._showArchivedProposals = !window._showArchivedProposals;
+  render();
+}
+
 function quickDeleteProposal(id) {
   const pr = (store.proposals||[]).find(p=>p.id===id);
   const name = pr?.title || 'this proposal';
@@ -3676,6 +3747,7 @@ function renderLeads() {
                 <div class="lead-name">${l.company}</div>
                 <div class="status-badge badge-${converted?'converted':l.status}">${converted?'Converted':LEAD_STATUSES.find(s=>s.key===l.status)?.label||l.status}</div>
                 ${overdueActions.length?`<span style="font-size:11px;font-weight:700;color:var(--red)">⚠ ${overdueActions.length} overdue</span>`:''}
+                ${isLeadStale(l)?`<span style="font-size:11px;font-weight:700;color:#7a5000;background:#fff3cd;border-radius:20px;padding:2px 7px">Stale</span>`:''}
               </div>
               <div class="lead-detail">${l.contactName}${l.contactRole?' · '+l.contactRole:''}${l.projectType?' · '+l.projectType:''}</div>
               ${l.estimatedValue?`<div class="lead-detail" style="color:var(--blue);font-weight:700">Est. $${l.estimatedValue.toLocaleString()}</div>`:''}
@@ -4943,7 +5015,7 @@ function renderFeedback() {
 }
 
 function openNewLeadModal(){openModal(`<div class="modal-title">Add Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" placeholder="Company name"></div><div class="form-group"><label>Contact Name</label><input id="l-contact"></div><div class="form-group"><label>Contact Role / Title</label><input id="l-role" placeholder="e.g. Brand Marketing Lead"></div><div class="form-group"><label>Contact Email</label><input id="l-email" type="email"></div><div class="form-group"><label>Contact Phone</label><input id="l-phone" placeholder="(416) 555-0000"></div><div class="form-group"><label>Project Type</label><select id="l-type"><option>Brand Activation</option><option>Pop-Up</option><option>Branding</option><option>Event</option><option>Creative Project</option><option>Other</option></select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" placeholder="0"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts('not-contacted')}</select></div><div class="form-group"><label>Next Action</label><input id="l-action" list="lead-actions" placeholder="e.g. Send Proposal"><datalist id="lead-actions"><option>Send Proposal</option><option>Follow Up</option><option>Discovery Call</option><option>Pitch Presentation</option><option>Send Contract</option><option>Check In</option><option>Meeting</option></datalist></div><div class="form-group"><label>Action Date</label><input id="l-action-date" type="date"></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes"></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createLead()">Add Lead</button></div>`);}
-function createLead(){const c=document.getElementById('l-company').value.trim();if(!c){toast('Company name required');return;}store.leads.push({id:store.nextId.leads++,company:c,contactName:document.getElementById('l-contact').value,contactRole:document.getElementById('l-role').value,contactEmail:document.getElementById('l-email').value,contactPhone:document.getElementById('l-phone').value,projectType:document.getElementById('l-type').value,estimatedValue:parseInt(document.getElementById('l-value').value)||0,status:document.getElementById('l-status').value,notes:document.getElementById('l-notes').value,nextAction:document.getElementById('l-action').value.trim(),nextActionDate:document.getElementById('l-action-date').value,convertedProjectId:null});closeModal();toast('Lead added');save();render();}
+function createLead(){const c=document.getElementById('l-company').value.trim();if(!c){toast('Company name required');return;}store.leads.push({id:store.nextId.leads++,company:c,contactName:document.getElementById('l-contact').value,contactRole:document.getElementById('l-role').value,contactEmail:document.getElementById('l-email').value,contactPhone:document.getElementById('l-phone').value,projectType:document.getElementById('l-type').value,estimatedValue:parseInt(document.getElementById('l-value').value)||0,status:document.getElementById('l-status').value,notes:document.getElementById('l-notes').value,nextAction:document.getElementById('l-action').value.trim(),nextActionDate:document.getElementById('l-action-date').value,convertedProjectId:null,createdAt:new Date().toISOString().split('T')[0]});closeModal();toast('Lead added');save();render();}
 function openEditLeadModal(id){const l=store.leads.find(x=>x.id===id);openModal(`<div class="modal-title">Edit Lead</div><div class="form-grid"><div class="form-group"><label>Company</label><input id="l-company" value="${l.company}"></div><div class="form-group"><label>Contact Name</label><input id="l-contact" value="${l.contactName||''}"></div><div class="form-group"><label>Contact Role / Title</label><input id="l-role" value="${l.contactRole||''}" placeholder="e.g. Brand Marketing Lead"></div><div class="form-group"><label>Contact Email</label><input id="l-email" value="${l.contactEmail||''}"></div><div class="form-group"><label>Contact Phone</label><input id="l-phone" value="${l.contactPhone||''}" placeholder="(416) 555-0000"></div><div class="form-group"><label>Project Type</label><select id="l-type">${['Brand Activation','Pop-Up','Branding','Event','Creative Project','Other'].map(t=>`<option ${l.projectType===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-group"><label>Estimated Value ($)</label><input id="l-value" type="number" value="${l.estimatedValue||0}"></div><div class="form-group"><label>Status</label><select id="l-status">${statusOpts(l.status)}</select></div><div class="form-group"><label>Next Action</label><input id="l-action" list="lead-actions-edit" value="${l.nextAction||''}" placeholder="e.g. Send Proposal"><datalist id="lead-actions-edit"><option>Send Proposal</option><option>Follow Up</option><option>Discovery Call</option><option>Pitch Presentation</option><option>Send Contract</option><option>Check In</option><option>Meeting</option></datalist></div><div class="form-group"><label>Action Date</label><input id="l-action-date" type="date" value="${l.nextActionDate||''}"></div><div class="form-group full"><label>Notes & Next Steps</label><textarea id="l-notes">${l.notes||''}</textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveLead(${id})">Save</button></div>`);}
 function saveLead(id){const l=store.leads.find(x=>x.id===id);l.company=document.getElementById('l-company').value.trim()||l.company;l.contactName=document.getElementById('l-contact').value;l.contactRole=document.getElementById('l-role').value;l.contactEmail=document.getElementById('l-email').value;l.contactPhone=document.getElementById('l-phone').value;l.projectType=document.getElementById('l-type').value;l.estimatedValue=parseInt(document.getElementById('l-value').value)||0;l.status=document.getElementById('l-status').value;l.notes=document.getElementById('l-notes').value;l.nextAction=document.getElementById('l-action').value.trim();l.nextActionDate=document.getElementById('l-action-date').value;closeModal();toast('Lead saved');save();render();}
 function deleteLead(id){showConfirm('Delete this lead? This cannot be undone.',()=>{store.leads=store.leads.filter(l=>l.id!==id);store.projects.forEach(p=>{if(p.leadId===id)p.leadId=null;});toast('Lead removed');save();render();});}
