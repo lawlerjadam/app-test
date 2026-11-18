@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proposal — FELT Studio</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:#f7f7f5;color:#1a1a1a;line-height:1.5}
+  .wrap{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+  .header{background:#2B2D18;border-radius:16px;padding:40px 44px;margin-bottom:32px;color:#fff}
+  .felt-wordmark{font-size:12px;font-weight:900;letter-spacing:0.28em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:28px}
+  .header-title{font-size:28px;font-weight:900;letter-spacing:-0.02em;line-height:1.2;margin-bottom:8px}
+  .header-meta{font-size:13px;color:rgba(255,255,255,0.5)}
+  .section{background:#fff;border-radius:14px;padding:28px 32px;margin-bottom:20px}
+  .section-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#9B90E8;margin-bottom:14px}
+  .intro{font-size:15px;color:#333;line-height:1.75;white-space:pre-line}
+  .tier-name{font-size:22px;font-weight:900;color:#1a1a1a;letter-spacing:-0.02em;margin-bottom:4px}
+  .tier-tag{font-size:13px;color:#888;margin-bottom:12px}
+  .tier-cap{display:inline-block;background:#f0ede4;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;color:#555;margin-bottom:16px}
+  .tier-desc{font-size:14px;color:#555;line-height:1.65}
+  table{width:100%;border-collapse:collapse}
+  .cat-row td{padding:14px 0 4px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#aaa}
+  .line-row td{padding:8px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0}
+  .line-row td:last-child{text-align:right;font-weight:600}
+  .total-row td{padding:14px 0;font-size:17px;font-weight:900;border-top:2px solid #1a1a1a}
+  .total-row td:last-child{text-align:right;color:#2B2D18}
+  .terms{font-size:13px;color:#555;line-height:1.65;margin-top:16px;padding-top:16px;border-top:1px solid #f0f0f0}
+  .validity{font-size:12px;color:#aaa;text-align:center;padding-top:16px}
+  .pw-img{width:100%;height:280px;object-fit:cover;border-radius:12px;margin-bottom:14px;display:block}
+  .pw-title{font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:6px}
+  .pw-desc{font-size:14px;color:#555;line-height:1.65}
+  .pw-item{margin-bottom:28px}
+  .cta{background:#2B2D18;border-radius:14px;padding:36px;text-align:center;margin-top:28px}
+  .cta-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.01em}
+  .cta-sub{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:20px;line-height:1.65;white-space:pre-line}
+  .cta-contact{font-size:12px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase}
+  .error{text-align:center;padding:80px 24px;color:#888}
+  @media(max-width:600px){
+    .wrap{padding:16px 14px 60px}
+    .header{padding:28px 22px;border-radius:12px}
+    .header-title{font-size:22px}
+    .section{padding:20px 18px}
+    .cta{padding:28px 20px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="error">Loading proposal…</div>
+</div>
+<script>
+(function() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) {
+    document.getElementById('app').innerHTML = '<div class="error"><h2>No proposal data found.</h2><p>This link may be invalid or expired.</p></div>';
+    return;
+  }
+  let d;
+  try {
+    d = JSON.parse(decodeURIComponent(atob(hash)));
+  } catch(e) {
+    document.getElementById('app').innerHTML = '<div class="error"><h2>Could not decode proposal.</h2><p>The link may be corrupted.</p></div>';
+    return;
+  }
+
+  document.title = (d.title || 'Proposal') + ' — FELT Studio';
+
+  const fmt = dateStr => {
+    if (!dateStr) return '';
+    const dt = new Date(dateStr + 'T12:00:00');
+    return dt.toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
+  };
+
+  const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  // Addon groups
+  let addonHtml = '';
+  if (d.addons && d.addons.length) {
+    const cats = {};
+    d.addons.forEach(a => { if(!cats[a.category]) cats[a.category]=[]; cats[a.category].push(a); });
+    addonHtml = Object.entries(cats).map(([cat,items]) =>
+      `<tr class="cat-row"><td colspan="2">${cat}</td></tr>` +
+      items.map(a => `<tr class="line-row"><td>${a.name}</td><td>${a.cost > 0 ? '$' + a.cost.toLocaleString() : 'POA'}</td></tr>`).join('')
+    ).join('');
+  }
+  const customHtml = (d.customLines||[]).filter(l=>l.name).map(l =>
+    `<tr class="line-row"><td>${l.name}</td><td>${l.cost > 0 ? '$' + l.cost.toLocaleString() : 'POA'}</td></tr>`
+  ).join('');
+
+  const hasScopeTable = addonHtml || customHtml;
+
+  // Past work
+  const pastWorkHtml = (d.pastWork||[]).filter(pw=>pw.title||pw.description).map(pw => `
+    <div class="pw-item">
+      ${pw.imageUrl ? `<img class="pw-img" src="${pw.imageUrl}" alt="${pw.title||''}">` : ''}
+      ${pw.title ? `<div class="pw-title">${pw.title}</div>` : ''}
+      ${pw.description ? `<div class="pw-desc">${pw.description}</div>` : ''}
+    </div>`).join('');
+
+  const html = `
+    <div class="header">
+      <div class="felt-wordmark">FELT Studio</div>
+      <div class="header-title">${d.title || 'Proposal'}</div>
+      <div class="header-meta">Prepared for ${d.clientName || 'you'} &middot; ${fmt(d.createdAt) || today}</div>
+    </div>
+
+    ${d.intro ? `<div class="section"><div class="section-label">Introduction</div><div class="intro">${d.intro}</div></div>` : ''}
+
+    ${d.tierName ? `<div class="section">
+      <div class="section-label">Package</div>
+      <div class="tier-name">${d.tierName}</div>
+      <div class="tier-tag">${d.tierTagline||''}</div>
+      ${d.tierCapacity ? `<div class="tier-cap">${d.tierCapacity}</div>` : ''}
+      ${d.tierDescription ? `<div class="tier-desc">${d.tierDescription}</div>` : ''}
+    </div>` : ''}
+
+    ${hasScopeTable ? `<div class="section">
+      <div class="section-label">Scope of Work</div>
+      <table>${addonHtml}${customHtml}</table>
+    </div>` : ''}
+
+    <div class="section">
+      <div class="section-label">Investment</div>
+      <table>
+        ${d.packageCost > 0 ? `<tr class="line-row"><td>${d.tierName||'Package'} fee</td><td>$${(d.packageCost||0).toLocaleString()}</td></tr>` : ''}
+        ${d.addonTotal > 0 ? `<tr class="line-row"><td>Add-ons</td><td>$${d.addonTotal.toLocaleString()}</td></tr>` : ''}
+        ${d.customTotal > 0 ? `<tr class="line-row"><td>Additional services</td><td>$${d.customTotal.toLocaleString()}</td></tr>` : ''}
+        <tr class="total-row"><td>Total</td><td>$${(d.grandTotal||0).toLocaleString()}</td></tr>
+      </table>
+      ${d.paymentTerms ? `<div class="terms"><strong>Payment terms:</strong> ${d.paymentTerms}</div>` : ''}
+      ${d.validUntil ? `<div class="validity">This proposal is valid until ${fmt(d.validUntil)}</div>` : ''}
+    </div>
+
+    ${pastWorkHtml ? `<div class="section"><div class="section-label">Our Work</div>${pastWorkHtml}</div>` : ''}
+
+    ${d.nextSteps ? `<div class="cta">
+      <div class="cta-title">Ready to get started?</div>
+      <div class="cta-sub">${d.nextSteps}</div>
+      <div class="cta-contact">hello@feltstudio.co</div>
+    </div>` : ''}
+  `;
+
+  document.getElementById('app').innerHTML = html;
+})();
+</script>
+</body>
+</html>

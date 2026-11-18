@@ -3181,19 +3181,44 @@ async function publishProposal(id) {
   const btn = document.getElementById('pb-publish-btn');
   if (btn) { btn.textContent = 'Generating…'; btn.disabled = true; }
   try {
-    const html = generateProposalHTML(pr);
-    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-    const path = `proposals/proposal-${pr.id}-${Date.now()}.html`;
-    const { data, error } = await _sb.storage.from(STORAGE_BUCKET).upload(path, blob, { contentType:'text/html', upsert:true });
-    if (error) throw error;
-    const { data: urlData } = _sb.storage.from(STORAGE_BUCKET).getPublicUrl(data.path);
-    pr.shareUrl = urlData.publicUrl;
+    const pkg = store.packages;
+    const tier = (pkg?.tiers||[]).find(t=>t.id===pr.tierId);
+    const selectedAddons = (pr.selectedAddons||[]).map(sa => {
+      const lib = (pkg?.addons||[]).find(a=>a.id===sa.addonId);
+      return lib ? {...lib, cost: sa.cost} : null;
+    }).filter(Boolean);
+    const addonTotal  = selectedAddons.reduce((s,a)=>s+(a.cost||0),0);
+    const customTotal = (pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
+    const grandTotal  = (pr.packageCost||0) + addonTotal + customTotal;
+
+    const exportData = {
+      title:           pr.title,
+      clientName:      pr.clientName,
+      createdAt:       pr.createdAt,
+      validUntil:      pr.validUntil,
+      intro:           pr.intro,
+      tierName:        tier?.name,
+      tierTagline:     tier?.tagline,
+      tierCapacity:    tier?.capacity,
+      tierDescription: tier?.description,
+      packageCost:     pr.packageCost||0,
+      addons:          selectedAddons.map(a=>({name:a.name,category:a.category,cost:a.cost})),
+      addonTotal,
+      customLines:     (pr.customLines||[]).filter(l=>l.name),
+      customTotal,
+      grandTotal,
+      paymentTerms:    pr.paymentTerms,
+      nextSteps:       pr.nextSteps,
+      pastWork:        (pr.pastWork||[]).filter(pw=>pw.title||pw.description)
+    };
+
+    const encoded = btoa(encodeURIComponent(JSON.stringify(exportData)));
+    pr.shareUrl = `${window.location.origin}/proposal-viewer.html#${encoded}`;
     pr.status = 'sent';
     pr.sentAt = new Date().toISOString().split('T')[0];
     await save();
     render();
-    toast('Proposal published! Link copied to clipboard.');
-    navigator.clipboard.writeText(pr.shareUrl).catch(()=>{});
+    navigator.clipboard.writeText(pr.shareUrl).then(()=>toast('Link copied to clipboard!')).catch(()=>toast('Link generated — copy from the banner above'));
   } catch(e) {
     console.error('Publish error:', e);
     toast('⚠ Publish failed — check console');
