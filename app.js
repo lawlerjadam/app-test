@@ -2769,6 +2769,8 @@ function renderServices() {
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${statusColors[pr.status]||'var(--muted)'};flex-shrink:0">${pr.status}</div>
           <div style="flex-shrink:0">${capacityDot(pr)}</div>
           ${pr.shareUrl?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyProposalLink(${pr.id})">Copy link</button>`:''}
+          ${pr.status==='sent'?`<button class="btn btn-ghost btn-sm" style="color:var(--green);font-weight:700;flex-shrink:0" onclick="event.stopPropagation();acceptProposal(${pr.id})">✓ Accept</button>`:''}
+          ${pr.status==='accepted'&&pr.acceptedProjectId?`<button class="btn btn-ghost btn-sm" style="color:var(--blue);flex-shrink:0" onclick="event.stopPropagation();navigate('project-detail',${pr.acceptedProjectId})">→ Project</button>`:''}
           <button class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" onclick="event.stopPropagation();quickDeleteProposal(${pr.id})">✕</button>
         </div>`;
       }).join('');
@@ -3439,6 +3441,80 @@ function quickDeleteProposal(id) {
     render();
     toast('Proposal deleted');
   });
+}
+
+function acceptProposal(id) {
+  const pr = (store.proposals||[]).find(p=>p.id===id);
+  if (!pr) return;
+  const name = pr.title || 'this proposal';
+  showConfirm(`Accept "${name}" and create a project?`, () => {
+    const pkg = store.packages;
+    const tier = (pkg?.tiers||[]).find(t=>t.id===pr.tierId);
+
+    // Build budget lines from proposal data
+    let blId = 1;
+    const budgetLines = [];
+    if ((pr.packageCost||0) > 0) {
+      budgetLines.push({ id: blId++, category: (tier?.name||'Package') + ' fee', forecast: pr.packageCost||0, actuals: 0 });
+    }
+    (pr.selectedAddons||[]).forEach(sa => {
+      const lib = (pkg?.addons||[]).find(a=>a.id===sa.addonId);
+      if (lib && (sa.cost||0) > 0) {
+        budgetLines.push({ id: blId++, category: lib.name, forecast: sa.cost||0, actuals: 0 });
+      }
+    });
+    (pr.customLines||[]).filter(l=>l.name&&(l.cost||0)>0).forEach(l => {
+      budgetLines.push({ id: blId++, category: l.name, forecast: l.cost||0, actuals: 0 });
+    });
+
+    const grandTotal = budgetLines.reduce((s,l)=>s+l.forecast,0);
+
+    // Core team (non-freelancers)
+    const coreTeamIds = (store.team||[]).filter(m=>!m.isFreelancer).map(m=>m.id);
+
+    // Find clientId if linked to a lead/company
+    let clientId = null;
+    if (pr.leadId) {
+      const lead = (store.leads||[]).find(l=>l.id===pr.leadId);
+      if (lead?.convertedCompanyId) clientId = lead.convertedCompanyId;
+    }
+
+    const newId = store.nextId.projects++;
+    store.projects.push({
+      id: newId,
+      name: pr.title || 'New Project',
+      client: pr.clientName || '—',
+      clientId,
+      type: tier?.name || 'FELT Other',
+      template: tier?.name || 'FELT Other',
+      status: 'active',
+      color: PROJECT_COLORS[Math.floor(Math.random() * 4)],
+      budget: grandTotal,
+      spent: 0,
+      startDate: pr.startDate || '',
+      endDate: pr.endDate || '',
+      brief: { overview: pr.intro || '', objectives: '', deliverables: '', timeline: '' },
+      teamIds: [...coreTeamIds],
+      teamAllocation: {},
+      contactIds: [],
+      expenses: [],
+      signoff: emptySignoff(),
+      production: emptyProduction(),
+      tasks: [],
+      assets: { driveFolder: '', files: [] },
+      invoices: [],
+      budgetLines,
+      proposalId: pr.id
+    });
+
+    // Mark proposal accepted
+    pr.status = 'accepted';
+    pr.acceptedProjectId = newId;
+
+    save();
+    toast('Project created from proposal ✓');
+    navigate('project-detail', newId);
+  }, { label: 'Accept & Create Project', danger: false });
 }
 
 function copyProposalLink(id) {
