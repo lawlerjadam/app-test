@@ -2864,6 +2864,7 @@ function calcProposalCapacity(pr) {
 
   // Core team (non-freelancer)
   const core = (store.team||[]).filter(m => !m.isFreelancer);
+  if (core.length === 0) return { status: 'unknown', reason: 'no-team' };
 
   // Blocked days overlapping the proposal window
   let blockedDays = 0;
@@ -2911,6 +2912,7 @@ function calcProposalCapacity(pr) {
 function capacityDot(pr) {
   const c = calcProposalCapacity(pr);
   if (!c) return `<span title="Add engagement dates to check capacity" style="font-size:11px;color:var(--muted)">— dates needed</span>`;
+  if (c.status === 'unknown') return `<span title="Add core team members to calculate capacity" style="font-size:11px;color:var(--muted)">— no team data</span>`;
   const col = {green:'#3cba6e', amber:'#f0a830', red:'#e44'}[c.status];
   const label = {green:'Capacity available', amber:'Capacity tight', red:'Over capacity'}[c.status];
   return `<span title="${label} · ${c.availablePerWeek} hrs/wk available, ${c.pkgHrsPerWeek} hrs/wk needed" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:${col}"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0"></span>${label}</span>`;
@@ -2919,6 +2921,7 @@ function capacityDot(pr) {
 function renderCapacityWidget(pr) {
   const c = calcProposalCapacity(pr);
   if (!c) return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--muted)">⬡ Set engagement start & end dates above to see capacity check</div>`;
+  if (c.status === 'unknown') return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--muted)">⬡ No core team members found — add non-freelancer team members to enable capacity tracking</div>`;
 
   const col  = {green:'#3cba6e', amber:'#f0a830', red:'#e44'}[c.status];
   const label= {green:'Capacity available', amber:'Capacity tight — may be stretched', red:'Over capacity — team is committed'}[c.status];
