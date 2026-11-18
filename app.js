@@ -246,7 +246,7 @@ const defaultData = {
   ],
   leads:[
     {id:1,company:'Southbank Spirits',contactName:'Leo Clarke',contactEmail:'leo@southbankspirits.co.uk',projectType:'Brand Launch',estimatedValue:55000,status:'proposal-sent',notes:'Independent gin brand looking for a 150-person trade launch in Jan. Very brand-conscious, want something editorial.',contactRole:'Founder',contactPhone:'+44 7700 900142',convertedProjectId:null,actions:[
-      {id:1,name:'Intro call — strong fit, brief confirmed',type:'Call',date:'2026-11-05',notes:'Budget £50–60K. Jan window, flexible on exact date. Wants editorial feel, not typical launch party.',done:true},
+      {id:1,name:'Intro call — strong fit, brief confirmed',type:'Call',date:'2026-11-05',notes:'Budget $50–60K CAD. Jan window, flexible on exact date. Wants editorial feel, not typical launch party.',done:true},
       {id:2,name:'Send proposal',type:'Email',date:'2026-11-18',notes:'Sent full proposal with two concept directions.',done:true}
     ]}
   ],
@@ -2660,7 +2660,7 @@ function renderServices() {
           <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-0.02em">${t.name}</div>
           <div style="font-size:13px;color:var(--muted);margin-top:2px">${t.tagline}</div>
         </div>
-        ${t.defaultCost > 0 ? `<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--muted)">From</div><div style="font-size:20px;font-weight:800;color:var(--text)">£${t.defaultCost.toLocaleString()}</div></div>` : ''}
+        ${t.defaultCost > 0 ? `<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--muted)">From</div><div style="font-size:20px;font-weight:800;color:var(--text)">$${t.defaultCost.toLocaleString()}</div></div>` : ''}
       </div>
       <div style="font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:12px">${t.description}</div>
     </div>`).join('');
@@ -2675,7 +2675,7 @@ function renderServices() {
           ${items.map(a => `
             <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
               <div style="font-size:13px;color:var(--text);font-weight:500">${a.name}</div>
-              ${a.cost > 0 ? `<div style="font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0">£${a.cost.toLocaleString()}</div>` : '<div style="font-size:11px;color:var(--muted);flex-shrink:0">POA</div>'}
+              ${a.cost > 0 ? `<div style="font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0">$${a.cost.toLocaleString()}</div>` : '<div style="font-size:11px;color:var(--muted);flex-shrink:0">POA</div>'}
             </div>`).join('')}
         </div>
       </div>`;
@@ -2721,7 +2721,7 @@ function openEditServicesModal() {
         <textarea id="svc-tier-desc-${i}" class="form-input" rows="3" style="width:100%;resize:vertical">${t.description}</textarea>
       </div>
       <div>
-        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Default cost (£, 0 = POA)</label>
+        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Default cost (CAD $, 0 = POA)</label>
         <input id="svc-tier-cost-${i}" class="form-input" type="number" min="0" value="${t.defaultCost}" style="width:120px">
       </div>
     </div>`).join('');
@@ -2745,7 +2745,7 @@ function openEditServicesModal() {
     <div class="modal-body" style="max-height:70vh;overflow-y:auto">
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Packages</div>
       ${tiersForm}
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin:20px 0 12px">Add-ons <span style="font-size:11px;font-weight:400;color:var(--muted)">(name · cost in £)</span></div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin:20px 0 12px">Add-ons <span style="font-size:11px;font-weight:400;color:var(--muted)">(name · cost in CAD $)</span></div>
       ${addonsForm}
     </div>
     <div class="modal-footer">
