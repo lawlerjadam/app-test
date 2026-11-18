@@ -627,7 +627,7 @@
     .client-payments-cards { display: block; }
     /* Services page — stack proposal rows on narrow screens */
     .svc-pr-row { flex-wrap: wrap; gap: 6px 10px; }
-    .svc-pr-main { width: 100%; }
+    .svc-pr-main { flex: 0 0 100%; width: 100%; }
     .svc-pr-meta { order: 2; }
     .svc-pr-actions { order: 3; margin-left: auto; }
     .svc-tiers-grid { grid-template-columns: 1fr !important; }

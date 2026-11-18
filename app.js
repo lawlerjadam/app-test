@@ -842,7 +842,8 @@ const MOBILE_TRAY_SECTIONS={
   ],
   money:[
     {icon:'◱',label:'Finance',view:'finance'},
-    {icon:'◑',label:'Snapshot',view:'snapshot'}
+    {icon:'◑',label:'Snapshot',view:'snapshot'},
+    {icon:'ladybird',label:'',special:'future-feels'}
   ],
   growth:[
     {icon:'◉',label:'Leads',view:'leads'},
