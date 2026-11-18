@@ -2791,8 +2791,8 @@ function openEditServicesModal() {
   }).join('');
 
   openModal(`
-    <div class="modal-header"><div class="modal-title">Edit Services & Packages</div></div>
-    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+    <div class="modal-title">Edit Services & Packages</div>
+    <div style="max-height:70vh;overflow-y:auto;padding:0 2px">
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Packages</div>
       ${tiersForm}
       <div style="font-size:13px;font-weight:700;color:var(--text);margin:20px 0 12px">Add-ons <span style="font-size:11px;font-weight:400;color:var(--muted)">(name · cost in CAD $)</span></div>
@@ -2840,8 +2840,8 @@ function openNewProposalModal(leadId) {
   const defaultClient = lead ? (lead.company||'') : '';
   const defaultTitle  = lead ? `Proposal — ${lead.company}` : '';
   openModal(`
-    <div class="modal-header"><div class="modal-title">New Proposal</div></div>
-    <div class="modal-body">
+    <div class="modal-title">New Proposal</div>
+    <div class="form-grid">
       <div class="form-group full"><label>Title</label><input id="np-title" class="form-input" placeholder="Proposal — Client Name" value="${defaultTitle}"></div>
       <div class="form-group full"><label>Client name</label><input id="np-client" class="form-input" placeholder="e.g. Meridian Hotels Group" value="${defaultClient}"></div>
     </div>
@@ -2914,7 +2914,7 @@ function renderProposalBuilder() {
           <label for="pb-addon-${a.id}" style="flex:1;font-size:13px;cursor:pointer;color:var(--text)">${a.name}</label>
           <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
             <span style="font-size:12px;color:var(--muted)">$</span>
-            <input id="pb-addon-cost-${a.id}" type="number" min="0" value="${cost}" placeholder="0" style="width:90px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);color:var(--text);font-family:inherit" ${sel?'':'disabled style="opacity:0.4"'} onchange="pbUpdateAddonCost('${a.id}',this.value)">
+            <input id="pb-addon-cost-${a.id}" type="number" min="0" value="${cost}" placeholder="0" style="width:90px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);color:var(--text);font-family:inherit;opacity:${sel?'1':'0.4'}" ${sel?'':'disabled'} onchange="pbUpdateAddonCost('${a.id}',this.value)">
           </div>
         </div>`;
       }).join('')}
