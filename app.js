@@ -3305,8 +3305,8 @@ function renderProposalBuilder() {
 
   return `
     <div class="topbar">
-      <div>
-        <div class="page-title">${pr.title||'Proposal'}</div>
+      <div style="min-width:0;flex:1">
+        <input class="pb-title-input" value="${(pr.title||'').replace(/"/g,'&quot;')}" placeholder="Untitled Proposal" oninput="currentPrField('title',this.value)" onblur="pbSaveDraft()">
         <div class="page-sub" style="display:flex;align-items:center;gap:8px">
           <span style="color:${statusColors[pr.status]};font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:0.07em">${pr.status}</span>
           ${pr.shareUrl?`<span style="color:var(--muted)">· Link generated</span>`:''}

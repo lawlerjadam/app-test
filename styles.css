@@ -66,6 +66,9 @@
   .topbar { background: var(--bg); padding: 22px 28px 0; display: flex; align-items: flex-start; justify-content: space-between; position: sticky; top: 0; z-index: 10; gap: 12px; }
   .tasks-topbar-controls { display: flex; align-items: center; gap: 10px; }
   .page-title { font-family: 'Instrument Serif', serif; font-size: 24px; font-weight: 400; letter-spacing: -0.3px; }
+  .pb-title-input { font-family: 'Instrument Serif', serif; font-size: 24px; font-weight: 400; letter-spacing: -0.3px; color: var(--navy); background: transparent; border: none; outline: none; width: 100%; padding: 0; border-bottom: 1.5px solid transparent; transition: border-color 0.15s; min-width: 0; }
+  .pb-title-input:hover, .pb-title-input:focus { border-bottom-color: var(--border); }
+  .pb-title-input::placeholder { color: var(--muted); }
   .page-title-greeting { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; font-size: 24px; letter-spacing: -0.3px; color: var(--navy); }
   .page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
