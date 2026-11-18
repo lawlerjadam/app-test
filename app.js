@@ -3163,22 +3163,22 @@ function updateProposalStatus(id, status) {
 }
 
 function confirmDeleteProposal(id) {
-  openConfirm(`Delete this proposal? This cannot be undone.`, () => {
+  showConfirm('Delete this proposal? This cannot be undone.', () => {
     store.proposals = (store.proposals||[]).filter(p=>p.id!==id);
     save();
     navigate('services');
-  }, {label:'Delete', danger:true});
+  });
 }
 
 function quickDeleteProposal(id) {
   const pr = (store.proposals||[]).find(p=>p.id===id);
   const name = pr?.title || 'this proposal';
-  openConfirm(`Delete "${name}"? This cannot be undone.`, () => {
+  showConfirm(`Delete "${name}"? This cannot be undone.`, () => {
     store.proposals = (store.proposals||[]).filter(p=>p.id!==id);
     save();
     render();
     toast('Proposal deleted');
-  }, {label:'Delete', danger:true});
+  });
 }
 
 function copyProposalLink(id) {
