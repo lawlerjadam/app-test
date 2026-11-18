@@ -2909,7 +2909,7 @@ function calcProposalCapacity(pr) {
   const hitBlocks = [];
   (store.blockedPeriods||[]).forEach(bp => {
     const bs = new Date(bp.startDate + 'T00:00:00');
-    const be = new Date(bp.endDate   + 'T00:00:00');
+    const be = new Date(bp.endDate   + 'T23:59:59');
     if (bs <= end && be >= start) {
       const overlapStart = bs < start ? start : bs;
       const overlapEnd   = be > end   ? end   : be;
@@ -3500,117 +3500,6 @@ async function publishProposal(id) {
   }
 }
 
-function generateProposalHTML(pr) {
-  const pkg = store.packages;
-  const tier = (pkg?.tiers||[]).find(t=>t.id===pr.tierId);
-  const selectedAddons = (pr.selectedAddons||[]).map(sa => {
-    const lib = (pkg?.addons||[]).find(a=>a.id===sa.addonId);
-    return lib ? {...lib, cost: sa.cost} : null;
-  }).filter(Boolean);
-  const addonTotal  = selectedAddons.reduce((s,a)=>s+(a.cost||0),0);
-  const customTotal = (pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
-  const grandTotal  = (pr.packageCost||0) + addonTotal + customTotal;
-  const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-  const validDate = pr.validUntil ? new Date(pr.validUntil+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : null;
-
-  const addonsByCategory = {};
-  selectedAddons.forEach(a => { if (!addonsByCategory[a.category]) addonsByCategory[a.category] = []; addonsByCategory[a.category].push(a); });
-  const addonCategoriesHtml = Object.entries(addonsByCategory).map(([cat, items]) => `
-    <tr><td colspan="2" style="padding:12px 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#888;">${cat}</td></tr>
-    ${items.map(a=>`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">${a.name}</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;color:#333;border-bottom:1px solid #f0f0f0">${a.cost>0?'$'+a.cost.toLocaleString():'POA'}</td></tr>`).join('')}`).join('');
-
-  const customLinesHtml = (pr.customLines||[]).filter(l=>l.name).map(l=>`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">${l.name}</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;color:#333;border-bottom:1px solid #f0f0f0">${l.cost>0?'$'+l.cost.toLocaleString():'POA'}</td></tr>`).join('');
-
-  const pastWorkHtml = (pr.pastWork||[]).filter(pw=>pw.title||pw.description).map(pw=>`
-    <div style="margin-bottom:28px">
-      ${pw.imageUrl?`<img src="${pw.imageUrl}" alt="${pw.title||''}" style="width:100%;height:260px;object-fit:cover;border-radius:12px;margin-bottom:14px">`:''}
-      ${pw.title?`<div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:6px">${pw.title}</div>`:''}
-      ${pw.description?`<div style="font-size:14px;color:#555;line-height:1.65">${pw.description}</div>`:''}
-    </div>`).join('');
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${pr.title||'Proposal'} — FELT Studio</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:#f7f7f5;color:#1a1a1a;line-height:1.5}
-  .wrap{max-width:720px;margin:0 auto;padding:40px 24px 80px}
-  .header{background:#2B2D18;border-radius:16px;padding:40px 44px;margin-bottom:32px;color:#fff}
-  .felt-wordmark{font-size:13px;font-weight:900;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:28px}
-  .header-title{font-size:28px;font-weight:900;letter-spacing:-0.02em;line-height:1.2;margin-bottom:8px}
-  .header-meta{font-size:13px;color:rgba(255,255,255,0.55)}
-  .section{background:#fff;border-radius:14px;padding:28px 32px;margin-bottom:20px}
-  .section-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#9B90E8;margin-bottom:14px}
-  .intro{font-size:15px;color:#333;line-height:1.75}
-  .tier-name{font-size:22px;font-weight:900;color:#1a1a1a;letter-spacing:-0.02em;margin-bottom:4px}
-  .tier-tag{font-size:13px;color:#888;margin-bottom:12px}
-  .tier-cap{display:inline-block;background:#f0ede4;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;color:#555;margin-bottom:16px}
-  .tier-desc{font-size:14px;color:#555;line-height:1.65}
-  table{width:100%;border-collapse:collapse}
-  .total-row td{padding:14px 0;font-size:17px;font-weight:900;border-top:2px solid #1a1a1a}
-  .total-amount{color:#2B2D18}
-  .terms{font-size:13px;color:#555;line-height:1.65}
-  .cta{background:#2B2D18;border-radius:14px;padding:32px;text-align:center;margin-top:28px}
-  .cta-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px}
-  .cta-sub{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:20px}
-  .cta-contact{font-size:13px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.05em;text-transform:uppercase}
-  .validity{font-size:12px;color:#aaa;text-align:center;padding-top:12px}
-  @media(max-width:600px){.wrap{padding:20px 16px 60px}.header{padding:28px 24px}.section{padding:22px 20px}}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="header">
-    <div class="felt-wordmark">FELT Studio</div>
-    <div class="header-title">${pr.title||'Proposal'}</div>
-    <div class="header-meta">Prepared for ${pr.clientName||'you'} · ${today}</div>
-  </div>
-
-  ${pr.intro?`<div class="section"><div class="section-label">Introduction</div><div class="intro">${pr.intro.replace(/\n/g,'<br>')}</div></div>`:''}
-
-  ${tier?`<div class="section">
-    <div class="section-label">Package</div>
-    <div class="tier-name">${tier.name}</div>
-    <div class="tier-tag">${tier.tagline}</div>
-    <div class="tier-cap">${tier.capacity}</div>
-    <div class="tier-desc">${tier.description}</div>
-  </div>`:''}
-
-  ${(selectedAddons.length>0||pr.customLines?.filter(l=>l.name).length>0)?`<div class="section">
-    <div class="section-label">Scope of Work</div>
-    <table>
-      ${addonCategoriesHtml}
-      ${customLinesHtml}
-    </table>
-  </div>`:''}
-
-  <div class="section">
-    <div class="section-label">Investment</div>
-    <table>
-      ${pr.packageCost>0?`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">${tier?.name||'Package'} fee</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0">$${(pr.packageCost||0).toLocaleString()}</td></tr>`:''}
-      ${selectedAddons.length>0?`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">Add-ons</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0">$${addonTotal.toLocaleString()}</td></tr>`:''}
-      ${customTotal>0?`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">Additional services</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0">$${customTotal.toLocaleString()}</td></tr>`:''}
-      <tr class="total-row"><td>Total</td><td style="text-align:right" class="total-amount">$${grandTotal.toLocaleString()}</td></tr>
-    </table>
-    ${pr.paymentTerms?`<div class="terms" style="margin-top:16px;padding-top:16px;border-top:1px solid #f0f0f0"><strong>Payment terms:</strong> ${pr.paymentTerms}</div>`:''}
-    ${validDate?`<div class="validity">This proposal is valid until ${validDate}</div>`:''}
-  </div>
-
-  ${pastWorkHtml?`<div class="section"><div class="section-label">Our Work</div>${pastWorkHtml}</div>`:''}
-
-  ${pr.nextSteps?`<div class="cta">
-    <div class="cta-title">Ready to get started?</div>
-    <div class="cta-sub">${pr.nextSteps.replace(/\n/g,'<br>')}</div>
-    <div class="cta-contact">hello@feltstudio.co</div>
-  </div>`:''}
-
-</div>
-</body>
-</html>`;
-}
 
 function renderLeads() {
   const ap=LEAD_STATUSES.filter(s=>!['won','lost'].includes(s.key)).map(s=>({...s,leads:store.leads.filter(l=>l.status===s.key),value:store.leads.filter(l=>l.status===s.key).reduce((sum,l)=>sum+(l.estimatedValue||0),0)}));
