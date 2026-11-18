@@ -424,6 +424,7 @@ store.team.forEach(m => {
 });
 store.team.forEach(m => {
   if (m.isFreelancer === undefined) m.isFreelancer = false;
+  if (!m.hoursPerWeek) m.hoursPerWeek = 40;
   (m.contracts || []).forEach(c => { if (!c.type) c.type = 'contract'; });
 });
 // Ensure all projects have a template field
@@ -2884,6 +2885,7 @@ function calcProposalCapacity(pr) {
   // Committed hrs/week from active projects during the proposal window
   let committedPerWeek = 0;
   core.forEach(m => {
+    const mHrs = m.hoursPerWeek || 40;
     const pcts = (store.projects||[])
       .filter(p => p.status === 'active' && (p.teamIds||[]).includes(m.id))
       .filter(p => {
@@ -2894,10 +2896,10 @@ function calcProposalCapacity(pr) {
         return true;
       })
       .reduce((sum, p) => sum + (p.teamAllocation?.[m.id] || 0), 0);
-    committedPerWeek += Math.min(100, pcts) / 100 * 40;
+    committedPerWeek += Math.min(100, pcts) / 100 * mHrs;
   });
 
-  const totalPerWeek     = core.length * 40;
+  const totalPerWeek = core.reduce((s, m) => s + (m.hoursPerWeek || 40), 0);
   const availablePerWeek = Math.max(0, totalPerWeek - committedPerWeek);
   const committedPct     = totalPerWeek > 0 ? Math.round(committedPerWeek / totalPerWeek * 100) : 0;
 
@@ -4057,12 +4059,13 @@ function openEditMemberCRMModal(id) {
       <div class="form-group"><label>Worker Status</label><select id="f-ir35"><option value="outside" ${m.ir35==='outside'?'selected':''}>Self-Employed</option><option value="inside" ${m.ir35==='inside'?'selected':''}>T4 Employee</option><option value="not-assessed" ${m.ir35==='not-assessed'?'selected':''}>Not Assessed</option></select></div>
       <div class="form-group"><label>Payment Terms (days)</label><input id="f-terms" value="${m.paymentTerms||'30'}"></div>
       <div class="form-group full"><label>Notes</label><textarea id="f-notes">${m.notes||''}</textarea></div>
+      <div class="form-group"><label>Capacity (hrs/week)</label><input id="f-hrs" type="number" min="1" max="80" value="${m.hoursPerWeek||40}" placeholder="40"><div style="font-size:11px;color:var(--muted);margin-top:4px">Used in capacity planning for proposals.</div></div>
       <div class="form-group full" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;font-size:13px">
           <input id="f-is-freelancer" type="checkbox" ${m.isFreelancer?'checked':''} style="width:16px;height:16px;accent-color:var(--navy)">
           Enable Freelancer Portal for this person
         </label>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;margin-left:26px">When enabled, they'll see a dedicated portal (not the full app) when they log in.</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;margin-left:26px">When enabled, they'll see a dedicated portal (not the full app) when they log in. Core team members should leave this unchecked.</div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveMemberCRM(${id})">Save</button></div>`);
@@ -4080,6 +4083,7 @@ function saveMemberCRM(id) {
   m.ir35=document.getElementById('f-ir35').value;
   m.paymentTerms=document.getElementById('f-terms').value;
   m.notes=document.getElementById('f-notes').value;
+  m.hoursPerWeek=parseInt(document.getElementById('f-hrs').value)||40;
   m.isFreelancer=document.getElementById('f-is-freelancer').checked;
   currentMember=m;
   closeModal();save();toast('Saved');render();
