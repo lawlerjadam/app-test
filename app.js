@@ -2722,6 +2722,7 @@ function renderServices() {
           ${total>0?`<div style="font-size:13px;font-weight:700;color:var(--text);flex-shrink:0">$${total.toLocaleString()}</div>`:''}
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${statusColors[pr.status]||'var(--muted)'};flex-shrink:0">${pr.status}</div>
           ${pr.shareUrl?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyProposalLink(${pr.id})">Copy link</button>`:''}
+          <button class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" onclick="event.stopPropagation();quickDeleteProposal(${pr.id})">✕</button>
         </div>`;
       }).join('');
 
@@ -3166,6 +3167,17 @@ function confirmDeleteProposal(id) {
     store.proposals = (store.proposals||[]).filter(p=>p.id!==id);
     save();
     navigate('services');
+  }, {label:'Delete', danger:true});
+}
+
+function quickDeleteProposal(id) {
+  const pr = (store.proposals||[]).find(p=>p.id===id);
+  const name = pr?.title || 'this proposal';
+  openConfirm(`Delete "${name}"? This cannot be undone.`, () => {
+    store.proposals = (store.proposals||[]).filter(p=>p.id!==id);
+    save();
+    render();
+    toast('Proposal deleted');
   }, {label:'Delete', danger:true});
 }
 
