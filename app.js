@@ -2908,7 +2908,30 @@ function calcProposalCapacity(pr) {
   else if (availablePerWeek >= pkgHrsPerWeek)        status = 'amber';
   else                                               status = 'red';
 
-  return { status, pkgHrsPerWeek, totalPerWeek, committedPerWeek: Math.round(committedPerWeek), availablePerWeek: Math.round(availablePerWeek), committedPct, effectiveWeeks: Math.round(effectiveWeeks * 10) / 10, coreCount: core.length, hitBlocks };
+  // If any blocked period overlaps the engagement, downgrade status one level
+  // and calculate the earliest possible start date if the start falls within a block
+  let earliestStart = null;
+  if (hitBlocks.length > 0) {
+    if      (status === 'green') status = 'amber';
+    else if (status === 'amber') status = 'red';
+    // Find blocks that overlap the start date itself
+    const startConflicts = (store.blockedPeriods||[]).filter(bp => {
+      const bs = new Date(bp.startDate + 'T00:00:00');
+      const be = new Date(bp.endDate   + 'T00:00:00');
+      return bs <= start && be >= start;
+    });
+    if (startConflicts.length > 0) {
+      // Earliest start = day after the latest end of any start-conflicting block
+      const latestEnd = startConflicts.reduce((max, bp) => {
+        const be = new Date(bp.endDate + 'T00:00:00');
+        return be > max ? be : max;
+      }, new Date(0));
+      latestEnd.setDate(latestEnd.getDate() + 1);
+      earliestStart = latestEnd.toISOString().split('T')[0];
+    }
+  }
+
+  return { status, pkgHrsPerWeek, totalPerWeek, committedPerWeek: Math.round(committedPerWeek), availablePerWeek: Math.round(availablePerWeek), committedPct, effectiveWeeks: Math.round(effectiveWeeks * 10) / 10, coreCount: core.length, hitBlocks, earliestStart };
 }
 
 function capacityDot(pr) {
@@ -2917,7 +2940,8 @@ function capacityDot(pr) {
   if (c.status === 'unknown') return `<span title="Add core team members to calculate capacity" style="font-size:11px;color:var(--muted)">— no team data</span>`;
   const col = {green:'#3cba6e', amber:'#f0a830', red:'#e44'}[c.status];
   const label = {green:'Capacity available', amber:'Capacity tight', red:'Over capacity'}[c.status];
-  return `<span title="${label} · ${c.availablePerWeek} hrs/wk available, ${c.pkgHrsPerWeek} hrs/wk needed" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:${col}"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0"></span>${label}</span>`;
+  const blockNote = c.earliestStart ? ` · Earliest start: ${formatDate(c.earliestStart)}` : (c.hitBlocks.length ? ` · Block overlap` : '');
+  return `<span title="${label} · ${c.availablePerWeek} hrs/wk available, ${c.pkgHrsPerWeek} hrs/wk needed${blockNote}" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:${col}"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0"></span>${label}${c.earliestStart ? ' ⚠' : ''}</span>`;
 }
 
 function renderCapacityWidget(pr) {
@@ -2961,7 +2985,8 @@ function renderCapacityWidget(pr) {
       </div>
       <div style="font-size:10px;color:var(--muted);margin-top:3px">Dashed portion = this engagement's demand</div>
     </div>
-    ${c.hitBlocks.length ? `<div style="font-size:12px;color:var(--accent-dark);margin-top:10px">⚠ Overlaps: ${c.hitBlocks.join(', ')}</div>` : ''}
+    ${c.earliestStart ? `<div style="background:#fff3cd;border:1.5px solid #f0a830;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:13px;font-weight:600;color:#7a5000">⚠ Cannot start until <strong>${formatDate(c.earliestStart)}</strong> due to blocked period: ${c.hitBlocks.join(', ')}</div>` :
+      c.hitBlocks.length ? `<div style="background:#fff8ec;border:1px solid #f0a83055;border-radius:8px;padding:8px 14px;margin-top:12px;font-size:12px;color:var(--accent-dark)">⚠ Engagement overlaps blocked period: ${c.hitBlocks.join(', ')}</div>` : ''}
   </div>`;
 }
 
