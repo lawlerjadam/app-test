@@ -849,8 +849,7 @@ const MOBILE_TRAY_SECTIONS={
     {icon:'◉',label:'Leads',view:'leads'},
     {icon:'◈',label:'Services',view:'services'},
     {icon:'✦',label:'Ideas',view:'ideas'},
-    {icon:'◌',label:'Feedback',view:'feedback'},
-    {icon:'ladybird',label:'',special:'future-feels'}
+    {icon:'◌',label:'Feedback',view:'feedback'}
   ]
 };
 function toggleMobileTray(section) {
