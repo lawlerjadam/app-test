@@ -430,6 +430,58 @@ store.team.forEach(m => {
 store.projects.forEach(p => {
   if (!p.template) p.template = 'FELT Other';
 });
+// Services & Packages migration
+if (!store.packages) {
+  store.packages = {
+    tiers: [
+      {
+        id: 'consultancy',
+        name: 'Consultancy',
+        tagline: 'Strategic guidance & direction',
+        capacity: '~10 hrs/week',
+        description: 'Perfect for clients who need expert creative direction and strategic input without full production involvement. We become your trusted creative sounding board.',
+        defaultCost: 0
+      },
+      {
+        id: 'creative-direction',
+        name: 'Creative Direction',
+        tagline: 'Ideas-to-execution leadership',
+        capacity: '~20 hrs/week',
+        description: 'Full creative leadership across concept, production planning and supplier management. We guide your project from first brief to final delivery.',
+        defaultCost: 0
+      },
+      {
+        id: 'full-felt-family',
+        name: 'Full FELT Family',
+        tagline: 'Complete end-to-end delivery',
+        capacity: '~40 hrs/week',
+        description: 'The whole FELT team, fully embedded. We handle everything from concept to wrap report — all you need to do is show up.',
+        defaultCost: 0
+      }
+    ],
+    addons: [
+      { id: 'ad1',  category: 'Strategy & Direction', name: 'Brand Strategy Workshop',           cost: 0 },
+      { id: 'ad2',  category: 'Strategy & Direction', name: 'Event Concept Development',          cost: 0 },
+      { id: 'ad3',  category: 'Strategy & Direction', name: 'Campaign Integration',               cost: 0 },
+      { id: 'ad4',  category: 'Strategy & Direction', name: 'Stakeholder Presentation Deck',      cost: 0 },
+      { id: 'ad5',  category: 'Management',           name: 'Project Management',                 cost: 0 },
+      { id: 'ad6',  category: 'Management',           name: 'Budget Management',                  cost: 0 },
+      { id: 'ad7',  category: 'Management',           name: 'Supplier & Vendor Management',       cost: 0 },
+      { id: 'ad8',  category: 'Management',           name: 'Risk & Contingency Planning',        cost: 0 },
+      { id: 'ad9',  category: 'Production',           name: 'Venue Sourcing & Negotiation',       cost: 0 },
+      { id: 'ad10', category: 'Production',           name: 'Site Visits & Recces',               cost: 0 },
+      { id: 'ad11', category: 'Production',           name: 'Logistics & Transport',              cost: 0 },
+      { id: 'ad12', category: 'Production',           name: 'Health & Safety Planning',           cost: 0 },
+      { id: 'ad13', category: 'Production',           name: 'Set Build & Strike',                 cost: 0 },
+      { id: 'ad14', category: 'Production',           name: 'Food & Beverage Coordination',       cost: 0 },
+      { id: 'ad15', category: 'Creative Execution',   name: 'Graphic Design & Print',             cost: 0 },
+      { id: 'ad16', category: 'Creative Execution',   name: 'AV & Technical Production',          cost: 0 },
+      { id: 'ad17', category: 'Creative Execution',   name: 'Photography & Videography',          cost: 0 },
+      { id: 'ad18', category: 'Creative Execution',   name: 'Talent & Entertainment Booking',     cost: 0 },
+      { id: 'ad19', category: 'Creative Execution',   name: 'Styling & Floral Design',            cost: 0 }
+    ]
+  };
+}
 
 // ─── MIGRATION: Calendar example data ─────────────────────────────────────────
 if (!store._calExamplesAdded) {
@@ -760,6 +812,7 @@ const MOBILE_TRAY_SECTIONS={
   ],
   growth:[
     {icon:'◉',label:'Leads',view:'leads'},
+    {icon:'◈',label:'Services',view:'services'},
     {icon:'✦',label:'Ideas',view:'ideas'},
     {icon:'◌',label:'Feedback',view:'feedback'},
     {icon:'ladybird',label:'',special:'future-feels'}
@@ -822,11 +875,11 @@ function navigateToContact(contactId) {
 function _applyNavActiveStates(view) {
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
-  const navMap={projects:1,tasks:2,calendar:3,team:4,contacts:5,'global-suppliers':6,finance:7,snapshot:8,leads:9,ideas:10};
+  const navMap={projects:1,tasks:2,calendar:3,team:4,contacts:5,'global-suppliers':6,finance:7,snapshot:8,leads:9,services:10,ideas:11};
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
   const workViews=['projects','project-detail','tasks','calendar','finance','snapshot'];
   const peopleViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
-  const growthViews=['leads','ideas'];
+  const growthViews=['leads','services','ideas'];
   const bnItems=document.querySelectorAll('.bottom-nav-item');
   if(workViews.includes(view)) bnItems[1]?.classList.add('active');
   else if(peopleViews.includes(view)) bnItems[3]?.classList.add('active');
@@ -879,6 +932,7 @@ function render() {
   else if(currentView==='project-detail') m.innerHTML=renderProjectDetail();
   else if(currentView==='tasks') m.innerHTML=renderTasks();
   else if(currentView==='leads') m.innerHTML=renderLeads();
+  else if(currentView==='services') m.innerHTML=renderServices();
   else if(currentView==='calendar') m.innerHTML=renderCalendar();
   else if(currentView==='ideas') m.innerHTML=renderIdeas();
   else if(currentView==='team') m.innerHTML=renderTeam();
@@ -2589,6 +2643,142 @@ function deleteLeadAction(leadId, actionId) {
     openLeadDetailModal(leadId);
   }, { label: 'Remove' });
 }
+// ─── SERVICES & PACKAGES ──────────────────────────────────────────────────────
+function renderServices() {
+  const pkg = store.packages;
+  const addonCategories = ['Strategy & Direction','Management','Production','Creative Execution'];
+  const isAdmin = currentUserRole === 'admin';
+
+  const tierColors = ['var(--accent)','var(--lavender)','var(--blue)'];
+  const tierIcons = ['◑','◕','●'];
+
+  const tiersHtml = pkg.tiers.map((t, i) => `
+    <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:24px 22px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${tierColors[i]};margin-bottom:4px">${tierIcons[i]} ${t.capacity}</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-0.02em">${t.name}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">${t.tagline}</div>
+        </div>
+        ${t.defaultCost > 0 ? `<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--muted)">From</div><div style="font-size:20px;font-weight:800;color:var(--text)">£${t.defaultCost.toLocaleString()}</div></div>` : ''}
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:12px">${t.description}</div>
+    </div>`).join('');
+
+  const addonsHtml = addonCategories.map(cat => {
+    const items = pkg.addons.filter(a => a.category === cat);
+    if (!items.length) return '';
+    return `
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">${cat}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+          ${items.map(a => `
+            <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div style="font-size:13px;color:var(--text);font-weight:500">${a.name}</div>
+              ${a.cost > 0 ? `<div style="font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0">£${a.cost.toLocaleString()}</div>` : '<div style="font-size:11px;color:var(--muted);flex-shrink:0">POA</div>'}
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="topbar">
+      <div>
+        <div class="page-title">Services & Packages</div>
+        <div class="page-sub">3 packages · ${pkg.addons.length} add-ons</div>
+      </div>
+      ${isAdmin ? `<button class="btn btn-ghost" onclick="openEditServicesModal()">✎ Edit</button>` : ''}
+    </div>
+    <div class="content">
+      <div class="section-header"><div class="section-title">Packages</div><div class="section-sub">Our three core engagement tiers</div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px">${tiersHtml}</div>
+      <div class="section-header"><div class="section-title">Pick & Mix Add-ons</div><div class="section-sub">Build a bespoke scope around any package</div></div>
+      <div class="card" style="padding:20px 22px">${addonsHtml}</div>
+    </div>`;
+}
+
+function openEditServicesModal() {
+  const pkg = store.packages;
+  const tiersForm = pkg.tiers.map((t, i) => `
+    <div style="border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em">Package ${i+1}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Name</label>
+          <input id="svc-tier-name-${i}" class="form-input" value="${t.name}" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Capacity</label>
+          <input id="svc-tier-cap-${i}" class="form-input" value="${t.capacity}" style="width:100%">
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Tagline</label>
+        <input id="svc-tier-tag-${i}" class="form-input" value="${t.tagline}" style="width:100%">
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Description</label>
+        <textarea id="svc-tier-desc-${i}" class="form-input" rows="3" style="width:100%;resize:vertical">${t.description}</textarea>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Default cost (£, 0 = POA)</label>
+        <input id="svc-tier-cost-${i}" class="form-input" type="number" min="0" value="${t.defaultCost}" style="width:120px">
+      </div>
+    </div>`).join('');
+
+  const addonCategories = ['Strategy & Direction','Management','Production','Creative Execution'];
+  const addonsForm = addonCategories.map(cat => {
+    const items = pkg.addons.filter(a => a.category === cat);
+    return `
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">${cat}</div>
+        ${items.map(a => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+            <input data-addon-id="${a.id}" data-field="name" class="form-input svc-addon-input" value="${a.name}" style="flex:1">
+            <input data-addon-id="${a.id}" data-field="cost" class="form-input svc-addon-input" type="number" min="0" value="${a.cost}" style="width:90px" placeholder="POA">
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+
+  openModal(`
+    <div class="modal-header"><div class="modal-title">Edit Services & Packages</div></div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Packages</div>
+      ${tiersForm}
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin:20px 0 12px">Add-ons <span style="font-size:11px;font-weight:400;color:var(--muted)">(name · cost in £)</span></div>
+      ${addonsForm}
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveServicesEdit()">Save</button>
+    </div>`);
+}
+
+function saveServicesEdit() {
+  const pkg = store.packages;
+  // Save tiers
+  pkg.tiers.forEach((t, i) => {
+    t.name = document.getElementById(`svc-tier-name-${i}`)?.value.trim() || t.name;
+    t.capacity = document.getElementById(`svc-tier-cap-${i}`)?.value.trim() || t.capacity;
+    t.tagline = document.getElementById(`svc-tier-tag-${i}`)?.value.trim() || t.tagline;
+    t.description = document.getElementById(`svc-tier-desc-${i}`)?.value.trim() || t.description;
+    t.defaultCost = parseInt(document.getElementById(`svc-tier-cost-${i}`)?.value) || 0;
+  });
+  // Save add-ons
+  document.querySelectorAll('.svc-addon-input').forEach(el => {
+    const id = el.dataset.addonId;
+    const field = el.dataset.field;
+    const addon = pkg.addons.find(a => a.id === id);
+    if (!addon) return;
+    if (field === 'name') addon.name = el.value.trim() || addon.name;
+    if (field === 'cost') addon.cost = parseInt(el.value) || 0;
+  });
+  save();
+  closeModal();
+  render();
+  toast('Services saved');
+}
+
 function renderLeads() {
   const ap=LEAD_STATUSES.filter(s=>!['won','lost'].includes(s.key)).map(s=>({...s,leads:store.leads.filter(l=>l.status===s.key),value:store.leads.filter(l=>l.status===s.key).reduce((sum,l)=>sum+(l.estimatedValue||0),0)}));
   const tv=store.leads.filter(l=>!['won','lost'].includes(l.status)).reduce((s,l)=>s+(l.estimatedValue||0),0);
