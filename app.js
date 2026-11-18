@@ -2941,8 +2941,8 @@ function calcProposalCapacity(pr) {
   const committedPct     = totalPerWeek > 0 ? Math.round(committedPerWeek / totalPerWeek * 100) : 0;
 
   let status;
-  if      (availablePerWeek >= pkgHrsPerWeek * 1.3) status = 'green';
-  else if (availablePerWeek >= pkgHrsPerWeek)        status = 'amber';
+  if      (availablePerWeek > pkgHrsPerWeek)         status = 'green';
+  else if (availablePerWeek >= pkgHrsPerWeek * 0.8) status = 'amber';
   else                                               status = 'red';
 
   // If any blocked period overlaps the engagement, downgrade status one level
@@ -2987,7 +2987,7 @@ function renderCapacityWidget(pr) {
   if (c.status === 'unknown') return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--muted)">⬡ No core team members found — add non-freelancer team members to enable capacity tracking</div>`;
 
   const col  = {green:'#3cba6e', amber:'#f0a830', red:'#e44'}[c.status];
-  const label= {green:'Capacity available', amber:'Capacity tight — may be stretched', red:'Over capacity — team is committed'}[c.status];
+  const label= {green:'Capacity available', amber:'Capacity tight — at the limit', red:'Over capacity — team is overcommitted'}[c.status];
   const barW = Math.min(100, c.committedPct);
   const needPct = c.totalPerWeek > 0 ? Math.round(c.pkgHrsPerWeek / c.totalPerWeek * 100) : 0;
 
