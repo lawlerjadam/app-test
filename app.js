@@ -579,6 +579,16 @@ if (!store._leadActionsAdded) {
 
 // ─── MIGRATION: Replace all example data with single project + single freelancer
 if (!store._v3FreshExamples) {
+  // Skip seeding — app starts clean now
+  store._calExamplesAdded = true;
+  store._memberPaymentsAdded = true;
+  store._leadActionsAdded = true;
+  store._v3FreshExamples = true;
+  save();
+}
+
+// ─── MIGRATION: Strip all remaining X-prefixed example data from existing installs
+if (!store._strippedExamples) {
   const td = d => { const r=new Date(); r.setDate(r.getDate()+d); return r.toISOString().split('T')[0]; };
 
   // Strip all X-prefixed example items
@@ -600,6 +610,11 @@ if (!store._v3FreshExamples) {
   if (!store.nextId.contacts)       store.nextId.contacts = 1;
   if (!store.nextId.ideas)          store.nextId.ideas = 1;
 
+  store._strippedExamples = true;
+  save();
+}
+
+if (false) { // old example seeding — kept for reference only, never runs
   // Add example company + contact
   const v3CoId = store.nextId.companies++;
   store.companies.push({
@@ -730,7 +745,7 @@ if (!store._v3FreshExamples) {
   store._leadActionsAdded = true;
   store._v3FreshExamples = true;
   save();
-}
+} // end if (false)
 
 // ─── MIGRATION: Companies model ───────────────────────────────────────────────
 if (!store.companies) {
@@ -1217,7 +1232,7 @@ function getBudgetTotals(p) {
   const feeForecast  = feeLines.reduce((s,l)=>s+(l.forecast||0),0);
   const rawForecast  = hardForecast + feeForecast;
   // forecast = total client-facing budget (already includes baked-in margin for hard costs)
-  const forecast  = rawForecast > 0 ? rawForecast : (p.budgetTarget || 0);
+  const forecast  = rawForecast > 0 ? rawForecast : (p.budgetTarget || p.budget || 0);
   const margin    = Math.round(hardForecast * 0.2);   // planned FELT margin
   const feltCost  = Math.round(hardForecast * 0.8) + feeForecast; // FELT's target spend
   // Actuals = what FELT actually paid
@@ -1293,7 +1308,7 @@ function renderProjectDetail() {
   }).join('');
 
   return `
-    <div class="topbar"><div><div class="back-btn" onclick="navigate('projects')">← Projects</div><div class="page-title">${p.name}</div><div class="page-sub">${(()=>{const co=p.clientId?store.companies.find(c=>c.id===p.clientId):null;return co?`<span style="cursor:pointer;color:var(--navy);font-weight:600;text-decoration:underline;text-decoration-style:dotted" onclick="navigateToCompany(${co.id})" title="View client profile">${co.name}</span>`:(p.client||'—');})()}&thinsp;·&thinsp;<span class="status-badge badge-${p.status}">${p.status}</span>&thinsp;·&thinsp;<span style="font-size:11px;color:var(--muted);font-weight:500">${tmpl}</span>${p.leadId?` · <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="navigateToLead(${p.leadId})" title="View originating lead">◉ from lead</span>`:''}</div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openClientSummary()">Share</button><button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button></div></div>
+    <div class="topbar"><div><div class="back-btn" onclick="navigate('projects')">← Projects</div><div class="page-title">${p.name}</div><div class="page-sub">${(()=>{const co=p.clientId?store.companies.find(c=>c.id===p.clientId):null;return co?`<span style="cursor:pointer;color:var(--navy);font-weight:600;text-decoration:underline;text-decoration-style:dotted" onclick="navigateToCompany(${co.id})" title="View client profile">${co.name}</span>`:(p.client||'—');})()}&thinsp;·&thinsp;<span class="status-badge badge-${p.status}">${p.status}</span>&thinsp;·&thinsp;<span style="font-size:11px;color:var(--muted);font-weight:500">${tmpl}</span>${p.leadId?` · <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="navigateToLead(${p.leadId})" title="View originating lead">◉ from lead</span>`:''}${p.proposalId?` · <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="navigate('services')" title="View originating proposal">◈ from proposal</span>`:''}</div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openClientSummary()">Share</button><button class="btn btn-ghost btn-sm" onclick="openEditProjectModal()">Edit</button></div></div>
     <div class="content">
       <div class="tabs">${tabsHtml}</div>
       ${currentTab==='brief'?renderBriefTab(p):''}
