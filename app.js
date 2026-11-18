@@ -3055,9 +3055,14 @@ function currentPrField(field, value) {
 function pbSelectTier(tierId) {
   const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
   if (!pr) return;
+  // Save any in-progress edits before switching tier
+  pbSaveDraft();
   pr.tierId = tierId;
+  // Always pull the tier's default cost into the package fee field
+  const tier = (store.packages?.tiers||[]).find(t=>t.id===tierId);
+  if (tier) pr.packageCost = tier.defaultCost || 0;
   save();
-  render(); // re-render to show selection
+  render();
 }
 
 function pbToggleAddon(addonId, checked) {
