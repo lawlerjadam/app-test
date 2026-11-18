@@ -1852,15 +1852,19 @@ function renderCalendar() {
 
   const weekStripHtml=weekDays.map((d,i)=>{
     const isToday=d.toDateString()===todayMob.toDateString();
+    const isBlocked=(store.blockedPeriods||[]).some(bp=>{
+      const bs=new Date(bp.startDate+'T00:00:00'),be=new Date(bp.endDate+'T23:59:59');
+      return d>=bs&&d<=be;
+    });
     const dots=store.projects.filter(p=>{
       if(!p.startDate||!p.endDate)return false;
       const s=new Date(p.startDate+'T00:00:00'),e=new Date(p.endDate+'T23:59:59');
       return d>=s&&d<=e;
     }).slice(0,3).map(p=>`<span class="cal-wd-dot" style="background:${p.color||'#2563EB'}"></span>`).join('');
-    return`<div class="cal-wd${isToday?' today':''}">
+    return`<div class="cal-wd${isToday?' today':''}${isBlocked?' blocked':''}" style="${isBlocked?'opacity:0.5;background:#2B2D1811;':''}">
       <div class="cal-wd-name">${dayInitials[i]}</div>
       <div class="cal-wd-num">${d.getDate()}</div>
-      <div class="cal-wd-dots">${dots}</div>
+      <div class="cal-wd-dots">${dots}${isBlocked?'<span class="cal-wd-dot" style="background:#2B2D18"></span>':''}</div>
     </div>`;
   }).join('');
 
@@ -1875,23 +1879,40 @@ function renderCalendar() {
     return(!s||s<=weekSun)&&(!e||e>=weekMon);
   }).sort((a,b)=>new Date(a.startDate||'9999')-new Date(b.startDate||'9999'));
 
-  const agendaHtml=weekProjects.length===0
+  const weekBlocks=(store.blockedPeriods||[]).filter(bp=>{
+    const bs=new Date(bp.startDate+'T00:00:00'),be=new Date(bp.endDate+'T23:59:59');
+    return bs<=weekSun&&be>=weekMon;
+  });
+
+  const agendaHtml=(weekProjects.length===0&&weekBlocks.length===0)
     ?`<div class="empty-state" style="padding:16px 0"><p>No projects scheduled this week.</p></div>`
-    :weekProjects.map(p=>{
-      const health=getProjectHealth(p);
-      return`<div class="cal-agenda-item" onclick="navigate('project-detail',${p.id})">
-        <div class="cal-agenda-accent" style="background:${p.color||'#2563EB'}"></div>
+    :[
+      ...weekBlocks.map(bp=>`<div class="cal-agenda-item" style="background:#2B2D1811;border-left:3px solid #2B2D18">
+        <div class="cal-agenda-accent" style="background:#2B2D18"></div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-            ${health?`<div style="width:7px;height:7px;border-radius:50%;background:${health.color};flex-shrink:0"></div>`:''}
-            <div class="cal-agenda-name">${p.name}</div>
+            <div class="cal-agenda-name">⛔ ${bp.name}</div>
           </div>
-          ${p.client?`<div class="cal-agenda-meta">${p.client}</div>`:''}
-          <div class="cal-agenda-meta">${formatDate(p.startDate)} → ${formatDate(p.endDate)}</div>
+          <div class="cal-agenda-meta">${formatDate(bp.startDate)} → ${formatDate(bp.endDate)}</div>
         </div>
-        <div class="status-badge badge-${p.status}" style="align-self:flex-start;margin-top:2px">${p.status}</div>
-      </div>`;
-    }).join('');
+        <div class="status-badge" style="background:#2B2D1822;color:#2B2D18;align-self:flex-start;margin-top:2px">blocked</div>
+      </div>`),
+      ...weekProjects.map(p=>{
+        const health=getProjectHealth(p);
+        return`<div class="cal-agenda-item" onclick="navigate('project-detail',${p.id})">
+          <div class="cal-agenda-accent" style="background:${p.color||'#2563EB'}"></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+              ${health?`<div style="width:7px;height:7px;border-radius:50%;background:${health.color};flex-shrink:0"></div>`:''}
+              <div class="cal-agenda-name">${p.name}</div>
+            </div>
+            ${p.client?`<div class="cal-agenda-meta">${p.client}</div>`:''}
+            <div class="cal-agenda-meta">${formatDate(p.startDate)} → ${formatDate(p.endDate)}</div>
+          </div>
+          <div class="status-badge badge-${p.status}" style="align-self:flex-start;margin-top:2px">${p.status}</div>
+        </div>`;
+      })
+    ].join('');
 
   const mobileView=`
     <div class="cal-mobile-view">
@@ -1937,10 +1958,26 @@ function renderCalendar() {
       else{margin='1px -6px';radius='0';}
       return`<div class="cal-event" style="background:${clr}CC;color:#fff;margin:${margin};border-radius:${radius};padding:2px ${leftEdge?'5px':'1px'}" onclick="event.stopPropagation();navigate('project-detail',${p.id})">${leftEdge?p.name.split('—')[0].trim():''}</div>`;
     }).join('');
+    // Blocked periods
+    const blocks=(store.blockedPeriods||[]).filter(bp=>{
+      const bs=new Date(bp.startDate+'T00:00:00'),be=new Date(bp.endDate+'T23:59:59');
+      return cell.date>=bs&&cell.date<=be;
+    });
+    const blockHtml=blocks.map(bp=>{
+      const isStart=cell.date.toDateString()===new Date(bp.startDate+'T12:00:00').toDateString();
+      const isEnd=cell.date.toDateString()===new Date(bp.endDate+'T12:00:00').toDateString();
+      const leftEdge=isStart||isWeekStart,rightEdge=isEnd||isWeekEnd;
+      let margin,radius;
+      if(leftEdge&&rightEdge){margin='1px 0';radius='3px';}
+      else if(leftEdge){margin='1px -6px 1px 0';radius='3px 0 0 3px';}
+      else if(rightEdge){margin='1px 0 1px -6px';radius='0 3px 3px 0';}
+      else{margin='1px -6px';radius='0';}
+      return`<div style="background:#2B2D1888;color:#fff;font-size:9px;font-weight:700;margin:${margin};border-radius:${radius};padding:2px ${leftEdge?'5px':'1px'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${leftEdge?'⛔ '+bp.name:''}</div>`;
+    }).join('');
     const cellDateStr=cell.date.toDateString();
     const leadDots=(store.leads||[]).filter(l=>l.nextAction&&l.nextActionDate&&new Date(l.nextActionDate+'T12:00:00').toDateString()===cellDateStr).map(l=>`<div style="font-size:9px;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;cursor:pointer" onclick="event.stopPropagation();navigate('leads')" title="${l.nextAction} · ${l.company}">◉ ${l.nextAction}</div>`).join('');
     const taskDots=(store.tasks||[]).filter(t=>t.dueDate&&t.status!=='done'&&new Date(t.dueDate+'T12:00:00').toDateString()===cellDateStr).map(t=>`<div style="font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;cursor:pointer" onclick="event.stopPropagation();navigate('tasks')" title="${t.title}${t.assignedTo?' · '+t.assignedTo:''}">◆ ${t.title}</div>`).join('');
-    return`<div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}"><div class="cal-day-num">${cell.date.getDate()}</div>${evHtml}${leadDots}${taskDots}</div>`;
+    return`<div class="cal-day ${!cell.thisMonth?'other-month':''} ${isToday?'today':''}"><div class="cal-day-num">${cell.date.getDate()}</div>${evHtml}${blockHtml}${leadDots}${taskDots}</div>`;
   }
   const sorted=[...store.projects].filter(p=>p.startDate||p.endDate).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
 
