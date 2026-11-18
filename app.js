@@ -433,6 +433,14 @@ store.projects.forEach(p => {
 // Proposals migration
 if (!store.proposals) store.proposals = [];
 if (!store.nextId.proposals) store.nextId.proposals = 1;
+// Add startDate/endDate to existing proposals that don't have them
+(store.proposals||[]).forEach(pr => {
+  if (pr.startDate === undefined) pr.startDate = '';
+  if (pr.endDate === undefined) pr.endDate = '';
+});
+// Blocked periods (capacity blocks) migration
+if (!store.blockedPeriods) store.blockedPeriods = [];
+if (!store.nextId.blockedPeriods) store.nextId.blockedPeriods = 1;
 // Services & Packages migration
 if (!store.packages) {
   store.packages = {
@@ -2721,6 +2729,7 @@ function renderServices() {
           </div>
           ${total>0?`<div style="font-size:13px;font-weight:700;color:var(--text);flex-shrink:0">$${total.toLocaleString()}</div>`:''}
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${statusColors[pr.status]||'var(--muted)'};flex-shrink:0">${pr.status}</div>
+          <div style="flex-shrink:0">${capacityDot(pr)}</div>
           ${pr.shareUrl?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyProposalLink(${pr.id})">Copy link</button>`:''}
           <button class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" onclick="event.stopPropagation();quickDeleteProposal(${pr.id})">✕</button>
         </div>`;
@@ -2740,6 +2749,15 @@ function renderServices() {
     <div class="content">
       <div class="section-header"><div class="section-title">Proposals</div><div class="section-sub">${proposals.length} proposal${proposals.length!==1?'s':''}</div></div>
       <div class="card" style="padding:0 22px">${proposalsHtml}</div>
+      ${isAdmin ? `<div class="section-header" style="margin-top:24px">
+        <div><div class="section-title">Capacity Blocks</div><div class="section-sub">${(store.blockedPeriods||[]).length} blocked period${(store.blockedPeriods||[]).length!==1?'s':''}</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="openManageBlockedPeriodsModal()">✎ Manage</button>
+      </div>
+      <div class="card" style="padding:0 22px;margin-bottom:4px">
+        ${(store.blockedPeriods||[]).length===0
+          ? `<div style="padding:14px 0;font-size:13px;color:var(--muted)">No blocks set — add holidays or shutdowns to improve capacity accuracy.</div>`
+          : (store.blockedPeriods||[]).map(bp=>`<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;font-weight:600;flex:1">${bp.name}</span><span style="font-size:12px;color:var(--muted)">${formatDate(bp.startDate)} – ${formatDate(bp.endDate)}</span></div>`).join('')}
+      </div>` : ''}
       <div class="section-header" style="margin-top:24px"><div class="section-title">Packages</div><div class="section-sub">Our three core engagement tiers</div></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px">${tiersHtml}</div>
       <div class="section-header"><div class="section-title">Pick & Mix Add-ons</div><div class="section-sub">Build a bespoke scope around any package</div></div>
@@ -2829,6 +2847,161 @@ function saveServicesEdit() {
   toast('Services saved');
 }
 
+// ─── CAPACITY ─────────────────────────────────────────────────────────────────
+const TIER_HRS = { 'consultancy': 10, 'creative-direction': 20, 'full-felt-family': 40 };
+
+function calcProposalCapacity(pr) {
+  if (!pr.startDate || !pr.endDate) return null;
+  const start = new Date(pr.startDate + 'T00:00:00');
+  const end   = new Date(pr.endDate   + 'T00:00:00');
+  if (end <= start) return null;
+
+  const totalDays  = Math.ceil((end - start) / 864e5);
+  const totalWeeks = Math.max(0.5, totalDays / 7);
+
+  // Package hrs/week from tier
+  const pkgHrsPerWeek = TIER_HRS[pr.tierId] || 20;
+
+  // Core team (non-freelancer)
+  const core = (store.team||[]).filter(m => !m.isFreelancer);
+
+  // Blocked days overlapping the proposal window
+  let blockedDays = 0;
+  const hitBlocks = [];
+  (store.blockedPeriods||[]).forEach(bp => {
+    const bs = new Date(bp.startDate + 'T00:00:00');
+    const be = new Date(bp.endDate   + 'T00:00:00');
+    if (bs <= end && be >= start) {
+      const overlapStart = bs < start ? start : bs;
+      const overlapEnd   = be > end   ? end   : be;
+      blockedDays += Math.ceil((overlapEnd - overlapStart) / 864e5);
+      hitBlocks.push(bp.name);
+    }
+  });
+  const effectiveWeeks = Math.max(0.5, totalWeeks - blockedDays / 7);
+
+  // Committed hrs/week from active projects during the proposal window
+  let committedPerWeek = 0;
+  core.forEach(m => {
+    const pcts = (store.projects||[])
+      .filter(p => p.status === 'active' && (p.teamIds||[]).includes(m.id))
+      .filter(p => {
+        const ps = p.startDate ? new Date(p.startDate + 'T00:00:00') : null;
+        const pe = p.endDate   ? new Date(p.endDate   + 'T00:00:00') : null;
+        if (ps && pe) return ps <= end && pe >= start;
+        if (ps)       return ps <= end;
+        return true;
+      })
+      .reduce((sum, p) => sum + (p.teamAllocation?.[m.id] || 0), 0);
+    committedPerWeek += Math.min(100, pcts) / 100 * 40;
+  });
+
+  const totalPerWeek     = core.length * 40;
+  const availablePerWeek = Math.max(0, totalPerWeek - committedPerWeek);
+  const committedPct     = totalPerWeek > 0 ? Math.round(committedPerWeek / totalPerWeek * 100) : 0;
+
+  let status;
+  if      (availablePerWeek >= pkgHrsPerWeek * 1.3) status = 'green';
+  else if (availablePerWeek >= pkgHrsPerWeek)        status = 'amber';
+  else                                               status = 'red';
+
+  return { status, pkgHrsPerWeek, totalPerWeek, committedPerWeek: Math.round(committedPerWeek), availablePerWeek: Math.round(availablePerWeek), committedPct, effectiveWeeks: Math.round(effectiveWeeks * 10) / 10, coreCount: core.length, hitBlocks };
+}
+
+function capacityDot(pr) {
+  const c = calcProposalCapacity(pr);
+  if (!c) return `<span title="Add engagement dates to check capacity" style="font-size:11px;color:var(--muted)">— dates needed</span>`;
+  const col = {green:'#3cba6e', amber:'#f0a830', red:'#e44'}[c.status];
+  const label = {green:'Capacity available', amber:'Capacity tight', red:'Over capacity'}[c.status];
+  return `<span title="${label} · ${c.availablePerWeek} hrs/wk available, ${c.pkgHrsPerWeek} hrs/wk needed" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:${col}"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0"></span>${label}</span>`;
+}
+
+function renderCapacityWidget(pr) {
+  const c = calcProposalCapacity(pr);
+  if (!c) return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--muted)">⬡ Set engagement start & end dates above to see capacity check</div>`;
+
+  const col  = {green:'#3cba6e', amber:'#f0a830', red:'#e44'}[c.status];
+  const label= {green:'Capacity available', amber:'Capacity tight — may be stretched', red:'Over capacity — team is committed'}[c.status];
+  const barW = Math.min(100, c.committedPct);
+  const needPct = c.totalPerWeek > 0 ? Math.round(c.pkgHrsPerWeek / c.totalPerWeek * 100) : 0;
+
+  return `<div style="background:var(--surface);border:2px solid ${col}33;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="width:10px;height:10px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0"></span>
+      <span style="font-size:13px;font-weight:700;color:${col}">${label}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:14px">
+      <div style="text-align:center;padding:10px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--text)">${c.pkgHrsPerWeek}</div>
+        <div style="font-size:11px;color:var(--muted)">hrs/wk needed</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:${col}">${c.availablePerWeek}</div>
+        <div style="font-size:11px;color:var(--muted)">hrs/wk available</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--text)">${c.effectiveWeeks}</div>
+        <div style="font-size:11px;color:var(--muted)">effective weeks</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--bg);border-radius:8px">
+        <div style="font-size:18px;font-weight:800;color:var(--text)">${c.coreCount}</div>
+        <div style="font-size:11px;color:var(--muted)">core team</div>
+      </div>
+    </div>
+    <div style="margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Team committed (${c.committedPct}%)</span><span>${c.committedPerWeek} hrs/wk of ${c.totalPerWeek} total</span></div>
+      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${barW}%;background:${col};border-radius:4px;transition:width 0.3s"></div>
+        <div style="position:absolute;top:0;left:${Math.min(100-needPct,barW+1)}%;width:${needPct}%;height:100%;background:${col}44;border-left:2px dashed ${col}"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px">Dashed portion = this engagement's demand</div>
+    </div>
+    ${c.hitBlocks.length ? `<div style="font-size:12px;color:var(--accent-dark);margin-top:10px">⚠ Overlaps: ${c.hitBlocks.join(', ')}</div>` : ''}
+  </div>`;
+}
+
+function openManageBlockedPeriodsModal() {
+  const rows = (store.blockedPeriods||[]).map(bp => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;font-size:13px;font-weight:600">${bp.name}</div>
+      <div style="font-size:12px;color:var(--muted)">${formatDate(bp.startDate)} – ${formatDate(bp.endDate)}</div>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteBlockedPeriod(${bp.id})">✕</button>
+    </div>`).join('');
+
+  openModal(`
+    <div class="modal-title">Capacity Blocks</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Holidays, shutdowns, or any period where the team is unavailable.</div>
+    <div style="margin-bottom:16px">${rows || '<div style="color:var(--muted);font-size:13px;padding:8px 0">No blocked periods yet.</div>'}</div>
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Add a block</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Name</label><input id="bp-name" class="form-input" placeholder="e.g. Christmas shutdown"></div>
+        <div></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Start</label><input id="bp-start" type="date" class="form-input"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">End</label><input id="bp-end" type="date" class="form-input"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addBlockedPeriod()">+ Add</button>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Done</button></div>`);
+}
+
+function addBlockedPeriod() {
+  const name  = document.getElementById('bp-name')?.value.trim();
+  const start = document.getElementById('bp-start')?.value;
+  const end   = document.getElementById('bp-end')?.value;
+  if (!name || !start || !end) { toast('Name, start & end required'); return; }
+  if (!store.blockedPeriods) store.blockedPeriods = [];
+  store.blockedPeriods.push({ id: store.nextId.blockedPeriods++, name, startDate: start, endDate: end });
+  save();
+  openManageBlockedPeriodsModal();
+}
+
+function deleteBlockedPeriod(id) {
+  store.blockedPeriods = (store.blockedPeriods||[]).filter(bp => bp.id !== id);
+  save();
+  openManageBlockedPeriodsModal();
+}
+
 // ─── PROPOSALS ────────────────────────────────────────────────────────────────
 function openProposalBuilder(proposalId) {
   currentProposalId = proposalId;
@@ -2865,6 +3038,8 @@ function createProposal(leadId) {
     status: 'draft',
     createdAt: new Date().toISOString().split('T')[0],
     validUntil: '',
+    startDate: '',
+    endDate: '',
     intro: '',
     tierId: 'creative-direction',
     packageCost: 0,
@@ -2991,8 +3166,16 @@ function renderProposalBuilder() {
             <input id="pb-client" class="form-input" value="${pr.clientName||''}" oninput="currentPrField('clientName',this.value)">
           </div>
           <div>
-            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Valid until</label>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Proposal valid until</label>
             <input id="pb-valid" type="date" class="form-input" value="${pr.validUntil||''}">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Engagement start</label>
+            <input id="pb-start" type="date" class="form-input" value="${pr.startDate||''}" onchange="pbSaveDraft();render()">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Engagement end</label>
+            <input id="pb-end" type="date" class="form-input" value="${pr.endDate||''}" onchange="pbSaveDraft();render()">
           </div>
         </div>
         <div>
@@ -3008,6 +3191,9 @@ function renderProposalBuilder() {
         <span style="font-size:13px;color:var(--muted)">$</span>
         <input id="pb-pkg-cost" type="number" min="0" value="${pr.packageCost||0}" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-weight:700;background:var(--bg);color:var(--text);font-family:inherit">
       </div>
+
+      <div class="section-header"><div class="section-title">Capacity Check</div><div class="section-sub">Based on core team availability during the engagement window</div></div>
+      ${renderCapacityWidget(pr)}
 
       <div class="section-header"><div class="section-title">Add-ons</div><div class="section-sub">Select & price the services included in this proposal</div></div>
       <div class="card" style="padding:16px 20px;margin-bottom:20px">${addonsForm}</div>
@@ -3140,6 +3326,8 @@ function pbSaveDraft() {
   const fv = id => document.getElementById(id)?.value ?? '';
   pr.clientName  = fv('pb-client') || pr.clientName;
   pr.validUntil  = fv('pb-valid');
+  pr.startDate   = fv('pb-start');
+  pr.endDate     = fv('pb-end');
   pr.intro       = fv('pb-intro');
   pr.packageCost = parseInt(fv('pb-pkg-cost'))||0;
   pr.paymentTerms= fv('pb-terms');
@@ -3213,6 +3401,8 @@ async function publishProposal(id) {
       clientName:      pr.clientName,
       createdAt:       pr.createdAt,
       validUntil:      pr.validUntil,
+      startDate:       pr.startDate,
+      endDate:         pr.endDate,
       intro:           pr.intro,
       tierName:        tier?.name,
       tierTagline:     tier?.tagline,
