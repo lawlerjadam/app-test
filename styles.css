@@ -481,6 +481,13 @@
   .allocate-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 
   .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; }
+
+  /* Services page */
+  .svc-pr-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .svc-pr-archived { opacity: 0.55; cursor: default; }
+  .svc-pr-main { flex: 1; min-width: 0; }
+  .svc-pr-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .svc-pr-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .section-title { font-size: 15px; font-weight: 800; color: var(--navy); }
   .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
   .empty-state .empty-icon { font-size: 32px; margin-bottom: 10px; }
@@ -618,4 +625,11 @@
     .payment-total-value { font-size: 16px; }
     .client-payments-table { display: none; }
     .client-payments-cards { display: block; }
+    /* Services page — stack proposal rows on narrow screens */
+    .svc-pr-row { flex-wrap: wrap; gap: 6px 10px; }
+    .svc-pr-main { width: 100%; }
+    .svc-pr-meta { order: 2; }
+    .svc-pr-actions { order: 3; margin-left: auto; }
+    .svc-tiers-grid { grid-template-columns: 1fr !important; }
+    .svc-addons-grid { grid-template-columns: 1fr !important; }
   }

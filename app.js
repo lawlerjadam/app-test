@@ -2766,7 +2766,7 @@ function renderServices() {
     return `
       <div style="margin-bottom:20px">
         <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">${cat}</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+        <div class="svc-addons-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
           ${items.map(a => `
             <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
               <div style="font-size:13px;color:var(--text);font-weight:500">${a.name}</div>
@@ -2788,24 +2788,27 @@ function renderServices() {
     const total = (pr.packageCost||0) + (pr.selectedAddons||[]).reduce((s,a)=>s+(a.cost||0),0) + (pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
     const stale = isProposalStale(pr);
     const staleDays = stale ? daysAgo(pr.sentAt) : 0;
-    return `<div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);cursor:pointer;${isArchived?'opacity:0.55':''}" onclick="${isArchived?'':'openProposalBuilder('+pr.id+')'}">
-      <div style="flex:1;min-width:0">
+    const actionBtns = [
+      pr.shareUrl&&!isArchived ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyProposalLink(${pr.id})">Copy link</button>` : '',
+      pr.status==='sent' ? `<button class="btn btn-ghost btn-sm" style="color:var(--green);font-weight:700" onclick="event.stopPropagation();acceptProposal(${pr.id})">✓ Accept</button>` : '',
+      pr.status==='accepted'&&pr.acceptedProjectId ? `<button class="btn btn-ghost btn-sm" style="color:var(--blue)" onclick="event.stopPropagation();navigate('project-detail',${pr.acceptedProjectId})">→ Project</button>` : '',
+      isArchived ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();restoreProposal(${pr.id})">Restore</button><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="event.stopPropagation();quickDeleteProposal(${pr.id})">✕</button>`
+                 : (pr.status!=='accepted' ? `<button class="btn btn-ghost btn-sm" style="color:var(--muted)" onclick="event.stopPropagation();rejectProposal(${pr.id})">Archive</button>` : '')
+    ].filter(Boolean).join('');
+    return `<div class="svc-pr-row${isArchived?' svc-pr-archived':''}" onclick="${isArchived?'':'openProposalBuilder('+pr.id+')'}">
+      <div class="svc-pr-main">
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
           <span style="font-size:14px;font-weight:600;color:var(--text)">${pr.title||'Untitled Proposal'}</span>
           ${stale?`<span style="font-size:11px;font-weight:700;color:#7a5000;background:#fff3cd;border-radius:20px;padding:2px 7px">Stale · ${staleDays}d</span>`:''}
         </div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px">${pr.clientName||''}${linked?' · Lead: '+linked.company:''}${pr.createdAt?' · '+formatDate(pr.createdAt):''}</div>
       </div>
-      ${total>0?`<div style="font-size:13px;font-weight:700;color:var(--text);flex-shrink:0">$${total.toLocaleString()}</div>`:''}
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${statusColors[pr.status]||'var(--muted)'};flex-shrink:0">${pr.status}</div>
-      ${!isArchived?`<div style="flex-shrink:0">${capacityDot(pr)}</div>`:''}
-      ${pr.shareUrl&&!isArchived?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyProposalLink(${pr.id})">Copy link</button>`:''}
-      ${pr.status==='sent'?`<button class="btn btn-ghost btn-sm" style="color:var(--green);font-weight:700;flex-shrink:0" onclick="event.stopPropagation();acceptProposal(${pr.id})">✓ Accept</button>`:''}
-      ${pr.status==='accepted'&&pr.acceptedProjectId?`<button class="btn btn-ghost btn-sm" style="color:var(--blue);flex-shrink:0" onclick="event.stopPropagation();navigate('project-detail',${pr.acceptedProjectId})">→ Project</button>`:''}
-      ${isArchived
-        ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();restoreProposal(${pr.id})">Restore</button><button class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" onclick="event.stopPropagation();quickDeleteProposal(${pr.id})">✕</button>`
-        : (pr.status!=='accepted'?`<button class="btn btn-ghost btn-sm" style="color:var(--muted);flex-shrink:0" onclick="event.stopPropagation();rejectProposal(${pr.id})">Archive</button>`:'')
-      }
+      <div class="svc-pr-meta">
+        ${total>0?`<span style="font-size:13px;font-weight:700;color:var(--text)">$${total.toLocaleString()}</span>`:''}
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${statusColors[pr.status]||'var(--muted)'}">${pr.status}</span>
+        ${!isArchived?capacityDot(pr):''}
+      </div>
+      <div class="svc-pr-actions" onclick="event.stopPropagation()">${actionBtns}</div>
     </div>`;
   };
 
@@ -2840,7 +2843,7 @@ function renderServices() {
           : (store.blockedPeriods||[]).map(bp=>`<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;font-weight:600;flex:1">${bp.name}</span><span style="font-size:12px;color:var(--muted)">${formatDate(bp.startDate)} – ${formatDate(bp.endDate)}</span></div>`).join('')}
       </div>` : ''}
       <div class="section-header" style="margin-top:24px"><div class="section-title">Packages</div><div class="section-sub">Our three core engagement tiers</div></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px">${tiersHtml}</div>
+      <div class="svc-tiers-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px">${tiersHtml}</div>
       <div class="section-header"><div class="section-title">Pick & Mix Add-ons</div><div class="section-sub">Build a bespoke scope around any package</div></div>
       <div class="card" style="padding:20px 22px">${addonsHtml}</div>
     </div>`;
