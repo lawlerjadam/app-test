@@ -430,6 +430,9 @@ store.team.forEach(m => {
 store.projects.forEach(p => {
   if (!p.template) p.template = 'FELT Other';
 });
+// Proposals migration
+if (!store.proposals) store.proposals = [];
+if (!store.nextId.proposals) store.nextId.proposals = 1;
 // Services & Packages migration
 if (!store.packages) {
   store.packages = {
@@ -790,6 +793,7 @@ let currentContact=null, currentContactTab='overview';
 let currentCompany=null;
 let convertingLeadId=null;
 let highlightLeadId=null;
+let currentProposalId=null;
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let calMobileWeekOffset=0;
 let calView='month';
@@ -879,7 +883,7 @@ function _applyNavActiveStates(view) {
   document.querySelectorAll('.nav-item')[navMap[view]]?.classList.add('active');
   const workViews=['projects','project-detail','tasks','calendar','finance','snapshot'];
   const peopleViews=['team','team-profile','contacts','contact-profile','global-suppliers'];
-  const growthViews=['leads','services','ideas'];
+  const growthViews=['leads','services','proposal-builder','ideas'];
   const bnItems=document.querySelectorAll('.bottom-nav-item');
   if(workViews.includes(view)) bnItems[1]?.classList.add('active');
   else if(peopleViews.includes(view)) bnItems[3]?.classList.add('active');
@@ -933,6 +937,7 @@ function render() {
   else if(currentView==='tasks') m.innerHTML=renderTasks();
   else if(currentView==='leads') m.innerHTML=renderLeads();
   else if(currentView==='services') m.innerHTML=renderServices();
+  else if(currentView==='proposal-builder') m.innerHTML=renderProposalBuilder();
   else if(currentView==='calendar') m.innerHTML=renderCalendar();
   else if(currentView==='ideas') m.innerHTML=renderIdeas();
   else if(currentView==='team') m.innerHTML=renderTeam();
@@ -2554,6 +2559,27 @@ function openLeadDetailModal(id) {
       <button class="btn btn-ghost btn-sm" style="color:var(--muted)" onclick="unconvertLead(${id})">Unlink project</button>
     </div>` : ''}
     ${actionsHtml}
+    ${(()=>{
+      const lp = (store.proposals||[]).filter(p=>p.leadId===id);
+      const statusColors = {draft:'var(--muted)',sent:'var(--blue)',accepted:'var(--green)',declined:'var(--red)'};
+      return `<div style="margin-top:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em">Proposals${lp.length?` · ${lp.length}`:''}</div>
+          <button class="btn btn-ghost btn-sm" onclick="closeModal();openNewProposalModal(${id})">+ New</button>
+        </div>
+        ${lp.length===0?`<div style="color:var(--muted);font-size:13px;padding:6px 0">No proposals linked to this lead yet.</div>`:lp.map(pr=>{
+          const total=(pr.packageCost||0)+(pr.selectedAddons||[]).reduce((s,a)=>s+(a.cost||0),0)+(pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="closeModal();openProposalBuilder(${pr.id})">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">${pr.title||'Untitled'}</div>
+              <div style="font-size:11px;color:var(--muted)">${pr.createdAt?formatDate(pr.createdAt):''}</div>
+            </div>
+            ${total>0?`<div style="font-size:12px;font-weight:700">$${total.toLocaleString()}</div>`:''}
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:${statusColors[pr.status]||'var(--muted)'}">${pr.status}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    })()}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
       <button class="btn btn-ghost" onclick="closeModal();openEditLeadModal(${id})">Edit Lead</button>
@@ -2681,16 +2707,39 @@ function renderServices() {
       </div>`;
   }).join('');
 
+  const proposals = store.proposals || [];
+  const proposalsHtml = proposals.length === 0
+    ? `<div class="empty-state" style="padding:30px 0"><div class="empty-icon">◈</div><p>No proposals yet. Create one to get started.</p></div>`
+    : proposals.slice().reverse().map(pr => {
+        const statusColors = {draft:'var(--muted)',sent:'var(--blue)',accepted:'var(--green)',declined:'var(--red)'};
+        const linked = pr.leadId ? store.leads?.find(l=>l.id===pr.leadId) : null;
+        const total = (pr.packageCost||0) + (pr.selectedAddons||[]).reduce((s,a)=>s+(a.cost||0),0) + (pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
+        return `<div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openProposalBuilder(${pr.id})">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600;color:var(--text)">${pr.title||'Untitled Proposal'}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${pr.clientName||''}${linked?' · Lead: '+linked.company:''}${pr.createdAt?' · '+formatDate(pr.createdAt):''}</div>
+          </div>
+          ${total>0?`<div style="font-size:13px;font-weight:700;color:var(--text);flex-shrink:0">$${total.toLocaleString()}</div>`:''}
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${statusColors[pr.status]||'var(--muted)'};flex-shrink:0">${pr.status}</div>
+          ${pr.shareUrl?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyProposalLink(${pr.id})">Copy link</button>`:''}
+        </div>`;
+      }).join('');
+
   return `
     <div class="topbar">
       <div>
         <div class="page-title">Services & Packages</div>
         <div class="page-sub">3 packages · ${pkg.addons.length} add-ons</div>
       </div>
-      ${isAdmin ? `<button class="btn btn-ghost" onclick="openEditServicesModal()">✎ Edit</button>` : ''}
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="openNewProposalModal()">+ New Proposal</button>
+        ${isAdmin ? `<button class="btn btn-ghost" onclick="openEditServicesModal()">✎ Edit</button>` : ''}
+      </div>
     </div>
     <div class="content">
-      <div class="section-header"><div class="section-title">Packages</div><div class="section-sub">Our three core engagement tiers</div></div>
+      <div class="section-header"><div class="section-title">Proposals</div><div class="section-sub">${proposals.length} proposal${proposals.length!==1?'s':''}</div></div>
+      <div class="card" style="padding:0 22px">${proposalsHtml}</div>
+      <div class="section-header" style="margin-top:24px"><div class="section-title">Packages</div><div class="section-sub">Our three core engagement tiers</div></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px">${tiersHtml}</div>
       <div class="section-header"><div class="section-title">Pick & Mix Add-ons</div><div class="section-sub">Build a bespoke scope around any package</div></div>
       <div class="card" style="padding:20px 22px">${addonsHtml}</div>
@@ -2777,6 +2826,491 @@ function saveServicesEdit() {
   closeModal();
   render();
   toast('Services saved');
+}
+
+// ─── PROPOSALS ────────────────────────────────────────────────────────────────
+function openProposalBuilder(proposalId) {
+  currentProposalId = proposalId;
+  navigate('proposal-builder');
+}
+
+function openNewProposalModal(leadId) {
+  const lead = leadId ? store.leads?.find(l=>l.id===leadId) : null;
+  const defaultClient = lead ? (lead.company||'') : '';
+  const defaultTitle  = lead ? `Proposal — ${lead.company}` : '';
+  openModal(`
+    <div class="modal-header"><div class="modal-title">New Proposal</div></div>
+    <div class="modal-body">
+      <div class="form-group full"><label>Title</label><input id="np-title" class="form-input" placeholder="Proposal — Client Name" value="${defaultTitle}"></div>
+      <div class="form-group full"><label>Client name</label><input id="np-client" class="form-input" placeholder="e.g. Meridian Hotels Group" value="${defaultClient}"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createProposal(${leadId||'null'})">Create</button>
+    </div>`);
+}
+
+function createProposal(leadId) {
+  const title  = document.getElementById('np-title')?.value.trim();
+  const client = document.getElementById('np-client')?.value.trim();
+  if (!client) { toast('Client name required'); return; }
+  if (!store.proposals) store.proposals = [];
+  if (!store.nextId.proposals) store.nextId.proposals = 1;
+  const pr = {
+    id: store.nextId.proposals++,
+    title: title || `Proposal — ${client}`,
+    clientName: client,
+    leadId: leadId || null,
+    status: 'draft',
+    createdAt: new Date().toISOString().split('T')[0],
+    validUntil: '',
+    intro: '',
+    tierId: 'creative-direction',
+    packageCost: 0,
+    selectedAddons: [],
+    customLines: [],
+    paymentTerms: '50% deposit on signing, balance 30 days prior to event.',
+    nextSteps: 'Please review and let us know if you would like to proceed — we would love to work together.',
+    pastWork: [],
+    shareUrl: null,
+    sentAt: null
+  };
+  store.proposals.push(pr);
+  save();
+  closeModal();
+  openProposalBuilder(pr.id);
+}
+
+function renderProposalBuilder() {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return `<div class="content"><div class="empty-state"><p>Proposal not found.</p></div></div>`;
+  const pkg = store.packages;
+  const statusColors = {draft:'var(--muted)',sent:'var(--blue)',accepted:'var(--green)',declined:'var(--red)'};
+  const isAdmin = currentUserRole === 'admin';
+
+  // Package tier cards
+  const tierCards = (pkg?.tiers||[]).map(t => {
+    const sel = pr.tierId === t.id;
+    return `<div onclick="pbSelectTier('${t.id}')" style="border:2px solid ${sel?'var(--accent)':'var(--border)'};border-radius:var(--radius);padding:16px;cursor:pointer;background:${sel?'var(--accent-light)':'var(--surface)'};transition:all 0.15s">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:${sel?'var(--accent-dark)':'var(--muted)'};margin-bottom:4px">${t.capacity}</div>
+      <div style="font-size:15px;font-weight:800;color:var(--text)">${t.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${t.tagline}</div>
+    </div>`;
+  }).join('');
+
+  // Add-ons by category
+  const addonCategories = ['Strategy & Direction','Management','Production','Creative Execution'];
+  const addonsForm = addonCategories.map(cat => {
+    const items = (pkg?.addons||[]).filter(a=>a.category===cat);
+    if (!items.length) return '';
+    return `<div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:8px">${cat}</div>
+      ${items.map(a=>{
+        const sel = (pr.selectedAddons||[]).find(x=>x.addonId===a.id);
+        const cost = sel ? sel.cost : (a.cost||0);
+        return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <input type="checkbox" id="pb-addon-${a.id}" ${sel?'checked':''} onchange="pbToggleAddon('${a.id}',this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent);flex-shrink:0">
+          <label for="pb-addon-${a.id}" style="flex:1;font-size:13px;cursor:pointer;color:var(--text)">${a.name}</label>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            <span style="font-size:12px;color:var(--muted)">$</span>
+            <input id="pb-addon-cost-${a.id}" type="number" min="0" value="${cost}" placeholder="0" style="width:90px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);color:var(--text);font-family:inherit" ${sel?'':'disabled style="opacity:0.4"'} onchange="pbUpdateAddonCost('${a.id}',this.value)">
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  // Custom lines
+  const customLinesHtml = (pr.customLines||[]).map((cl,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input id="pb-cl-name-${i}" class="form-input" value="${cl.name}" placeholder="Line item name" style="flex:1" oninput="pbUpdateCustomLine(${i},'name',this.value)">
+      <span style="font-size:12px;color:var(--muted)">$</span>
+      <input id="pb-cl-cost-${i}" type="number" min="0" value="${cl.cost}" style="width:100px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit" oninput="pbUpdateCustomLine(${i},'cost',this.value)">
+      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="pbRemoveCustomLine(${i})">✕</button>
+    </div>`).join('');
+
+  // Past work
+  const pastWorkHtml = (pr.pastWork||[]).map((pw,i)=>`
+    <div style="border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="pbRemovePastWork(${i})">Remove</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Title</label>
+          <input class="form-input" value="${pw.title||''}" placeholder="e.g. Meridian Hotels NYE Gala" oninput="pbUpdatePastWork(${i},'title',this.value)">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Image URL (optional)</label>
+          <input class="form-input" value="${pw.imageUrl||''}" placeholder="https://…" oninput="pbUpdatePastWork(${i},'imageUrl',this.value)">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Description</label>
+        <textarea class="form-input" rows="2" style="resize:vertical" oninput="pbUpdatePastWork(${i},'description',this.value)">${pw.description||''}</textarea>
+      </div>
+    </div>`).join('');
+
+  // Financial summary
+  const addonTotal = (pr.selectedAddons||[]).reduce((s,a)=>s+(a.cost||0),0);
+  const customTotal = (pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
+  const grandTotal = (pr.packageCost||0) + addonTotal + customTotal;
+
+  return `
+    <div class="topbar">
+      <div>
+        <div class="page-title">${pr.title||'Proposal'}</div>
+        <div class="page-sub" style="display:flex;align-items:center;gap:8px">
+          <span style="color:${statusColors[pr.status]};font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:0.07em">${pr.status}</span>
+          ${pr.shareUrl?`<span style="color:var(--muted)">· Link generated</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="pbSaveDraft();toast('Saved')">Save Draft</button>
+        ${pr.status==='draft'||pr.status==='sent'?`<button class="btn btn-primary" onclick="pbSaveDraft();publishProposal(${pr.id})" id="pb-publish-btn">Generate & Share ↗</button>`:''}
+        ${isAdmin?`<button class="btn btn-ghost" style="color:var(--red)" onclick="confirmDeleteProposal(${pr.id})">Delete</button>`:''}
+      </div>
+    </div>
+    <div class="content">
+
+      ${pr.shareUrl?`<div style="background:var(--accent-light);border:1.5px solid var(--accent);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:var(--accent-dark)">Proposal link generated</div>
+          <div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pr.shareUrl}</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="copyProposalLink(${pr.id})">Copy Link</button>
+        <a href="${pr.shareUrl}" target="_blank" class="btn btn-ghost btn-sm">Preview ↗</a>
+      </div>`:''}
+
+      <div class="section-header"><div class="section-title">Client & Cover</div></div>
+      <div class="card" style="padding:20px 22px;margin-bottom:20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Client name</label>
+            <input id="pb-client" class="form-input" value="${pr.clientName||''}" oninput="currentPrField('clientName',this.value)">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Valid until</label>
+            <input id="pb-valid" type="date" class="form-input" value="${pr.validUntil||''}">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Intro / cover note</label>
+          <textarea id="pb-intro" class="form-input" rows="4" style="resize:vertical" placeholder="Thank you for the opportunity to work together…">${pr.intro||''}</textarea>
+        </div>
+      </div>
+
+      <div class="section-header"><div class="section-title">Package</div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px">${tierCards}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:12px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius)">
+        <label style="font-size:13px;color:var(--text);flex:1">Package fee</label>
+        <span style="font-size:13px;color:var(--muted)">$</span>
+        <input id="pb-pkg-cost" type="number" min="0" value="${pr.packageCost||0}" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-weight:700;background:var(--bg);color:var(--text);font-family:inherit">
+      </div>
+
+      <div class="section-header"><div class="section-title">Add-ons</div><div class="section-sub">Select & price the services included in this proposal</div></div>
+      <div class="card" style="padding:16px 20px;margin-bottom:20px">${addonsForm}</div>
+
+      <div class="section-header"><div class="section-title">Custom Line Items</div><div class="section-sub">Anything not in the standard add-on library</div></div>
+      <div class="card" style="padding:16px 20px;margin-bottom:20px">
+        ${customLinesHtml}
+        <button class="btn btn-ghost btn-sm" onclick="pbAddCustomLine()">+ Add line item</button>
+      </div>
+
+      <div class="section-header"><div class="section-title">Financial Summary</div></div>
+      <div class="card" style="padding:16px 22px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--muted)">Package fee</span><span style="font-size:13px;font-weight:600">$${(pr.packageCost||0).toLocaleString()}</span></div>
+        ${(pr.selectedAddons||[]).length>0?`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--muted)">Add-ons (${(pr.selectedAddons||[]).length})</span><span style="font-size:13px;font-weight:600">$${addonTotal.toLocaleString()}</span></div>`:''}
+        ${(pr.customLines||[]).length>0?`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--muted)">Custom items</span><span style="font-size:13px;font-weight:600">$${customTotal.toLocaleString()}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;padding:10px 0;margin-top:4px"><span style="font-size:15px;font-weight:800;color:var(--text)">Total</span><span style="font-size:18px;font-weight:800;color:var(--accent-dark)">$${grandTotal.toLocaleString()}</span></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Payment terms</label>
+          <textarea id="pb-terms" class="form-input" rows="2" style="resize:vertical">${pr.paymentTerms||''}</textarea>
+        </div>
+      </div>
+
+      <div class="section-header"><div class="section-title">Past Work Examples</div><div class="section-sub">Show relevant work to build confidence</div></div>
+      <div style="margin-bottom:8px">${pastWorkHtml}</div>
+      <button class="btn btn-ghost btn-sm" onclick="pbAddPastWork()" style="margin-bottom:24px">+ Add example</button>
+
+      <div class="section-header"><div class="section-title">Next Steps</div></div>
+      <div class="card" style="padding:16px 20px;margin-bottom:40px">
+        <textarea id="pb-nextsteps" class="form-input" rows="3" style="resize:vertical">${pr.nextSteps||''}</textarea>
+      </div>
+
+      ${pr.status!=='accepted'&&pr.status!=='declined'?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:40px">
+        ${pr.status==='sent'?`<button class="btn btn-green" onclick="pbSaveDraft();updateProposalStatus(${pr.id},'accepted')">Mark Accepted ✓</button><button class="btn btn-ghost" style="color:var(--red)" onclick="updateProposalStatus(${pr.id},'declined')">Mark Declined</button>`:''}
+      </div>`:''}
+
+    </div>`;
+}
+
+// Live in-memory updates while editing the proposal builder (no save to Supabase on each keystroke)
+function currentPrField(field, value) {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (pr) pr[field] = value;
+}
+
+function pbSelectTier(tierId) {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return;
+  pr.tierId = tierId;
+  save();
+  render(); // re-render to show selection
+}
+
+function pbToggleAddon(addonId, checked) {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return;
+  if (!pr.selectedAddons) pr.selectedAddons = [];
+  if (checked) {
+    if (!pr.selectedAddons.find(a=>a.addonId===addonId)) {
+      const libAddon = (store.packages?.addons||[]).find(a=>a.id===addonId);
+      pr.selectedAddons.push({addonId, cost: libAddon?.cost||0});
+    }
+    // Enable cost input
+    const costInput = document.getElementById(`pb-addon-cost-${addonId}`);
+    if (costInput) { costInput.disabled = false; costInput.style.opacity = '1'; }
+  } else {
+    pr.selectedAddons = pr.selectedAddons.filter(a=>a.addonId!==addonId);
+    const costInput = document.getElementById(`pb-addon-cost-${addonId}`);
+    if (costInput) { costInput.disabled = true; costInput.style.opacity = '0.4'; }
+  }
+}
+
+function pbUpdateAddonCost(addonId, value) {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return;
+  const sel = (pr.selectedAddons||[]).find(a=>a.addonId===addonId);
+  if (sel) sel.cost = parseInt(value)||0;
+}
+
+function pbUpdateCustomLine(idx, field, value) {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr || !pr.customLines[idx]) return;
+  pr.customLines[idx][field] = field==='cost' ? (parseInt(value)||0) : value;
+}
+
+function pbAddCustomLine() {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return;
+  if (!pr.customLines) pr.customLines = [];
+  pr.customLines.push({id: Date.now(), name:'', cost:0});
+  save(); render();
+}
+
+function pbRemoveCustomLine(idx) {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return;
+  pr.customLines.splice(idx, 1);
+  save(); render();
+}
+
+function pbAddPastWork() {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return;
+  if (!pr.pastWork) pr.pastWork = [];
+  pr.pastWork.push({id: Date.now(), title:'', description:'', imageUrl:''});
+  save(); render();
+}
+
+function pbRemovePastWork(idx) {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return;
+  pr.pastWork.splice(idx, 1);
+  save(); render();
+}
+
+function pbUpdatePastWork(idx, field, value) {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr || !pr.pastWork[idx]) return;
+  pr.pastWork[idx][field] = value;
+}
+
+function pbSaveDraft() {
+  const pr = (store.proposals||[]).find(p=>p.id===currentProposalId);
+  if (!pr) return;
+  // Read all form fields
+  const fv = id => document.getElementById(id)?.value ?? '';
+  pr.clientName  = fv('pb-client') || pr.clientName;
+  pr.validUntil  = fv('pb-valid');
+  pr.intro       = fv('pb-intro');
+  pr.packageCost = parseInt(fv('pb-pkg-cost'))||0;
+  pr.paymentTerms= fv('pb-terms');
+  pr.nextSteps   = fv('pb-nextsteps');
+  // Flush add-on costs from inputs
+  (pr.selectedAddons||[]).forEach(a => {
+    const v = document.getElementById(`pb-addon-cost-${a.addonId}`)?.value;
+    if (v !== undefined) a.cost = parseInt(v)||0;
+  });
+  // Flush custom line names/costs from inputs
+  (pr.customLines||[]).forEach((cl,i) => {
+    const n = document.getElementById(`pb-cl-name-${i}`)?.value;
+    const c = document.getElementById(`pb-cl-cost-${i}`)?.value;
+    if (n !== undefined) cl.name = n;
+    if (c !== undefined) cl.cost = parseInt(c)||0;
+  });
+  save();
+}
+
+function updateProposalStatus(id, status) {
+  const pr = (store.proposals||[]).find(p=>p.id===id);
+  if (!pr) return;
+  pr.status = status;
+  save();
+  if (currentView === 'proposal-builder') render();
+}
+
+function confirmDeleteProposal(id) {
+  openConfirm(`Delete this proposal? This cannot be undone.`, () => {
+    store.proposals = (store.proposals||[]).filter(p=>p.id!==id);
+    save();
+    navigate('services');
+  }, {label:'Delete', danger:true});
+}
+
+function copyProposalLink(id) {
+  const pr = (store.proposals||[]).find(p=>p.id===id);
+  if (!pr?.shareUrl) { toast('No link yet — click Generate & Share first'); return; }
+  navigator.clipboard.writeText(pr.shareUrl).then(()=>toast('Link copied!')).catch(()=>toast('Copy failed — link: '+pr.shareUrl));
+}
+
+async function publishProposal(id) {
+  const pr = (store.proposals||[]).find(p=>p.id===id);
+  if (!pr) return;
+  const btn = document.getElementById('pb-publish-btn');
+  if (btn) { btn.textContent = 'Generating…'; btn.disabled = true; }
+  try {
+    const html = generateProposalHTML(pr);
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const path = `proposals/proposal-${pr.id}-${Date.now()}.html`;
+    const { data, error } = await _sb.storage.from(STORAGE_BUCKET).upload(path, blob, { contentType:'text/html', upsert:true });
+    if (error) throw error;
+    const { data: urlData } = _sb.storage.from(STORAGE_BUCKET).getPublicUrl(data.path);
+    pr.shareUrl = urlData.publicUrl;
+    pr.status = 'sent';
+    pr.sentAt = new Date().toISOString().split('T')[0];
+    await save();
+    render();
+    toast('Proposal published! Link copied to clipboard.');
+    navigator.clipboard.writeText(pr.shareUrl).catch(()=>{});
+  } catch(e) {
+    console.error('Publish error:', e);
+    toast('⚠ Publish failed — check console');
+    if (btn) { btn.textContent = 'Generate & Share ↗'; btn.disabled = false; }
+  }
+}
+
+function generateProposalHTML(pr) {
+  const pkg = store.packages;
+  const tier = (pkg?.tiers||[]).find(t=>t.id===pr.tierId);
+  const selectedAddons = (pr.selectedAddons||[]).map(sa => {
+    const lib = (pkg?.addons||[]).find(a=>a.id===sa.addonId);
+    return lib ? {...lib, cost: sa.cost} : null;
+  }).filter(Boolean);
+  const addonTotal  = selectedAddons.reduce((s,a)=>s+(a.cost||0),0);
+  const customTotal = (pr.customLines||[]).reduce((s,l)=>s+(l.cost||0),0);
+  const grandTotal  = (pr.packageCost||0) + addonTotal + customTotal;
+  const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const validDate = pr.validUntil ? new Date(pr.validUntil+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : null;
+
+  const addonsByCategory = {};
+  selectedAddons.forEach(a => { if (!addonsByCategory[a.category]) addonsByCategory[a.category] = []; addonsByCategory[a.category].push(a); });
+  const addonCategoriesHtml = Object.entries(addonsByCategory).map(([cat, items]) => `
+    <tr><td colspan="2" style="padding:12px 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#888;">${cat}</td></tr>
+    ${items.map(a=>`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">${a.name}</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;color:#333;border-bottom:1px solid #f0f0f0">${a.cost>0?'$'+a.cost.toLocaleString():'POA'}</td></tr>`).join('')}`).join('');
+
+  const customLinesHtml = (pr.customLines||[]).filter(l=>l.name).map(l=>`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">${l.name}</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;color:#333;border-bottom:1px solid #f0f0f0">${l.cost>0?'$'+l.cost.toLocaleString():'POA'}</td></tr>`).join('');
+
+  const pastWorkHtml = (pr.pastWork||[]).filter(pw=>pw.title||pw.description).map(pw=>`
+    <div style="margin-bottom:28px">
+      ${pw.imageUrl?`<img src="${pw.imageUrl}" alt="${pw.title||''}" style="width:100%;height:260px;object-fit:cover;border-radius:12px;margin-bottom:14px">`:''}
+      ${pw.title?`<div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:6px">${pw.title}</div>`:''}
+      ${pw.description?`<div style="font-size:14px;color:#555;line-height:1.65">${pw.description}</div>`:''}
+    </div>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${pr.title||'Proposal'} — FELT Studio</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:#f7f7f5;color:#1a1a1a;line-height:1.5}
+  .wrap{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+  .header{background:#2B2D18;border-radius:16px;padding:40px 44px;margin-bottom:32px;color:#fff}
+  .felt-wordmark{font-size:13px;font-weight:900;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:28px}
+  .header-title{font-size:28px;font-weight:900;letter-spacing:-0.02em;line-height:1.2;margin-bottom:8px}
+  .header-meta{font-size:13px;color:rgba(255,255,255,0.55)}
+  .section{background:#fff;border-radius:14px;padding:28px 32px;margin-bottom:20px}
+  .section-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#9B90E8;margin-bottom:14px}
+  .intro{font-size:15px;color:#333;line-height:1.75}
+  .tier-name{font-size:22px;font-weight:900;color:#1a1a1a;letter-spacing:-0.02em;margin-bottom:4px}
+  .tier-tag{font-size:13px;color:#888;margin-bottom:12px}
+  .tier-cap{display:inline-block;background:#f0ede4;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;color:#555;margin-bottom:16px}
+  .tier-desc{font-size:14px;color:#555;line-height:1.65}
+  table{width:100%;border-collapse:collapse}
+  .total-row td{padding:14px 0;font-size:17px;font-weight:900;border-top:2px solid #1a1a1a}
+  .total-amount{color:#2B2D18}
+  .terms{font-size:13px;color:#555;line-height:1.65}
+  .cta{background:#2B2D18;border-radius:14px;padding:32px;text-align:center;margin-top:28px}
+  .cta-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px}
+  .cta-sub{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:20px}
+  .cta-contact{font-size:13px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.05em;text-transform:uppercase}
+  .validity{font-size:12px;color:#aaa;text-align:center;padding-top:12px}
+  @media(max-width:600px){.wrap{padding:20px 16px 60px}.header{padding:28px 24px}.section{padding:22px 20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="felt-wordmark">FELT Studio</div>
+    <div class="header-title">${pr.title||'Proposal'}</div>
+    <div class="header-meta">Prepared for ${pr.clientName||'you'} · ${today}</div>
+  </div>
+
+  ${pr.intro?`<div class="section"><div class="section-label">Introduction</div><div class="intro">${pr.intro.replace(/\n/g,'<br>')}</div></div>`:''}
+
+  ${tier?`<div class="section">
+    <div class="section-label">Package</div>
+    <div class="tier-name">${tier.name}</div>
+    <div class="tier-tag">${tier.tagline}</div>
+    <div class="tier-cap">${tier.capacity}</div>
+    <div class="tier-desc">${tier.description}</div>
+  </div>`:''}
+
+  ${(selectedAddons.length>0||pr.customLines?.filter(l=>l.name).length>0)?`<div class="section">
+    <div class="section-label">Scope of Work</div>
+    <table>
+      ${addonCategoriesHtml}
+      ${customLinesHtml}
+    </table>
+  </div>`:''}
+
+  <div class="section">
+    <div class="section-label">Investment</div>
+    <table>
+      ${pr.packageCost>0?`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">${tier?.name||'Package'} fee</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0">$${(pr.packageCost||0).toLocaleString()}</td></tr>`:''}
+      ${selectedAddons.length>0?`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">Add-ons</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0">$${addonTotal.toLocaleString()}</td></tr>`:''}
+      ${customTotal>0?`<tr><td style="padding:7px 0;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0">Additional services</td><td style="padding:7px 0;text-align:right;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0">$${customTotal.toLocaleString()}</td></tr>`:''}
+      <tr class="total-row"><td>Total</td><td style="text-align:right" class="total-amount">$${grandTotal.toLocaleString()}</td></tr>
+    </table>
+    ${pr.paymentTerms?`<div class="terms" style="margin-top:16px;padding-top:16px;border-top:1px solid #f0f0f0"><strong>Payment terms:</strong> ${pr.paymentTerms}</div>`:''}
+    ${validDate?`<div class="validity">This proposal is valid until ${validDate}</div>`:''}
+  </div>
+
+  ${pastWorkHtml?`<div class="section"><div class="section-label">Our Work</div>${pastWorkHtml}</div>`:''}
+
+  ${pr.nextSteps?`<div class="cta">
+    <div class="cta-title">Ready to get started?</div>
+    <div class="cta-sub">${pr.nextSteps.replace(/\n/g,'<br>')}</div>
+    <div class="cta-contact">hello@feltstudio.co</div>
+  </div>`:''}
+
+</div>
+</body>
+</html>`;
 }
 
 function renderLeads() {
